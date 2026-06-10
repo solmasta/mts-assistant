@@ -549,13 +549,14 @@ async function callAgent(systemPrompt, userPrompt, onChunk) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "claude-haiku-4-5-20251001",
+      model: "claude-sonnet-4-6",
       max_tokens: 1000,
       system: systemPrompt,
       messages: [{ role: "user", content: userPrompt }],
     }),
   });
   const data = await res.json();
+  if (data.error) return "⚠️ API Error: " + (data.error.message || JSON.stringify(data.error));
   return data.content?.find(b => b.type === "text")?.text || "No response generated.";
 }
 
@@ -1857,9 +1858,9 @@ function MTSAssistant() {
     await saveChat(updated);
     try{
       const sysWithProfile = SYSTEM_PROMPT + (profile?`\n\nTechnician: ${profile.name}${profile.techId?` (ID: ${profile.techId})`:""}${profile.region?`, Region: ${profile.region}`:""}${profile.specialty?.length?`, Specialties: ${profile.specialty.join(", ")}`:""}`:``);
-      const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:1000,system:sysWithProfile,messages:msgs.map(m=>({role:m.role,content:m.content}))})});
+      const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,system:sysWithProfile,messages:msgs.map(m=>({role:m.role,content:m.content}))})});
       const data=await res.json();
-      const reply=data.content?.find(b=>b.type==="text")?.text||"Sorry, couldn't generate a response.";
+      const reply=data.error?("⚠️ API Error: "+(data.error.message||JSON.stringify(data.error))):(data.content?.find(b=>b.type==="text")?.text||"Sorry, couldn't generate a response.");
       const withReply={...updated,messages:[...msgs,{role:"assistant",content:reply}],updatedAt:Date.now()};
       setChats(prev=>prev.map(c=>c.id===activeChatId?withReply:c).sort((a,b)=>b.updatedAt-a.updatedAt));
       await saveChat(withReply);
