@@ -13,7 +13,6 @@
     body { background:#0a0a0a; font-family:'Barlow',sans-serif; }
     @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Barlow+Condensed:wght@700;800&display=swap');
     
-    /* Card & button styles */
     .card-hover { transition: all 0.2s ease; cursor: pointer; }
     .card-hover:hover { background: #3a3a3a !important; border-color: #E30613 !important; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
     .red-btn { transition: all 0.2s ease; cursor: pointer; background: #E30613; border: none; border-radius: 14px; padding: 12px 20px; color: white; font-weight: 700; font-size: 14px; box-shadow: 0 4px 12px rgba(227,6,19,0.3); }
@@ -28,7 +27,6 @@
     ::-webkit-scrollbar-track { background: #1a1a1a; }
     ::-webkit-scrollbar-thumb { background: #E30613; border-radius: 4px; }
     
-    /* HVAC-themed background pattern (wrenches, gears, thermometers) */
     body::before {
       content: "";
       position: fixed;
@@ -56,7 +54,6 @@ const BLACK = "#000000";
 const BG = "#0a0a0a";
 const CARD = "#222222";
 const BORDER = "rgba(227,6,19,0.35)";
-const GEMINI_API_KEY = "AIzaSyA03el2fK6mtlxpdxfk_XaB91VqPPV6zS4";
 
 const SYSTEM_PROMPT = `You are MTS Assistant – Field Assistant, an expert AI tool for JLL MTS mobile HVAC engineers. Help diagnose faults, install parts, provide safety guidance, and find OEM documentation. Be concise, use numbered steps, and flag safety items with ⚠️.`;
 
@@ -87,7 +84,7 @@ function timeAgo(ts) {
   return `${days}d ago`;
 }
 
-// ----- Logo (stacked text, matching your image) -----
+// ----- Logo -----
 const Logo = ({ size = "default", variant = "full" }) => {
   const isLarge = size === "large";
   const mainSize = isLarge ? 48 : 30;
@@ -109,7 +106,7 @@ const Logo = ({ size = "default", variant = "full" }) => {
   );
 };
 
-// ----- Shared UI Components (high contrast) -----
+// ----- Shared UI Components -----
 function Header({ title, subtitle, onBack, right }) {
   return (
     <div style={{ background: "linear-gradient(135deg, #000000 0%, #1a0000 100%)", borderBottom: `3px solid ${JLL_RED}`, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
@@ -162,10 +159,11 @@ function OnlineBadge() {
   );
 }
 
-// ----- AI Call (Gemini) -----
-async function callAgent(systemPrompt, userPrompt) {
+// ----- AI Call with API key from storage -----
+async function callAgent(systemPrompt, userPrompt, apiKey) {
+  if (!apiKey) return "🔑 No API key set. Please go to Settings (gear icon on home) and enter your Gemini API key.";
   try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -175,12 +173,12 @@ async function callAgent(systemPrompt, userPrompt) {
       })
     });
     const data = await res.json();
-    if (data.error) return "⚠️ API Error: " + (data.error.message || JSON.stringify(data.error));
+    if (data.error) return `⚠️ API Error: ${data.error.message || JSON.stringify(data.error)}`;
     return data.candidates?.[0]?.content?.parts?.map(p => p.text).join("") || "No response.";
-  } catch { return "⚠️ Connection error."; }
+  } catch { return "⚠️ Connection error. Check network."; }
 }
 
-// ----- Document Library with Model Lookup (enhanced graphics) -----
+// ----- Document Library (no API required) -----
 const DOC_DB = [
   { id:"carrier1", keywords: ["carrier","48xc","50xc","38","25vna"], brand:"Carrier", name:"Carrier 48/50XC Service Manual", type:"Service Manual", content:"Carrier 48/50XC Commercial Packaged Units. R-410A. Fault codes: E79 high pressure, E31 low pressure. Subcooling 10-15°F." },
   { id:"trane1", keywords: ["trane","ycd","ych","xv18"], brand:"Trane", name:"Trane YCD/YCH Fault Codes", type:"Fault Code Library", content:"Trane YCD/YCH Codes: 1=High pressure, 2=Low pressure, 3=Compressor over-temp." },
@@ -198,17 +196,20 @@ function DocumentLibraryScreen({ storage }) {
   const [search, setSearch] = useState("");
   const [modelSerial, setModelSerial] = useState("");
   const [lookupResult, setLookupResult] = useState(null);
-  useEffect(()=>{ setDocs(DOC_DB); },[]);
+  const [apiKey, setApiKey] = useState(null);
+  useEffect(()=>{ setDocs(DOC_DB); loadKey(); },[]);
+  async function loadKey(){ try{ const k=await storage.get("apiKey"); if(k?.value) setApiKey(k.value); }catch{} }
   function handleLookup() {
     const input = modelSerial.toLowerCase();
     const matched = DOC_DB.filter(d => d.keywords.some(kw => input.includes(kw)) || (d.brand && input.includes(d.brand.toLowerCase())));
     setLookupResult(matched.length ? matched : null);
   }
   async function askDoc(doc, q) {
-    if(!q.trim()) return; setAsking(true); setAnswer("");
+    if(!q.trim()) return; if(!apiKey){ setAnswer("🔑 No API key set. Please go to Settings (gear icon) to add your Gemini API key."); return; }
+    setAsking(true); setAnswer("");
     const sys = "Answer from the document precisely.";
     const prompt = `Document: ${doc.name}\nContent: ${doc.content}\nQuestion: ${q}`;
-    const r = await callAgent(sys, prompt);
+    const r = await callAgent(sys, prompt, apiKey);
     setAnswer(r); setAsking(false);
   }
   const filtered = docs.filter(d => !search || [d.name,d.brand,d.type].join(" ").toLowerCase().includes(search.toLowerCase()));
@@ -255,7 +256,7 @@ function DocumentLibraryScreen({ storage }) {
   );
 }
 
-// ----- PT Chart Screen -----
+// ----- PT Chart Screen (no API) -----
 function PTChartScreen() {
   const [ref, setRef] = useState("R-410A");
   const [mode, setMode] = useState("P→T");
@@ -284,7 +285,7 @@ function PTChartScreen() {
   );
 }
 
-// ----- Job Notes Screen -----
+// ----- Job Notes Screen (no API) -----
 function NotesScreen({ storage }) {
   const [notes, setNotes] = useState([]);
   const [title, setTitle] = useState("");
@@ -315,7 +316,7 @@ function NotesScreen({ storage }) {
   );
 }
 
-// ----- Equipment Screen -----
+// ----- Equipment Screen (no API) -----
 function EquipmentScreen({ storage }) {
   const [items, setItems] = useState([]);
   const [model, setModel] = useState("");
@@ -347,7 +348,7 @@ function EquipmentScreen({ storage }) {
   );
 }
 
-// ----- Parts Log Screen -----
+// ----- Parts Log Screen (no API) -----
 function PartsLogScreen({ storage }) {
   const [parts, setParts] = useState([]);
   const [name, setName] = useState("");
@@ -382,7 +383,7 @@ function PartsLogScreen({ storage }) {
   );
 }
 
-// ----- Photo Screen -----
+// ----- Photo Screen (no API) -----
 function PhotoScreen({ storage }) {
   const [photos, setPhotos] = useState([]);
   const [preview, setPreview] = useState(null);
@@ -421,7 +422,7 @@ function PhotoScreen({ storage }) {
   );
 }
 
-// ----- Service History Screen -----
+// ----- Service History Screen (no API) -----
 function ServiceHistoryScreen({ storage }) {
   const [logs, setLogs] = useState([]);
   const [unit, setUnit] = useState("");
@@ -451,7 +452,7 @@ function ServiceHistoryScreen({ storage }) {
   );
 }
 
-// ----- Chat List & Chat Screen -----
+// ----- Chat List & Chat Screen (with API key) -----
 function ChatListScreen({ chats, onOpen, onCreate, onDelete, deletingId }) {
   return (
     <div style={{ flex:1, display:"flex", flexDirection:"column" }}>
@@ -498,14 +499,47 @@ function ChatScreen({ chat, onBack, onSend, loading }) {
   );
 }
 
-// ----- Dashboard -----
-function DashboardScreen({ profile, stats, onNav, onStartJob, recentChats, onOpenChat }) {
+// ----- Settings Screen (to set Gemini API key) -----
+function SettingsScreen({ storage, onClose, onKeySaved }) {
+  const [apiKey, setApiKey] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+  useEffect(()=>{ loadKey(); },[]);
+  async function loadKey(){ try{ const k=await storage.get("apiKey"); if(k?.value) setApiKey(k.value); }catch{} }
+  async function saveKey(){
+    setSaving(true); setMessage("");
+    try{ await storage.set("apiKey", apiKey.trim()); setMessage("✅ API key saved! AI features will now work."); if(onKeySaved) onKeySaved(); setTimeout(()=>setMessage(""),3000); }catch(e){ setMessage("❌ Failed to save key."); } finally{ setSaving(false); }
+  }
+  return (
+    <div style={{ flex:1, display:"flex", flexDirection:"column" }}>
+      <Header title="SETTINGS" subtitle="API KEY" onBack={onClose} />
+      <div style={{ padding:20 }}>
+        <div style={{ background: CARD, borderRadius: 16, padding: 16, border: `1px solid ${BORDER}`, marginBottom: 20 }}>
+          <div style={{ fontWeight:700, marginBottom:8 }}>Google Gemini API Key</div>
+          <div style={{ fontSize:12, color:"#aaa", marginBottom:12 }}>Get a free key from <a href="https://aistudio.google.com/apikey" target="_blank" style={{ color:JLL_RED }}>Google AI Studio</a>. Paste it below to enable AI chat and document Q&A.</div>
+          <Input label="API Key" value={apiKey} onChange={setApiKey} placeholder="Paste your Gemini API key here" type="password" />
+          <RedBtn onClick={saveKey} disabled={saving || !apiKey.trim()} style={{ marginTop:8 }}>{saving?"Saving…":"Save Key"}</RedBtn>
+          {message && <div style={{ marginTop:12, fontSize:12, color: message.includes("✅")?"#27AE60":JLL_RED }}>{message}</div>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ----- Dashboard (with settings gear) -----
+function DashboardScreen({ profile, stats, onNav, onStartJob, recentChats, onOpenChat, onOpenSettings }) {
   const hour = new Date().getHours();
   const greeting = hour<12?"Good morning":hour<17?"Good afternoon":"Good evening";
   return (
     <div style={{ flex:1, display:"flex", flexDirection:"column" }}>
       <div style={{ background: "linear-gradient(135deg, #000000 0%, #1a0000 100%)", borderBottom: `3px solid ${JLL_RED}`, padding: "16px" }}>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}><div><div style={{ fontSize:12, color:"#aaa" }}>{greeting},</div><div style={{ fontSize:22, fontWeight:800, color:"#fff" }}>{profile.name.toUpperCase()}</div></div><Logo size="small" variant="icon" /></div>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+          <div><div style={{ fontSize:12, color:"#aaa" }}>{greeting},</div><div style={{ fontSize:22, fontWeight:800, color:"#fff" }}>{profile.name.toUpperCase()}</div></div>
+          <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+            <button onClick={onOpenSettings} style={{ background:"rgba(255,255,255,0.1)", border:"none", borderRadius:30, width:36, height:36, fontSize:18, cursor:"pointer" }}>⚙️</button>
+            <Logo size="small" variant="icon" />
+          </div>
+        </div>
         <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:10, marginTop:16 }}>
           {[{label:"Jobs",value:stats.chats},{label:"Parts",value:stats.parts},{label:"Notes",value:stats.notes},{label:"History",value:stats.history}].map(s=><div key={s.label} style={{ background:"rgba(255,255,255,0.08)", borderRadius:12, padding:"10px", textAlign:"center", backdropFilter:"blur(4px)" }}><div style={{ fontSize:20, fontWeight:800, color:"#fff" }}>{s.value}</div><div style={{ fontSize:10, color:"#aaa" }}>{s.label}</div></div>)}
         </div>
@@ -545,18 +579,21 @@ function MTSAssistant() {
   const [tab, setTab] = useState("home");
   const [chatView, setChatView] = useState("list");
   const [toolView, setToolView] = useState(null);
+  const [showSettings, setShowSettings] = useState(false);
   const [chats, setChats] = useState([]);
   const [activeChatId, setActiveChatId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [stats, setStats] = useState({chats:0, parts:0, notes:0, history:0});
+  const [apiKey, setApiKey] = useState(null);
   const storage = window.storage = {
     get: async (k) => { const v=localStorage.getItem('mts__'+k); if(v===null) throw new Error('Not found'); return {key:k,value:v}; },
     set: async (k,v) => { localStorage.setItem('mts__'+k,v); return {key:k,value:v}; },
     delete: async (k) => { localStorage.removeItem('mts__'+k); return {key:k,deleted:true}; },
     list: async (prefix) => { const keys=[], p='mts__'+(prefix||''); for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith(p)) keys.push(k.replace('mts__','')); } return {keys}; }
   };
-  useEffect(()=>{ loadData(); },[]);
+  useEffect(()=>{ loadData(); loadApiKey(); },[]);
+  async function loadApiKey(){ try{ const k=await storage.get("apiKey"); if(k?.value) setApiKey(k.value); }catch{} }
   async function loadData() {
     try{
       const p=await storage.get("profile"); if(p?.value) setProfile(JSON.parse(p.value));
@@ -571,13 +608,14 @@ function MTSAssistant() {
   async function createChat(){ const chat={id:genId(),title:"New Job",messages:[],updatedAt:Date.now()}; setChats(prev=>[chat,...prev]); setStats(s=>({...s,chats:s.chats+1})); setActiveChatId(chat.id); setChatView("chat"); setTab("chat"); await saveChat(chat); }
   async function deleteChat(id){ setDeletingId(id); await storage.delete("chat:"+id); setChats(prev=>prev.filter(c=>c.id!==id)); setStats(s=>({...s,chats:Math.max(0,s.chats-1)})); if(activeChatId===id){ setActiveChatId(null); setChatView("list"); } setDeletingId(null); }
   const activeChat = chats.find(c=>c.id===activeChatId);
-  async function sendMessage(text){ if(!text||loading||!activeChatId) return; const newMsg={role:"user",content:text}; const msgs=[...(activeChat?.messages||[]),newMsg]; let title=activeChat?.title||"New Job"; if((activeChat?.messages||[]).length===0) title=text.length>40?text.slice(0,40)+"…":text; const updated={...activeChat,title,messages:msgs,updatedAt:Date.now()}; setChats(prev=>prev.map(c=>c.id===activeChatId?updated:c)); setLoading(true); await saveChat(updated); const sys=SYSTEM_PROMPT+(profile?`\nTechnician: ${profile.name}`:""); const reply=await callAgent(sys,text); const withReply={...updated,messages:[...msgs,{role:"assistant",content:reply}],updatedAt:Date.now()}; setChats(prev=>prev.map(c=>c.id===activeChatId?withReply:c).sort((a,b)=>b.updatedAt-a.updatedAt)); await saveChat(withReply); setLoading(false); }
+  async function sendMessage(text){ if(!text||loading||!activeChatId) return; const newMsg={role:"user",content:text}; const msgs=[...(activeChat?.messages||[]),newMsg]; let title=activeChat?.title||"New Job"; if((activeChat?.messages||[]).length===0) title=text.length>40?text.slice(0,40)+"…":text; const updated={...activeChat,title,messages:msgs,updatedAt:Date.now()}; setChats(prev=>prev.map(c=>c.id===activeChatId?updated:c)); setLoading(true); await saveChat(updated); const sys=SYSTEM_PROMPT+(profile?`\nTechnician: ${profile.name}`:""); const reply=await callAgent(sys,text,apiKey); const withReply={...updated,messages:[...msgs,{role:"assistant",content:reply}],updatedAt:Date.now()}; setChats(prev=>prev.map(c=>c.id===activeChatId?withReply:c).sort((a,b)=>b.updatedAt-a.updatedAt)); await saveChat(withReply); setLoading(false); }
   function navTo(target, sub=null) { setTab(target); if(target==="chat") setChatView("list"); if(target==="tools") setToolView(sub); }
   if (!profile) return <OnboardingScreen onComplete={saveProfile} />;
+  if (showSettings) return <SettingsScreen storage={storage} onClose={()=>{setShowSettings(false); loadApiKey();}} onKeySaved={loadApiKey} />;
   return (
     <div style={{ height:"100vh", background:BG, display:"flex", flexDirection:"column", maxWidth:480, margin:"0 auto" }}>
       <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden" }}>
-        {tab==="home" && <DashboardScreen profile={profile} stats={stats} recentChats={chats.slice(0,3)} onStartJob={createChat} onNav={navTo} onOpenChat={id=>{setActiveChatId(id);setChatView("chat");setTab("chat");}} />}
+        {tab==="home" && <DashboardScreen profile={profile} stats={stats} recentChats={chats.slice(0,3)} onStartJob={createChat} onNav={navTo} onOpenChat={id=>{setActiveChatId(id);setChatView("chat");setTab("chat");}} onOpenSettings={()=>setShowSettings(true)} />}
         {tab==="chat" && chatView==="list" && <ChatListScreen chats={chats} onOpen={id=>{setActiveChatId(id);setChatView("chat");}} onCreate={createChat} onDelete={deleteChat} deletingId={deletingId} />}
         {tab==="chat" && chatView==="chat" && <ChatScreen chat={activeChat} onBack={()=>setChatView("list")} onSend={sendMessage} loading={loading} />}
         {tab==="docs" && <DocumentLibraryScreen storage={storage} />}
