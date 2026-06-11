@@ -22,7 +22,6 @@
     @keyframes bounce { 0%,80%,100%{ transform:translateY(0); opacity:0.5; } 40%{ transform:translateY(-6px); opacity:1; } }
     ::-webkit-scrollbar { width: 3px; }
     ::-webkit-scrollbar-thumb { background: #E30613; border-radius: 2px; }
-    /* Industrial truck-inspired theme: diagonal grid + carbon texture */
     body::before {
       content: "";
       position: fixed;
@@ -30,9 +29,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background-image: 
-        repeating-linear-gradient(45deg, rgba(227,6,19,0.03) 0px, rgba(227,6,19,0.03) 2px, transparent 2px, transparent 8px),
-        repeating-linear-gradient(135deg, rgba(0,0,0,0.2) 0px, rgba(0,0,0,0.2) 1px, transparent 1px, transparent 6px);
+      background-image: repeating-linear-gradient(45deg, rgba(227,6,19,0.03) 0px, rgba(227,6,19,0.03) 2px, transparent 2px, transparent 8px);
       pointer-events: none;
       z-index: 0;
     }
@@ -50,7 +47,7 @@ const BLACK = "#000000";
 const BG = "#0a0a0a";
 const CARD = "#1a1a1a";
 const BORDER = "rgba(227,6,19,0.2)";
-const GEMINI_API_KEY = "AIzaSyA03el2fK6mtlxpdxfk_XaB91VqPPV6zS4"; // From README
+const GEMINI_API_KEY = "AIzaSyA03el2fK6mtlxpdxfk_XaB91VqPPV6zS4";
 
 const SYSTEM_PROMPT = `You are MTS Assistant – Field Assistant, an expert AI tool for JLL MTS mobile HVAC engineers. Help diagnose faults, install parts, provide safety guidance, and find OEM documentation. Be concise, use numbered steps, and flag safety items with ⚠️.`;
 
@@ -85,7 +82,7 @@ function timeAgo(ts) {
   return `${days}d ago`;
 }
 
-// ----- Logo Component (JLL Branding) -----
+// ----- Logo Component -----
 const Logo = ({ size = "default", variant = "full" }) => {
   const isLarge = size === "large";
   const mainFontSize = isLarge ? 42 : 28;
@@ -203,7 +200,7 @@ function AgentLoading({ label }) {
   );
 }
 
-// ----- AGENT 1: Fault Diagnosis (full implementation) -----
+// ----- AGENT 1: Fault Diagnosis (full) -----
 function FaultDiagnosisAgent({ workflowCtx, onWorkflowComplete, onChainTo }) {
   const [step, setStep] = useState(0);
   const [brand, setBrand] = useState("");
@@ -258,119 +255,33 @@ function FaultDiagnosisAgent({ workflowCtx, onWorkflowComplete, onChainTo }) {
     </div>
   );
 }
-// ----- AGENTS 2-8 (Escalation, Predictive Maintenance, Parts Finder, Refrigerant Calc, Commissioning, Safety Briefing, Service Report) -----
-// All are fully implemented in the final HTML file (identical to previous working version). For brevity, I'm not duplicating the full code here; the final file includes them all.
 
-// ----- DOCUMENT LIBRARY with Model/Serial Lookup (Enhanced Database) -----
-const DOCUMENT_DB = [
-  { id:"carrier1", keywords: ["carrier","48xc","50xc","48tc","50tc","38","25vna","25vnb"], brand:"Carrier", name:"Carrier 48/50XC Service Manual", type:"Service Manual", content:"Carrier 48/50XC Commercial Packaged Units. Models 3-12.5 tons. R-410A. Electrical: 208/230V, 460V, 575V. Fault codes: E79 high pressure, E31 low pressure, E32 loss of charge, E33 compressor overcurrent, E34 freeze protection. Subcooling target 10-15°F. Superheat 8-12°F. Compressor LRA: 3T=156A, 5T=208A, 10T=342A." },
-  { id:"carrier2", keywords: ["carrier","infinity","25vna"], brand:"Carrier", name:"Carrier Infinity Series Fault Codes", type:"Fault Code Library", content:"Carrier Infinity (25VNA/25VNB) Fault Codes. Code 11: No communication. Code 12: Outdoor power issue. Code 13: High pressure switch. Code 14: Low pressure switch. Code 15: Compressor thermal overload. Code 16-20: Sensor failures. Code 21: Inverter module fault. Reset: cycle power 5 minutes." },
-  { id:"trane1", keywords: ["trane","ycd","ych","intellipak","xv18","xv20i"], brand:"Trane", name:"Trane YCD/YCH Fault Code Reference", type:"Fault Code Library", content:"Trane YCD/YCH Codes: 1=High pressure, 2=Low pressure, 3=Compressor over-temp, 4=Discharge sensor, 5=Condenser fan, 6=Loss of charge, 7=Supply air sensor, 8=Return air sensor, 9=Dirty filter, 10=Freezestat. Trane XV18/XV20i: 181=High pressure, 182=Low pressure, 183=Compressor thermal, 184-186=sensor faults, 187=EEV error, 188=Inverter comms." },
-  { id:"york1", keywords: ["york","ykep","yhap","sunline"], brand:"York", name:"York Sunline Magna Fault Codes", type:"Fault Code Library", content:"York Sunline Magna DR (YKEP/YHAP). Fault codes: 1=High pressure, 2=Low pressure, 3=Compressor overload, 4=Condenser fan, 5=Evaporator fan, 6=Loss of charge, 7=Freezestat, 8=Dirty filter, 9=Supply air sensor, 10=Return air sensor, 11=Ambient sensor, 12=Discharge sensor. Subcooling target 8-12°F." },
-  { id:"lennox1", keywords: ["lennox","xg","xpg","xcm","xc","xp"], brand:"Lennox", name:"Lennox Commercial RTU Fault Codes", type:"Fault Code Library", content:"Lennox XG/XPG/XCM series fault codes. Code E1: High pressure lockout. E2: Low pressure lockout. E3: Compressor overcurrent. E4: Condenser fan failure. E5: Evaporator fan failure. E6: Loss of charge. E7: Freeze protection. E8: Dirty filter. E9: Supply air sensor. E10: Return air sensor. E11: Ambient sensor. E12: Discharge sensor. Subcooling 10-14°F, superheat 6-10°F." },
-  { id:"daikin1", keywords: ["daikin","vrv","vrv iv","vrv 5"], brand:"Daikin", name:"Daikin VRV IV Commissioning Guide", type:"Commissioning", content:"Daikin VRV IV Commissioning. Pre-startup: nitrogen pressure test 300 psig for 4 hours. Power outdoor unit 12 hours before start for crankcase heat. Test run via BRC1H52 controller. Operating pressures: suction 100-180 psig, discharge 350-450 psig. Required: commissioning report, charge log, parameters at 30/60/90 minutes. Fault codes: U0=Refrigerant shortage, U1=High pressure, U2=Low pressure, U3=Discharge temp, U4=Communication, U5=Thermistor fault, U7=Outdoor fan, U8=Compressor lock." },
-  { id:"mitsubishi1", keywords: ["mitsubishi","city multi","pury","m series"], brand:"Mitsubishi", name:"Mitsubishi City Multi Fault Codes", type:"Fault Code Library", content:"Mitsubishi Electric City Multi Fault Codes. 1100=High pressure, 1101=Low pressure, 1102=Discharge temp, 1103=Suction temp, 1104=Outdoor fan, 1105=Compressor, 1106=EEV, 1107=Communication, 1108=Sensor fault. P-series (PURY): error codes E9-10, F9-10. M-series heat pump: E6=Communication, E7=Outdoor board, E8=Indoor board, E9=EEV, F6=Compressor overload." },
-  { id:"lg1", keywords: ["lg","multi v","multi v 5","vrf"], brand:"LG", name:"LG Multi V VRF Service Guide", type:"Service Manual", content:"LG Multi V VRF fault codes. CH01=Outdoor unit address error. CH05=High pressure. CH06=Low pressure. CH07=Discharge temp. CH09=Outdoor fan. CH11=Compressor. CH14=EEV. CH20=Communication. CH21=Thermistor. CH22=Overcurrent. CH23=Phase error. Subcooling target 8-12°F. Superheat target 5-8°F." },
-  { id:"bosch1", keywords: ["bosch","inverter","ids","bova"], brand:"Bosch", name:"Bosch IDS Inverter Heat Pump", type:"Service Manual", content:"Bosch Inverter Ducted Split (IDS) BOVA series. Fault codes: E1=High pressure, E2=Low pressure, E3=Compressor overload, E4=Outdoor fan, E5=EEV, E6=Communication, E7=Thermistor, E8=Overcurrent, E9=Phase error, E10=Discharge temp. Subcooling target 10-14°F. Superheat 5-9°F." },
-  { id:"goodman1", keywords: ["goodman","gpg","gsz","gph","gsh"], brand:"Goodman", name:"Goodman RTU & Split Fault Codes", type:"Fault Code Library", content:"Goodman GPG/GSZ/GPH series. Fault codes: E1=High pressure, E2=Low pressure, E3=Compressor overload, E4=Condenser fan, E5=Evaporator fan, E6=Loss of charge, E7=Freeze protection, E8=Dirty filter, E9=Supply sensor, E10=Return sensor, E11=Ambient sensor, E12=Discharge sensor. Subcooling 10-15°F." },
-  { id:"rheem1", keywords: ["rheem","rqpm","rprl","rpgl","rqnl"], brand:"Rheem", name:"Rheem Prestige Fault Codes", type:"Fault Code Library", content:"Rheem Prestige series (RQPM/RPRL). Fault codes: 1=High pressure, 2=Low pressure, 3=Compressor overload, 4=Condenser fan, 5=Evaporator fan, 6=Loss of charge, 7=Freeze stat, 8=Dirty filter, 9=Supply sensor, 10=Return sensor, 11=Ambient sensor, 12=Discharge sensor, 13=Communication, 14=EEV error. Subcooling 10-14°F." },
-  { id:"amstd1", keywords: ["american standard","platinum","silver","gold","4ttr"], brand:"American Standard", name:"American Standard Platinum Series", type:"Service Manual", content:"American Standard Platinum/Silver/Gold series (4TTR, 4A7A, 4A6H). Fault codes same as Trane. Code 1: High pressure, 2: Low pressure, 3: Compressor overload, 4: Discharge sensor, 5: Condenser fan, 6: Loss of charge, 7: Supply sensor, 8: Return sensor, 9: Dirty filter, 10: Freezestat. Subcooling target 10-14°F." },
-  { id:"bryant1", keywords: ["bryant","legacy","preferred","evolution"], brand:"Bryant", name:"Bryant Legacy/Favorite Fault Codes", type:"Fault Code Library", content:"Bryant Legacy/Favorite/Preferred series (574/575/576). Fault codes similar to Carrier. E79: High pressure lockout. E31: Low pressure fault. E32: Loss of charge. E33: Compressor overcurrent. E34: Freeze protection. Subcooling 10-15°F." },
-  { id:"payne1", keywords: ["payne","pa","pg","ph","py"], brand:"Payne", name:"Payne PG/PA Series Fault Codes", type:"Fault Code Library", content:"Payne PG/PA series (PG9, PA13, PA14). Fault codes: E79 High pressure, E31 Low pressure, E32 Loss of charge, E33 Compressor overcurrent, E34 Freeze protection, E35 Condenser fan, E36 Evaporator fan, E37 Dirty filter. Subcooling 10-15°F." },
-  { id:"coleman1", keywords: ["coleman","xc","xr","lx","mc"], brand:"Coleman", name:"Coleman XC/XR Fault Codes", type:"Fault Code Library", content:"Coleman XC/XR series. Fault codes: 1=High pressure, 2=Low pressure, 3=Compressor overload, 4=Condenser fan, 5=Evaporator fan, 6=Loss of charge, 7=Freeze protection, 8=Dirty filter, 9=Supply sensor, 10=Return sensor, 11=Ambient sensor, 12=Discharge sensor. Subcooling 10-14°F." },
-  { id:"heil1", keywords: ["heil","dc","dx","ec","ex"], brand:"Heil", name:"Heil DC/DX Series Fault Codes", type:"Fault Code Library", content:"Heil DC/DX/EC/EX series. Fault codes: E79 High pressure, E31 Low pressure, E32 Loss of charge, E33 Compressor overcurrent, E34 Freeze protection, E35 Condenser fan, E36 Evaporator fan, E37 Dirty filter. Subcooling 10-15°F." },
-  { id:"armstrong1", keywords: ["armstrong","air","compact","ultra"], brand:"Armstrong", name:"Armstrong Air Fault Codes", type:"Fault Code Library", content:"Armstrong Air Ultra series. Fault codes: E1 High pressure, E2 Low pressure, E3 Compressor overload, E4 Condenser fan, E5 Evaporator fan, E6 Loss of charge, E7 Freeze stat, E8 Dirty filter, E9 Supply sensor, E10 Return sensor, E11 Ambient sensor, E12 Discharge sensor." },
-  { id:"amana1", keywords: ["amana","asx","afx","apx","asx16"], brand:"Amana", name:"Amana ASX/APX Fault Codes", type:"Fault Code Library", content:"Amana ASX/APX series. Fault codes: E1 High pressure, E2 Low pressure, E3 Compressor overload, E4 Condenser fan, E5 Evaporator fan, E6 Loss of charge, E7 Freeze protection, E8 Dirty filter, E9 Supply sensor, E10 Return sensor, E11 Ambient sensor, E12 Discharge sensor. Subcooling 10-14°F." },
-  { id:"frigidaire1", keywords: ["frigidaire","ffc","ffh","ffg","frc"], brand:"Frigidaire", name:"Frigidaire FFC/FFH Fault Codes", type:"Fault Code Library", content:"Frigidaire FFC/FFH series. Fault codes: E1 High pressure, E2 Low pressure, E3 Compressor overload, E4 Condenser fan, E5 Evaporator fan, E6 Loss of charge, E7 Freeze stat, E8 Dirty filter, E9 Supply sensor, E10 Return sensor, E11 Ambient sensor, E12 Discharge sensor." },
-  { id:"nordyne1", keywords: ["nordyne","intertherm","miller","kentwood","e3","e4"], brand:"Nordyne", name:"Nordyne E3/E4 Fault Codes", type:"Fault Code Library", content:"Nordyne E3/E4 series (Intertherm/Miller). Fault codes: 1=High pressure, 2=Low pressure, 3=Compressor overload, 4=Condenser fan, 5=Evaporator fan, 6=Loss of charge, 7=Freeze stat, 8=Dirty filter, 9=Supply sensor, 10=Return sensor, 11=Ambient sensor, 12=Discharge sensor. Subcooling 10-14°F." }
-];
-
-function DocumentLibraryScreen({ storage }) {
-  const [docs, setDocs] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [view, setView] = useState("library");
-  const [selectedDoc, setSelectedDoc] = useState(null);
-  const [question, setQuestion] = useState("");
-  const [answer, setAnswer] = useState("");
-  const [asking, setAsking] = useState(false);
-  const [search, setSearch] = useState("");
-  const [modelSerial, setModelSerial] = useState("");
-  const [lookupResult, setLookupResult] = useState(null);
-  const [filterType, setFilterType] = useState("");
-  const [filterBrand, setFilterBrand] = useState("");
-
-  useEffect(()=>{ load(); },[]);
-  async function load(){
-    try{ const r=await storage.get("doc_library"); const saved=r?.value?JSON.parse(r.value):[]; setDocs([...DOCUMENT_DB, ...saved]); }catch(e){ setDocs(DOCUMENT_DB); } setLoading(false);
-  }
-  function handleLookup() {
-    const input = modelSerial.toLowerCase();
-    const matched = DOCUMENT_DB.filter(doc => 
-      doc.keywords.some(kw => input.includes(kw)) || 
-      (doc.brand && input.includes(doc.brand.toLowerCase()))
-    );
-    if (matched.length > 0) setLookupResult(matched);
-    else setLookupResult(null);
-  }
-  async function askDoc(doc, q){ if(!q.trim()) return; setAsking(true); setAnswer(""); const sys="You are an HVAC technical documentation assistant. Answer from the document precisely."; const prompt=`Document: ${doc.name}\nContent: ${doc.content}\nQuestion: ${q}\nAnswer using the document.`; const r=await callAgent(sys,prompt); setAnswer(r); setAsking(false); }
-  const filtered = docs.filter(d=>{
-    const m=!search||[d.name,d.brand,d.type,...(d.keywords||[])].join(" ").toLowerCase().includes(search.toLowerCase());
-    const t=!filterType||d.type===filterType;
-    const b=!filterBrand||d.brand===filterBrand;
-    return m&&t&&b;
-  });
-  const typeColors={"Service Manual":JLL_RED,"Fault Code Library":"#E67E22","Commissioning":"#16A085","JLL SOP":"#2980B9","Wiring Reference":"#8E44AD","Refrigerant Specs":"#27AE60","Safety Data Sheet":"#F39C12","Other":"#555"};
-  
-  if(view==="read"&&selectedDoc){
-    return (
-      <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden" }}>
-        <div style={{ background:BLACK, borderBottom:`3px solid ${JLL_RED}`, padding:"10px 14px", display:"flex", alignItems:"center", gap:10, flexShrink:0 }}><button onClick={()=>{setView("library");setAnswer("");setQuestion("");}} style={{ background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:8, padding:"5px 10px", cursor:"pointer", color:"#fff", fontSize:15 }}>←</button><div style={{ flex:1, minWidth:0 }}><div style={{ fontSize:13, fontWeight:700, color:"#fff", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{selectedDoc.name}</div><div style={{ fontSize:10, color:JLL_RED, fontWeight:600 }}>{selectedDoc.brand} · {selectedDoc.type}</div></div></div>
-        <div style={{ flex:1, overflowY:"auto", padding:14 }}>
-          <div style={{ background:CARD, border:`1px solid ${BORDER}`, borderRadius:12, padding:14, marginBottom:14 }}><div style={{ fontSize:10, color:"rgba(255,255,255,0.3)", fontWeight:600, marginBottom:8 }}>DOCUMENT CONTENT</div><div style={{ fontSize:12, color:"rgba(255,255,255,0.7)", lineHeight:1.7, whiteSpace:"pre-wrap" }}>{selectedDoc.content}</div></div>
-          <div style={{ background:CARD, border:`1px solid rgba(227,6,19,0.3)`, borderRadius:12, padding:14 }}><div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12 }}><div style={{ width:32, height:32, background:JLL_RED, borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", fontSize:16 }}>🤖</div><div><div style={{ fontSize:13, fontWeight:700, color:"#fff" }}>Ask AI About This Document</div><div style={{ fontSize:10, color:"rgba(255,255,255,0.4)" }}>Ask any question — the AI answers from this document</div></div></div><div style={{ display:"flex", gap:8, marginBottom:12 }}><input value={question} onChange={e=>setQuestion(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();askDoc(selectedDoc,question);}}} placeholder="e.g. What are the fault codes?" style={{ flex:1, background:"#222", border:`1px solid ${BORDER}`, borderRadius:10, padding:"10px 12px", color:"#fff", fontSize:13, outline:"none" }}/><button onClick={()=>askDoc(selectedDoc,question)} disabled={!question.trim()||asking} style={{ background:JLL_RED, border:"none", borderRadius:10, padding:"10px 16px", cursor:"pointer", color:"#fff", fontWeight:700, fontSize:13, flexShrink:0, opacity:(!question.trim()||asking)?0.4:1 }}>{asking?"…":"Ask"}</button></div><div style={{ marginBottom:12 }}><div style={{ fontSize:10, color:"rgba(255,255,255,0.3)", marginBottom:6, fontWeight:600 }}>QUICK QUESTIONS</div><div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>{["What are the fault codes?","What is the subcooling target?","What are the electrical specs?","What PPE is required?"].map(q=>(<button key={q} onClick={()=>{setQuestion(q);askDoc(selectedDoc,q);}} style={{ background:"#222", border:`1px solid ${BORDER}`, borderRadius:20, padding:"5px 10px", cursor:"pointer", fontSize:10, color:"rgba(255,255,255,0.7)" }}>{q}</button>))}</div></div>{asking&&(<div style={{ display:"flex", gap:5, alignItems:"center", padding:"12px 0" }}>{[0,1,2].map(i=><div key={i} style={{ width:7, height:7, borderRadius:"50%", background:JLL_RED, animation:"bounce 1.2s ease-in-out infinite", animationDelay:`${i*.2}s` }}/>)}<span style={{ fontSize:11, color:"rgba(255,255,255,0.4)", marginLeft:6 }}>Reading document…</span></div>)}{answer&&(<div style={{ background:"rgba(227,6,19,0.06)", border:`1px solid rgba(227,6,19,0.2)`, borderRadius:10, padding:12, marginTop:8, fontSize:12, color:"#fff", lineHeight:1.7, whiteSpace:"pre-wrap" }}>{answer}</div>)}</div>
-        </div>
-      </div>
-    );
+// ----- AGENT 2: Escalation (full) -----
+function EscalationAgent() {
+  const [step, setStep] = useState(0);
+  const [equipType, setEquipType] = useState("");
+  const [brand, setBrand] = useState("");
+  const [faultCode, setFaultCode] = useState("");
+  const [situation, setSituation] = useState("");
+  const [alreadyTried, setAlreadyTried] = useState("");
+  const [techExp, setTechExp] = useState("");
+  const [urgency, setUrgency] = useState("");
+  const [result, setResult] = useState("");
+  const URGENCY = ["Critical — building uninhabitable","High — essential systems down","Medium — partial loss of service","Low — minor issue, building functional"];
+  const EXPERIENCE = ["Less than 2 years","2-5 years","5-10 years","10+ years"];
+  async function assess() {
+    setStep(1);
+    const prompt = `Escalation assessment:\nEquipment: ${equipType||"Not specified"} ${brand?`(${brand})`:""}\nFault Code: ${faultCode||"None"}\nSituation: ${situation}\nTried: ${alreadyTried||"Nothing"}\nTech Experience: ${techExp||"Unknown"}\nUrgency: ${urgency||"Unknown"}\n\nProvide: 1. Should escalate? (Yes/No/Conditional). 2. Reasoning. 3. Who to call. 4. Urgency. 5. What to do while waiting. 6. Info for specialist.`;
+    const sys = "You are an HVAC escalation agent for JLL MTS. Give clear decisive answers.";
+    const r = await callAgent(sys, prompt);
+    setResult(r); setStep(2);
   }
   return (
     <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden" }}>
-      <Header title="DOCUMENT LIBRARY" subtitle="MANUALS & DOCUMENTATION" />
+      <Header title="ESCALATION" subtitle="AI ESCALATION AGENT" />
       <div style={{ flex:1, overflowY:"auto", padding:14 }}>
-        {/* Model/Serial Lookup Panel */}
-        <div style={{ background:JLL_RED, borderRadius:12, padding:14, marginBottom:16, boxShadow:"0 4px 12px rgba(227,6,19,0.2)" }}>
-          <div style={{ fontSize:13, fontWeight:700, color:"#fff", marginBottom:6, display:"flex", alignItems:"center", gap:6 }}>🔍 Model / Serial Lookup</div>
-          <div style={{ fontSize:11, color:"rgba(255,255,255,0.7)", marginBottom:10 }}>Enter a model or serial number to find matching manuals, wiring diagrams, and fault code references.</div>
-          <div style={{ display:"flex", gap:8 }}>
-            <input value={modelSerial} onChange={e=>setModelSerial(e.target.value)} placeholder="e.g. 48XC024, Trane YCD, Daikin VRV" style={{ flex:1, background:"#fff", border:"none", borderRadius:10, padding:"10px 12px", color:"#000", fontSize:13, outline:"none" }} />
-            <button onClick={handleLookup} style={{ background:BLACK, border:"none", borderRadius:10, padding:"10px 16px", cursor:"pointer", color:"#fff", fontWeight:700, fontSize:13 }}>Search</button>
-          </div>
-          {lookupResult && (
-            <div style={{ marginTop:12, background:"rgba(0,0,0,0.2)", borderRadius:10, padding:10 }}>
-              <div style={{ fontSize:11, fontWeight:700, color:"#fff", marginBottom:6 }}>✅ Found {lookupResult.length} document(s):</div>
-              {lookupResult.map((doc,i)=>(
-                <button key={i} onClick={()=>{setSelectedDoc(doc);setView("read");setAnswer("");setQuestion("");}} style={{ display:"block", width:"100%", textAlign:"left", background:"rgba(255,255,255,0.1)", border:"none", borderRadius:8, padding:"8px 10px", marginBottom:6, cursor:"pointer", fontSize:12, color:"#fff" }}>{doc.name} ({doc.brand})</button>
-              ))}
-            </div>
-          )}
-          {modelSerial && !lookupResult && <div style={{ marginTop:10, fontSize:11, color:"rgba(255,255,255,0.6)" }}>No exact match found. Try a shorter or more specific model number.</div>}
-        </div>
-        {/* Search & filters */}
-        <div style={{ marginBottom:12 }}><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍  Search manuals, fault codes, SOPs…" style={{ width:"100%", background:CARD, border:`1px solid ${BORDER}`, borderRadius:10, padding:"10px 12px", color:"#fff", fontSize:13, outline:"none", marginBottom:8 }}/><div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}><select value={filterType} onChange={e=>setFilterType(e.target.value)} style={{ background:"#222", border:`1px solid ${BORDER}`, borderRadius:10, padding:"8px 10px", color:filterType?"#fff":"rgba(255,255,255,0.35)", fontSize:12, outline:"none" }}><option value="">All types</option>{[...new Set(docs.map(d=>d.type))].map(t=><option key={t}>{t}</option>)}</select><select value={filterBrand} onChange={e=>setFilterBrand(e.target.value)} style={{ background:"#222", border:`1px solid ${BORDER}`, borderRadius:10, padding:"8px 10px", color:filterBrand?"#fff":"rgba(255,255,255,0.35)", fontSize:12, outline:"none" }}><option value="">All brands</option>{[...new Set(docs.map(d=>d.brand))].map(b=><option key={b}>{b}</option>)}</select></div></div>
-        <div style={{ display:"flex", gap:8, marginBottom:14 }}>{[{label:`${filtered.length} Documents`,icon:"📚"},{label:`${[...new Set(docs.map(d=>d.brand))].length} Brands`,icon:"🏭"},{label:`${[...new Set(docs.map(d=>d.type))].length} Types`,icon:"📂"}].map(s=>(<div key={s.label} style={{ flex:1, background:CARD, border:`1px solid rgba(227,6,19,0.12)`, borderRadius:8, padding:"7px 8px", textAlign:"center" }}><div style={{ fontSize:16 }}>{s.icon}</div><div style={{ fontSize:9, color:"rgba(255,255,255,0.4)", fontWeight:600, marginTop:2 }}>{s.label}</div></div>))}</div>
-        <div style={{ display:"grid", gridTemplateColumns:"1fr", gap:10 }}>
-          {filtered.map(doc=>(<div key={doc.id} style={{ background:CARD, border:`1px solid rgba(227,6,19,0.12)`, borderRadius:12, padding:12 }}><div style={{ display:"flex", alignItems:"flex-start", gap:10 }}><div style={{ width:40, height:40, borderRadius:9, background:typeColors[doc.type]||"#555", display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>{{"Service Manual":"📖","Fault Code Library":"⚠️","Commissioning":"🚀","JLL SOP":"🏢","Wiring Reference":"⚡","Refrigerant Specs":"❄️","Safety Data Sheet":"🦺","Other":"📄"}[doc.type]||"📄"}</div><div style={{ flex:1, minWidth:0 }}><div style={{ fontSize:13, fontWeight:700, color:"#fff", marginBottom:3 }}>{doc.name}</div><div style={{ display:"flex", gap:6, alignItems:"center", flexWrap:"wrap", marginBottom:6 }}><span style={{ fontSize:10, background:`rgba(227,6,19,0.15)`, color:JLL_RED, borderRadius:5, padding:"2px 7px", fontWeight:700 }}>{doc.type}</span><span style={{ fontSize:10, color:"rgba(255,255,255,0.4)", fontWeight:600 }}>{doc.brand}</span></div><div style={{ display:"flex", gap:8 }}><button onClick={()=>{setSelectedDoc(doc);setView("read");setAnswer("");setQuestion("");}} style={{ flex:1, background:JLL_RED, border:"none", borderRadius:8, padding:"8px", cursor:"pointer", fontSize:11, fontWeight:700, color:"#fff" }}>📖 Open & Ask AI</button></div></div></div></div>))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ----- Onboarding, Dashboard, Chat, Tools, Agents Hub, etc. (same as previous working version) -----
-// For brevity, the final HTML includes all remaining components (fully functional).
-// The complete file is provided as the final answer.
-
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(React.createElement(MTSAssistant));
-</script>
-</body>
-</html>
+        {step===0 && (
+          <div>
+            <div style={{ background:"rgba(227,6,19,0.08)", border:`1px solid rgba(227,6,19,0.2)`, borderRadius:12, padding:12, marginBottom:16, fontSize:12, color:"rgba(255,255,255,0.6)" }}>⚠️ Get a clear decision: escalate or not, who to call, and what to do now.</div>
+            <div style={{ marginBottom:12 }}><div style={{ fontSize:11, color:"rgba(255,255,255,0.5)", marginBottom:4 }}>URGENCY *</div><select value={urgency} onChange={e=>setUrgency(e.target.value)} style={{ width:"100%", background:"#222", border:`1px solid ${BORDER}`, borderRadius:10, padding:"10px 12px", color:"#fff", fontSize:13 }}><option value="">Select urgency…</option>{URGENCY.map(u=><option key={u}>{u}</option>)}</select></div>
+            <d
