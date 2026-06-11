@@ -31,18 +31,6 @@
   </div>
   <div id="root"></div>
   <script>
-    window.ANTHROPIC_KEY = "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";
-    const _origFetch = window.fetch;
-    window.fetch = function(url, opts) {
-      if (url && url.includes && url.includes('anthropic.com')) {
-        opts = opts || {};
-        opts.headers = opts.headers || {};
-        opts.headers['x-api-key'] = window.ANTHROPIC_KEY;
-        opts.headers['anthropic-version'] = '2023-06-01';
-        opts.headers['anthropic-dangerous-direct-browser-access'] = 'true';
-      }
-      return _origFetch(url, opts);
-    };
     window.storage = {
       get: async (k) => { const v=localStorage.getItem('mts__'+k); if(v===null) throw new Error('Not found'); return {key:k,value:v}; },
       set: async (k,v) => { localStorage.setItem('mts__'+k,v); return {key:k,value:v}; },
@@ -544,20 +532,21 @@ function NotesScreen({ storage }) {
 }
 
 // ── AGENT HELPERS ─────────────────────────────────────────────────────────
+const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyA03el2fK6mtlxpdxfk_XaB91VqPPV6zS4";
+
 async function callAgent(systemPrompt, userPrompt, onChunk) {
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
+  const res = await fetch(GEMINI_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      max_tokens: 1000,
-      system: systemPrompt,
-      messages: [{ role: "user", content: userPrompt }],
+      systemInstruction: { parts: [{ text: systemPrompt }] },
+      contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+      generationConfig: { maxOutputTokens: 2000 },
     }),
   });
   const data = await res.json();
   if (data.error) return "⚠️ API Error: " + (data.error.message || JSON.stringify(data.error));
-  return data.content?.find(b => b.type === "text")?.text || "No response generated.";
+  return data.candidates?.[0]?.content?.parts?.map(p => p.text).join("") || "No response generated.";
 }
 
 function AgentCard({ icon, title, desc, color="#E30613", onClick }) {
@@ -1858,9 +1847,9 @@ function MTSAssistant() {
     await saveChat(updated);
     try{
       const sysWithProfile = SYSTEM_PROMPT + (profile?`\n\nTechnician: ${profile.name}${profile.techId?` (ID: ${profile.techId})`:""}${profile.region?`, Region: ${profile.region}`:""}${profile.specialty?.length?`, Specialties: ${profile.specialty.join(", ")}`:""}`:``);
-      const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,system:sysWithProfile,messages:msgs.map(m=>({role:m.role,content:m.content}))})});
+      const res=await fetch(GEMINI_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({systemInstruction:{parts:[{text:sysWithProfile}]},contents:msgs.map(m=>({role:m.role==="assistant"?"model":"user",parts:[{text:m.content}]})),generationConfig:{maxOutputTokens:2000}})});
       const data=await res.json();
-      const reply=data.error?("⚠️ API Error: "+(data.error.message||JSON.stringify(data.error))):(data.content?.find(b=>b.type==="text")?.text||"Sorry, couldn't generate a response.");
+      const reply=data.error?("⚠️ API Error: "+(data.error.message||JSON.stringify(data.error))):(data.candidates?.[0]?.content?.parts?.map(p=>p.text).join("")||"Sorry, couldn't generate a response.");
       const withReply={...updated,messages:[...msgs,{role:"assistant",content:reply}],updatedAt:Date.now()};
       setChats(prev=>prev.map(c=>c.id===activeChatId?withReply:c).sort((a,b)=>b.updatedAt-a.updatedAt));
       await saveChat(withReply);
