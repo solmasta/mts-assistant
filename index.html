@@ -1,40 +1,389 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#E30613">
-  <title>MTS Assistant – JLL Field AI</title>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body { background:#0a0a0a; font-family:'Barlow',sans-serif; }
-    @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Barlow+Condensed:wght@700;800&display=swap');
-    
-    .card-hover { transition: all 0.2s ease; cursor: pointer; }
-    .card-hover:hover { background: #3a3a3a !important; border-color: #E30613 !important; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
-    .red-btn { transition: all 0.2s ease; cursor: pointer; background: #E30613; border: none; border-radius: 14px; padding: 12px 20px; color: white; font-weight: 700; font-size: 14px; box-shadow: 0 4px 12px rgba(227,6,19,0.3); }
-    .red-btn:hover { background: #c00010; transform: translateY(-1px); box-shadow: 0 6px 16px rgba(227,6,19,0.4); }
-    .red-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-    
-    @keyframes fadeUp { from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:translateY(0); } }
-    @keyframes bounce { 0%,80%,100%{ transform:translateY(0); opacity:0.5; } 40%{ transform:translateY(-6px); opacity:1; } }
-    @keyframes pulse { 0%,100%{ opacity:0.6; } 50%{ opacity:1; } }
-    
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: #1a1a1a; }
-    ::-webkit-scrollbar-thumb { background: #E30613; border-radius: 4px; }
-    
-    body::before {
-      content: "";
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Cpath fill='%23E30613' fill-opacity='0.06' d='M30,40 L40,40 L40,50 L30,50 Z M70,70 L80,70 L80,80 L70,80 Z M50,20 L55,15 L60,20 L55,25 Z'/%3E%3Ccircle cx='90' cy='30' r='5' fill='%23E30613' fill-opacity='0.05'/%3E%3Cpath d='M20,90 L25,85 L30,90 L25,95 Z' fill='%23E30613' fill-opacity='0.05'/%3E%3C/svg%3E");
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#E30613">
+    <title>MTS Assistant – JLL Field AI</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js">
+    </script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js">
+    </script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js">
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #08080c;
+            font-family: 'Barlow', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800;900&family=Barlow+Condensed:wght@600;700;800&display=swap');
+
+        .card {
+            background: rgba(28, 28, 35, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(227, 6, 19, 0.2);
+            border-radius: 18px;
+            padding: 14px;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+        .card:hover {
+            background: rgba(40, 40, 50, 0.85);
+            border-color: rgba(227, 6, 19, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+        .red-btn {
+            background: linear-gradient(135deg, #E30613 0%, #b8000f 100%);
+            border: none;
+            border-radius: 14px;
+            padding: 13px 22px;
+            color: white;
+            font-weight: 700;
+            font-size: 15px;
+            letter-spacing: 0.3px;
+            box-shadow: 0 8px 18px rgba(227, 6, 19, 0.3);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .red-btn:hover {
+            background: linear-gradient(135deg, #c00010 0%, #9e000c 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 12px 24px rgba(227, 6, 19, 0.45);
+        }
+        .red-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: 0 4px 10px rgba(227, 6, 19, 0.2);
+        }
+        .glass-input {
+            background: rgba(20, 20, 28, 0.7);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            padding: 12px 16px;
+            color: #fff;
+            font-size: 15px;
+            outline: none;
+            width: 100%;
+            transition: border 0.2s;
+        }
+        .glass-input:focus {
+            border-color: #E30613;
+        }
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes pulse {
+            0%,
+            100% {
+                opacity: 0.7;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+        @keyframes dotBounce {
+            0%,
+            80%,
+            100% {
+                transform: translateY(0);
+                opacity: 0.4;
+            }
+            40% {
+                transform: translateY(-7px);
+                opacity: 1;
+            }
+        }
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #111;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #E30613;
+            border-radius: 10px;
+        }
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 15 L35 20 L30 25 L25 20 Z' fill='%23E30613' fill-opacity='0.04'/%3E%3Ccircle cx='45' cy='10' r='3' fill='%23E30613' fill-opacity='0.04'/%3E%3C/svg%3E");
+            background-repeat: repeat;
+            pointer-events: none;
+            z-index: 0;
+        }
+        #root {
+            position: relative;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useRef, useEffect } = React;
+        const JLL_RED = "#E30613";
+        const BLACK = "#08080c";
+        const CARD_BG = "rgba(28,28,35,0.8)";
+        const BORDER_COLOR = "rgba(227,6,19,0.25)";
+
+        // ----- SYSTEM PROMPT -----
+        const SYSTEM_PROMPT = `You are MTS Assistant – Field Assistant, an expert AI tool for JLL MTS mobile HVAC engineers. Help diagnose faults, install parts, provide safety guidance, and find OEM documentation. Be concise, use numbered steps, and flag safety items with ⚠️.`;
+
+        // ----- QUICK PROMPTS -----
+        const QUICK_PROMPTS = [
+            { icon: "🔧", label: "Diagnose a fault", text: "I have an HVAC unit with a fault. Help me diagnose it step by step." },
+            { icon: "🔩", label: "Install a part", text: "I need step-by-step instructions to install a replacement part. Guide me." },
+            { icon: "🛡️", label: "PPE requirements", text: "What PPE do I need for this task?" },
+            { icon: "📖", label: "Error code lookup", text: "Help me decode an error/fault code." }
+        ];
+
+        // ----- PT DATA -----
+        const PT_DATA = {
+            "R-410A": [
+                [-60, -43],
+                [-40, -29],
+                [-20, -12],
+                [0, 8],
+                [20, 28],
+                [40, 50],
+                [60, 76],
+                [80, 104],
+                [100, 136],
+                [120, 172],
+                [150, 228],
+                [200, 314],
+                [250, 416]
+            ],
+            "R-22": [
+                [-60, -56],
+                [-40, -38],
+                [-20, -16],
+                [0, 5],
+                [20, 28],
+                [40, 51],
+                [60, 78],
+                [80, 107],
+                [100, 140],
+                [120, 175],
+                [150, 226],
+                [200, 302],
+                [250, 388]
+            ],
+            "R-32": [
+                [-60, -47],
+                [-40, -31],
+                [-20, -13],
+                [0, 7],
+                [20, 29],
+                [40, 53],
+                [60, 81],
+                [80, 113],
+                [100, 148],
+                [120, 188],
+                [150, 247],
+                [200, 338]
+            ],
+            "R-454B": [
+                [-60, -44],
+                [-40, -29],
+                [-20, -11],
+                [0, 9],
+                [20, 30],
+                [40, 53],
+                [60, 80],
+                [80, 110],
+                [100, 144],
+                [120, 182],
+                [150, 238],
+                [200, 325]
+            ],
+            "R-407C": [
+                [-60, -52],
+                [-40, -35],
+                [-20, -15],
+                [0, 6],
+                [20, 28],
+                [40, 52],
+                [60, 79],
+                [80, 109],
+                [100, 143],
+                [120, 180],
+                [150, 233],
+                [200, 312]
+            ],
+            "R-134a": [
+                [-60, -50],
+                [-40, -31],
+                [-20, -9],
+                [0, 14],
+                [20, 38],
+                [40, 64],
+                [60, 93],
+                [80, 126],
+                [100, 163],
+                [120, 203],
+                [150, 259],
+                [200, 340]
+            ]
+        };
+        const REFRIGERANTS = Object.keys(PT_DATA);
+        const BRANDS = ["Carrier", "Trane", "York", "Lennox", "Daikin", "Mitsubishi", "LG", "Bosch", "Goodman", "Rheem", "Ruud", "American Standard", "Bryant", "Payne", "Coleman", "Heil", "Armstrong", "Amana", "Frigidaire", "Nordyne"];
+
+        // ----- EXPANDED DOCUMENT DATABASE -----
+        const DOC_DB = [
+            { id: "carrier1", keywords: ["carrier", "48xc", "50xc", "38", "25vna"], brand: "Carrier", name: "Carrier 48/50XC Service Manual", type: "Service Manual", content: "Carrier 48/50XC Commercial Packaged Units. R-410A. Fault codes: E79 high pressure, E31 low pressure. Subcooling 10-15°F." },
+            { id: "carrier2", keywords: ["carrier", "38marb", "25vna8", "wiring"], brand: "Carrier", name: "Carrier 38MARB Wiring Diagram", type: "Wiring Diagram", content: "38MARB Outdoor Unit Wiring: L1-L2 to contactor, compressor common to C, run cap 45/5 µF. Control board CN-GREEN to indoor." },
+            { id: "carrier3", keywords: ["carrier", "58mvc", "furnace", "schematic"], brand: "Carrier", name: "Carrier 58MVC Schematic", type: "Schematic", content: "58MVC Gas Furnace: Inducer motor 120V, pressure switch 0.30\" WC. Control board LED flash codes: 1 short = normal, 2 short = pressure switch fail." },
+            { id: "trane1", keywords: ["trane", "ycd", "ych", "xv18"], brand: "Trane", name: "Trane YCD/YCH Fault Codes", type: "Fault Code Library", content: "Trane YCD/YCH Codes: 1=High pressure, 2=Low pressure, 3=Compressor over-temp." },
+            { id: "trane2", keywords: ["trane", "xl19i", "parts", "catalog"], brand: "Trane", name: "Trane XL19i Parts Catalog", type: "Parts Catalog", content: "XL19i Heat Pump: Outdoor coil #TRN5432, compressor #COM7788, reversing valve #RV3344. Indoor air handler #TWE037." },
+            { id: "york1", keywords: ["york", "ykep", "yhap"], brand: "York", name: "York Sunline Fault Codes", type: "Fault Code Library", content: "York Sunline: 1=High pressure, 2=Low pressure, 3=Compressor overload." },
+            { id: "york2", keywords: ["york", "zp", "affinity", "wiring"], brand: "York", name: "York ZP Series Wiring Guide", type: "Wiring Diagram", content: "ZP 024-060: 208/230V-1ph. Compressor terminals: S-R-C. Capacitor 35/5 µF. Defrost board connections: T1-T2." },
+            { id: "lennox1", keywords: ["lennox", "xg", "xpg"], brand: "Lennox", name: "Lennox XG/XPG Fault Codes", type: "Fault Code Library", content: "Lennox E1=High pressure lockout, E2=Low pressure lockout." },
+            { id: "lennox2", keywords: ["lennox", "s30", "smart hub", "manual"], brand: "Lennox", name: "Lennox S30 Smart Hub Manual", type: "Installation Guide", content: "S30 thermostat: R, C, G, Y1, Y2, W1, W2, O/B terminals. Wi-Fi setup via Lennox App. Firmware update v2.4 required." },
+            { id: "daikin1", keywords: ["daikin", "vrv", "vrv iv"], brand: "Daikin", name: "Daikin VRV IV Commissioning", type: "Commissioning", content: "Daikin VRV IV: pre-startup checks, test run via BRC1H52, pressures 100-180 suction, 350-450 discharge." },
+            { id: "daikin2", keywords: ["daikin", "atmosphera", "r32", "charging"], brand: "Daikin", name: "Daikin Atmosphera R32 Charge Guide", type: "Service Bulletin", content: "Atmosphera R32: subcooling 8-10K. Charge adjustment: add 20g/m of liquid line over 7.5m. Superheat 5-7K at service valve." },
+            { id: "mitsubishi1", keywords: ["mitsubishi", "city multi", "pumy", "error codes"], brand: "Mitsubishi", name: "Mitsubishi City Multi Error Codes", type: "Fault Code Library", content: "PUHY/PUMY: 1102=Discharge temp high, 1302=High pressure sensor fault, 1500=Refrigerant overcharge." },
+            { id: "lg1", keywords: ["lg", "multi v", "error"], brand: "LG", name: "LG Multi V 5 Error Code List", type: "Fault Code Library", content: "LG CH05: Error 21 = DC peak, 22 = CT sensor, 41 = D-Pipe high temp, 45 = Pressure sensor error." },
+            { id: "bosch1", keywords: ["bosch", "bova", "ids", "schematic"], brand: "Bosch", name: "Bosch BOVA IDS Schematic", type: "Schematic", content: "BOVA 2.0: Inverter board CN800 to compressor. Outdoor fan PWM signal 0-10V. Communication 2-wire to indoor." },
+            { id: "goodman1", keywords: ["goodman", "gpg", "manual"], brand: "Goodman", name: "Goodman GPG Package Unit Manual", type: "Service Manual", content: "GPG14M: pressures typical 65-75 suction, 225-275 discharge. Fault recall via LED flash on control board." },
+            { id: "rheem1", keywords: ["rheem", "r95t", "furnace"], brand: "Rheem", name: "Rheem R95T Furnace Wiring", type: "Wiring Diagram", content: "R95T: thermostat R-C-W-G-Y. Limit switch in series. Ignitor 120VAC. Error codes: 1=lockout, 2=pressure switch." },
+            { id: "fujitsu1", keywords: ["fujitsu", "halcyon", "aou", "error"], brand: "Fujitsu", name: "Fujitsu Halcyon AOU Error Codes", type: "Fault Code Library", content: "AOU24RL: E:EE = EEPROM error, E:01 = communication, E:06 = compressor startup fault." },
+            { id: "hitachi1", keywords: ["hitachi", "utopia", "ras", "service"], brand: "Hitachi", name: "Hitachi Utopia RAS Service Manual", type: "Service Manual", content: "Utopia RAS-4FS: compressor DC inverter, check resistance U-V 0.8-1.2 ohm. Alarm codes: 01,02,03." },
+            { id: "panasonic1", keywords: ["panasonic", "exterios", "wiring"], brand: "Panasonic", name: "Panasonic Exterios XE Wiring", type: "Wiring Diagram", content: "Exterios XE9: terminal block 1-2-3, communication polarity sensitive. Connect to indoor unit terminal 1-2-3." },
+            { id: "amstan1", keywords: ["american standard", "silver", "fault"], brand: "American Standard", name: "American Standard Silver 16 Faults", type: "Fault Code Library", content: "Silver 16: 1 flash=low pressure, 2 flash=high pressure, 3 flash=compressor overload." },
+        ];
+
+        function genId() { return "id_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6); }
+
+        function timeAgo(ts) {
+            const d = Date.now() - ts,
+                m = Math.floor(d / 60000),
+                h = Math.floor(d / 3600000),
+                days = Math.floor(d / 86400000);
+            if (m < 1) return "Just now";
+            if (m < 60) return `${m}m ago`;
+            if (h < 24) return `${h}h ago`;
+            return `${days}d ago`;
+        }
+
+        // ----- LOGO -----
+        const Logo = ({ size = "default", variant = "full" }) => {
+            const isLarge = size === "large";
+            const mainSize = isLarge ? 52 : 32;
+            if (variant === "icon") {
+                return (
+                    <div style={{ width: isLarge ? 72 : 52, height: isLarge ? 72 : 52, background: `linear-gradient(135deg, #E30613, #a00010)`, borderRadius: isLarge ? 20 : 16, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 0 0 4px rgba(227,6,19,0.25)` }}>
+                        <span style={{ fontSize: isLarge ? 36 : 26, fontWeight: 800, color: "#fff", fontFamily: "'Barlow Condensed',sans-serif", textShadow: "0 2px 6px rgba(0,0,0,0.4)" }}>MTS</span>
+                    </div>
+                );
+            }
+            return (
+                <div style={{ textAlign: "center" }}>
+                    <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: mainSize, color: "#fff", letterSpacing: "-1.5px", lineHeight: 1.1, textShadow: "0 2px 15px rgba(227,6,19,0.4)" }}>MTS</div>
+                </div>
+            );
+        };
+
+        // ----- Shared UI -----
+        function Header({ title, subtitle, onBack, right }) {
+            return (
+                <div style={{ background: "linear-gradient(135deg, #0c0c14 0%, #1a0a0a 100%)", borderBottom: `3px solid ${JLL_RED}`, padding: "16px 18px", display: "flex", alignItems: "center", gap: 14, flexShrink: 0 }}>
+                    {onBack && <button onClick={onBack} style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 12, padding: "8px 14px", cursor: "pointer", color: "#fff", fontSize: 18 }}>←</button>}
+                    <Logo size="small" variant="icon" />
+                    <div style={{ flex: 1 }}>
+                        <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: 20, color: "#fff" }}>{title}</div>
+                        <div style={{ fontSize: 12, color: JLL_RED, fontWeight: 600, textTransform: "uppercase", marginTop: 4 }}>{subtitle}</div>
+                    </div>
+                    {right}
+                </div>
+            );
+        }
+
+        function SectionTitle({ children }) {
+            return <div style={{ fontSize: 13, color: "#aaa", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }}><span style={{ width: 4, height: 16, background: JLL_RED, borderRadius: 2 }}></span>{children}</div>;
+        }
+
+        function Input({ label, value, onChange, placeholder, type = "text" }) {
+            return (
+                <div style={{ marginBottom: 16 }}>
+                    {label && <div style={{ fontSize: 12, color: "#ccc", fontWeight: 600, marginBottom: 6 }}>{label}</div>}
+                    <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className="glass-input" />
+                </div>
+            );
+        }
+
+        function Textarea({ label, value, onChange, placeholder, rows = 3 }) {
+            return (
+                <div style={{ marginBottom: 16 }}>
+                    {label && <div style={{ fontSize: 12, color: "#ccc", fontWeight: 600, marginBottom: 6 }}>{label}</div>}
+                    <textarea value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} rows={rows} className="glass-input" style={{ resize: "vertical" }} />
+                </div>
+            );
+        }
+
+        function RedBtn({ children, onClick, disabled, style }) {
+            return (
+                <button className="red-btn" onClick={onClick} disabled={disabled} style={style}>
+                    {children}
+                </button>
+            );
+        }
+
+        function OnlineBadge() {
+            return (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(39,174,96,0.2)", border: "1px solid rgba(39,174,96,0.5)", borderRadius: 30, padding: "5px 14px" }}>
+                    <div style={{ width: 9, height: 9, borderRadius: "50%", background: "#27AE60", animation: "pulse 1.5s infinite" }} />
+                    <span style={{ fontSize: 12, color: "#27AE60", fontWeight: 600 }}>ONLINE</span>
+                </div>
+            );
+        }
+
+        async function callAgent(systemPrompt, userPrompt, apiKey) {
+            if (!apiKey) return "🔑 No API key set. Please go to Settings and enter your Gemini API key.";
+            try {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        systemInstruction: { parts: [{ text: systemPrompt }] },
+                        contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+                        generationConfig: { maxOutputTokens: 2000 }
+                    })
+                });
+                const data = await res.json();
+                if (data.error) return `⚠️ API Error: ${data.error.message || JSON.stringify(data.error)}`;
+                return data.candidates?.[0]?.content?.parts?.map(p => p.text).join("") || "No response.";
+            } catch { return "⚠️ Connection error."; }
+        }
+
+        // ----- AGENT LOADING / RESULT COMPONENTS -----
+        function AgentLoading      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Cpath fill='%23E30613' fill-opacity='0.06' d='M30,40 L40,40 L40,50 L30,50 Z M70,70 L80,70 L80,80 L70,80 Z M50,20 L55,15 L60,20 L55,25 Z'/%3E%3Ccircle cx='90' cy='30' r='5' fill='%23E30613' fill-opacity='0.05'/%3E%3Cpath d='M20,90 L25,85 L30,90 L25,95 Z' fill='%23E30613' fill-opacity='0.05'/%3E%3C/svg%3E");
       background-repeat: repeat;
       background-size: 80px;
       pointer-events: none;
