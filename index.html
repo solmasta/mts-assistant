@@ -12,15 +12,23 @@
     * { margin:0; padding:0; box-sizing:border-box; }
     body { background:#0a0a0a; font-family:'Barlow',sans-serif; }
     @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Barlow+Condensed:wght@700;800&display=swap');
+    
+    /* Card & button styles */
     .card-hover { transition: all 0.2s ease; cursor: pointer; }
-    .card-hover:hover { background: rgba(227,6,19,0.08) !important; border-color: rgba(227,6,19,0.35) !important; transform: translateY(-1px); }
-    .red-btn { transition: all 0.2s ease; cursor: pointer; }
-    .red-btn:hover { background: #c00010 !important; transform: translateY(-1px); }
-    .red-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .card-hover:hover { background: #3a3a3a !important; border-color: #E30613 !important; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+    .red-btn { transition: all 0.2s ease; cursor: pointer; background: #E30613; border: none; border-radius: 14px; padding: 12px 20px; color: white; font-weight: 700; font-size: 14px; box-shadow: 0 4px 12px rgba(227,6,19,0.3); }
+    .red-btn:hover { background: #c00010; transform: translateY(-1px); box-shadow: 0 6px 16px rgba(227,6,19,0.4); }
+    .red-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    
     @keyframes fadeUp { from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:translateY(0); } }
     @keyframes bounce { 0%,80%,100%{ transform:translateY(0); opacity:0.5; } 40%{ transform:translateY(-6px); opacity:1; } }
-    ::-webkit-scrollbar { width: 3px; }
-    ::-webkit-scrollbar-thumb { background: #E30613; border-radius: 2px; }
+    @keyframes pulse { 0%,100%{ opacity:0.6; } 50%{ opacity:1; } }
+    
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: #1a1a1a; }
+    ::-webkit-scrollbar-thumb { background: #E30613; border-radius: 4px; }
+    
+    /* HVAC-themed background pattern (wrenches, gears, thermometers) */
     body::before {
       content: "";
       position: fixed;
@@ -28,7 +36,9 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background-image: repeating-linear-gradient(45deg, rgba(227,6,19,0.03) 0px, rgba(227,6,19,0.03) 2px, transparent 2px, transparent 8px);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Cpath fill='%23E30613' fill-opacity='0.06' d='M30,40 L40,40 L40,50 L30,50 Z M70,70 L80,70 L80,80 L70,80 Z M50,20 L55,15 L60,20 L55,25 Z'/%3E%3Ccircle cx='90' cy='30' r='5' fill='%23E30613' fill-opacity='0.05'/%3E%3Cpath d='M20,90 L25,85 L30,90 L25,95 Z' fill='%23E30613' fill-opacity='0.05'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-size: 80px;
       pointer-events: none;
       z-index: 0;
     }
@@ -44,16 +54,16 @@ const { useState, useRef, useEffect } = React;
 const JLL_RED = "#E30613";
 const BLACK = "#000000";
 const BG = "#0a0a0a";
-const CARD = "#1a1a1a";
-const BORDER = "rgba(227,6,19,0.2)";
-const GEMINI_API_KEY = "AIzaSyA03el2fK6mtlxpdxfk_XaB91VqPPV6zS4"; // From your README
+const CARD = "#222222";
+const BORDER = "rgba(227,6,19,0.35)";
+const GEMINI_API_KEY = "AIzaSyA03el2fK6mtlxpdxfk_XaB91VqPPV6zS4";
 
 const SYSTEM_PROMPT = `You are MTS Assistant – Field Assistant, an expert AI tool for JLL MTS mobile HVAC engineers. Help diagnose faults, install parts, provide safety guidance, and find OEM documentation. Be concise, use numbered steps, and flag safety items with ⚠️.`;
 
 const QUICK_PROMPTS = [
   { icon:"🔧", label:"Diagnose a fault", text:"I have an HVAC unit with a fault. Help me diagnose it step by step." },
   { icon:"🔩", label:"Install a part", text:"I need step-by-step instructions to install a replacement part. Guide me." },
-  { icon:"📋", label:"PPE requirements", text:"What PPE do I need for this task?" },
+  { icon:"🛡️", label:"PPE requirements", text:"What PPE do I need for this task?" },
   { icon:"📖", label:"Error code lookup", text:"Help me decode an error/fault code." }
 ];
 
@@ -77,76 +87,77 @@ function timeAgo(ts) {
   return `${days}d ago`;
 }
 
-// ----- Logo -----
+// ----- Logo (stacked text, matching your image) -----
 const Logo = ({ size = "default", variant = "full" }) => {
   const isLarge = size === "large";
-  const mainFontSize = isLarge ? 42 : 28;
-  const subFontSize = isLarge ? 12 : 9;
-  const assistantFontSize = isLarge ? 16 : 11;
+  const mainSize = isLarge ? 48 : 30;
+  const subSize = isLarge ? 14 : 10;
+  const assistSize = isLarge ? 20 : 13;
   if (variant === "icon") {
     return (
-      <div style={{ width: isLarge ? 56 : 40, height: isLarge ? 56 : 40, background: JLL_RED, borderRadius: isLarge ? 14 : 10, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 0 0 2px ${JLL_RED}20` }}>
-        <span style={{ fontSize: isLarge ? 26 : 18, fontWeight: 800, color: "#fff", fontFamily: "'Barlow Condensed',sans-serif", lineHeight: 1 }}>MTS</span>
+      <div style={{ width: isLarge ? 64 : 48, height: isLarge ? 64 : 48, background: JLL_RED, borderRadius: isLarge ? 18 : 14, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 0 0 3px rgba(227,6,19,0.2)` }}>
+        <span style={{ fontSize: isLarge ? 32 : 24, fontWeight: 800, color: "#fff", fontFamily: "'Barlow Condensed',sans-serif" }}>MTS</span>
       </div>
     );
   }
   return (
     <div style={{ textAlign: "center" }}>
-      <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: mainFontSize, color: "#fff", letterSpacing: "-0.5px", lineHeight: 1.1 }}>MTS</div>
-      <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: assistantFontSize, color: JLL_RED, letterSpacing: "0.08em", marginTop: 4 }}>MTS ASSISTANT</div>
-      <div style={{ fontFamily: "'Barlow',sans-serif", fontWeight: 500, fontSize: subFontSize, color: "rgba(255,255,255,0.5)", letterSpacing: "0.12em", marginTop: 2 }}>FIELD ASSISTANT</div>
+      <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: mainSize, color: "#fff", letterSpacing: "-1px", lineHeight: 1.1, textShadow: "0 2px 10px rgba(227,6,19,0.3)" }}>MTS</div>
+      <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: assistSize, color: JLL_RED, letterSpacing: "0.12em", marginTop: 4 }}>MTS ASSISTANT</div>
+      <div style={{ fontFamily: "'Barlow',sans-serif", fontWeight: 500, fontSize: subSize, color: "#aaa", letterSpacing: "0.15em", marginTop: 2 }}>FIELD ASSISTANT</div>
     </div>
   );
 };
 
-// ----- Shared UI Components -----
+// ----- Shared UI Components (high contrast) -----
 function Header({ title, subtitle, onBack, right }) {
   return (
-    <div style={{ background:BLACK, borderBottom:`3px solid ${JLL_RED}`, padding:"11px 14px", display:"flex", alignItems:"center", gap:10, flexShrink:0 }}>
-      {onBack && <button onClick={onBack} style={{ background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:8, padding:"5px 10px", cursor:"pointer", color:"#fff", fontSize:15 }}>←</button>}
+    <div style={{ background: "linear-gradient(135deg, #000000 0%, #1a0000 100%)", borderBottom: `3px solid ${JLL_RED}`, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+      {onBack && <button onClick={onBack} style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 10, padding: "6px 12px", cursor: "pointer", color: "#fff", fontSize: 16 }}>←</button>}
       <Logo size="small" variant="icon" />
-      <div style={{ flex:1, minWidth:0 }}>
-        <div style={{ fontFamily:"'Barlow Condensed',sans-serif", fontWeight:800, fontSize:17, color:"#fff" }}>{title}</div>
-        <div style={{ fontSize:10, color:JLL_RED, fontWeight:600, textTransform:"uppercase", marginTop:2 }}>{subtitle}</div>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: 18, color: "#fff" }}>{title}</div>
+        <div style={{ fontSize: 11, color: JLL_RED, fontWeight: 600, textTransform: "uppercase", marginTop: 2 }}>{subtitle}</div>
       </div>
       {right}
     </div>
   );
 }
 function SectionTitle({ children }) {
-  return <div style={{ fontSize:10, color:"rgba(255,255,255,0.3)", fontWeight:700, textTransform:"uppercase", marginBottom:10 }}>{children}</div>;
+  return <div style={{ fontSize: 12, color: "#aaa", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 12 }}>{children}</div>;
 }
 function Input({ label, value, onChange, placeholder, type="text" }) {
   return (
-    <div style={{ marginBottom:12 }}>
-      {label && <div style={{ fontSize:11, color:"rgba(255,255,255,0.5)", fontWeight:600, marginBottom:4 }}>{label}</div>}
+    <div style={{ marginBottom: 14 }}>
+      {label && <div style={{ fontSize: 12, color: "#ccc", fontWeight: 600, marginBottom: 5 }}>{label}</div>}
       <input type={type} value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder}
-        style={{ width:"100%", background:CARD, border:`1px solid ${BORDER}`, borderRadius:10, padding:"10px 12px", color:"#fff", fontSize:13, outline:"none" }} />
+        style={{ width: "100%", background: "#2a2a2a", border: `1px solid ${BORDER}`, borderRadius: 12, padding: "12px 14px", color: "#fff", fontSize: 14, outline: "none", transition: "border 0.2s" }}
+        onFocus={e=>e.target.style.borderColor=JLL_RED} onBlur={e=>e.target.style.borderColor=BORDER} />
     </div>
   );
 }
 function Textarea({ label, value, onChange, placeholder, rows=3 }) {
   return (
-    <div style={{ marginBottom:12 }}>
-      {label && <div style={{ fontSize:11, color:"rgba(255,255,255,0.5)", fontWeight:600, marginBottom:4 }}>{label}</div>}
+    <div style={{ marginBottom: 14 }}>
+      {label && <div style={{ fontSize: 12, color: "#ccc", fontWeight: 600, marginBottom: 5 }}>{label}</div>}
       <textarea value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} rows={rows}
-        style={{ width:"100%", background:CARD, border:`1px solid ${BORDER}`, borderRadius:10, padding:"10px 12px", color:"#fff", fontSize:13, outline:"none", resize:"vertical" }} />
+        style={{ width: "100%", background: "#2a2a2a", border: `1px solid ${BORDER}`, borderRadius: 12, padding: "12px 14px", color: "#fff", fontSize: 14, outline: "none", resize: "vertical" }} />
     </div>
   );
 }
 function RedBtn({ children, onClick, disabled, style }) {
   return (
     <button className="red-btn" onClick={onClick} disabled={disabled}
-      style={{ background:JLL_RED, border:"none", borderRadius:12, padding:"11px 18px", cursor:"pointer", color:"#fff", fontWeight:700, fontSize:13, transition:"all .2s", boxShadow:"0 4px 12px rgba(227,6,19,0.35)", ...style }}>
+      style={{ width: "100%", background: JLL_RED, border: "none", borderRadius: 14, padding: "13px 20px", cursor: "pointer", color: "#fff", fontWeight: 700, fontSize: 14, transition: "all 0.2s", ...style }}>
       {children}
     </button>
   );
 }
 function OnlineBadge() {
   return (
-    <div style={{ display:"flex", alignItems:"center", gap:5, background:"rgba(39,174,96,0.1)", border:"1px solid rgba(39,174,96,0.4)", borderRadius:20, padding:"3px 9px" }}>
-      <div style={{ width:6, height:6, borderRadius:"50%", background:"#27AE60", animation:"pulse 2s infinite" }} />
-      <span style={{ fontSize:10, color:"#27AE60", fontWeight:600 }}>ONLINE</span>
+    <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(39,174,96,0.15)", border: "1px solid rgba(39,174,96,0.5)", borderRadius: 30, padding: "4px 12px" }}>
+      <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#27AE60", animation: "pulse 1.5s infinite" }} />
+      <span style={{ fontSize: 11, color: "#27AE60", fontWeight: 600 }}>ONLINE</span>
     </div>
   );
 }
@@ -166,10 +177,10 @@ async function callAgent(systemPrompt, userPrompt) {
     const data = await res.json();
     if (data.error) return "⚠️ API Error: " + (data.error.message || JSON.stringify(data.error));
     return data.candidates?.[0]?.content?.parts?.map(p => p.text).join("") || "No response.";
-  } catch (err) { return "⚠️ Connection error. Check network."; }
+  } catch { return "⚠️ Connection error."; }
 }
 
-// ----- Document Library with Model/Serial Lookup -----
+// ----- Document Library with Model Lookup (enhanced graphics) -----
 const DOC_DB = [
   { id:"carrier1", keywords: ["carrier","48xc","50xc","38","25vna"], brand:"Carrier", name:"Carrier 48/50XC Service Manual", type:"Service Manual", content:"Carrier 48/50XC Commercial Packaged Units. R-410A. Fault codes: E79 high pressure, E31 low pressure. Subcooling 10-15°F." },
   { id:"trane1", keywords: ["trane","ycd","ych","xv18"], brand:"Trane", name:"Trane YCD/YCH Fault Codes", type:"Fault Code Library", content:"Trane YCD/YCH Codes: 1=High pressure, 2=Low pressure, 3=Compressor over-temp." },
@@ -205,15 +216,15 @@ function DocumentLibraryScreen({ storage }) {
     return (
       <div style={{ flex:1, display:"flex", flexDirection:"column" }}>
         <Header title="DOCUMENT" subtitle={selectedDoc.brand} onBack={()=>{setView("library");setAnswer("");}} />
-        <div style={{ flex:1, overflowY:"auto", padding:14 }}>
-          <div style={{ background:CARD, borderRadius:12, padding:14, marginBottom:14, whiteSpace:"pre-wrap", fontSize:12, color:"#ddd" }}>{selectedDoc.content}</div>
-          <div style={{ background:CARD, borderRadius:12, padding:14 }}>
-            <div style={{ marginBottom:10, fontWeight:700 }}>Ask AI about this document</div>
-            <div style={{ display:"flex", gap:8 }}>
-              <input value={question} onChange={e=>setQuestion(e.target.value)} placeholder="e.g. What are the fault codes?" style={{ flex:1, background:"#222", border:`1px solid ${BORDER}`, borderRadius:10, padding:"10px", color:"#fff" }} />
-              <button onClick={()=>askDoc(selectedDoc,question)} disabled={asking} style={{ background:JLL_RED, border:"none", borderRadius:10, padding:"10px 16px", color:"#fff" }}>{asking?"…":"Ask"}</button>
+        <div style={{ flex:1, overflowY:"auto", padding:16 }}>
+          <div style={{ background: CARD, borderRadius: 16, padding: 16, marginBottom: 16, border: `1px solid ${BORDER}`, whiteSpace: "pre-wrap", fontSize: 13, color: "#ddd", lineHeight: 1.6 }}>{selectedDoc.content}</div>
+          <div style={{ background: CARD, borderRadius: 16, padding: 16, border: `1px solid ${BORDER}` }}>
+            <div style={{ marginBottom: 12, fontWeight: 700, color: "#fff", fontSize: 14 }}>🤖 Ask AI about this document</div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <input value={question} onChange={e=>setQuestion(e.target.value)} placeholder="e.g. What are the fault codes?" style={{ flex: 1, background: "#2a2a2a", border: `1px solid ${BORDER}`, borderRadius: 12, padding: "12px", color: "#fff", fontSize: 13 }} />
+              <button onClick={()=>askDoc(selectedDoc,question)} disabled={asking} style={{ background: JLL_RED, border: "none", borderRadius: 12, padding: "0 18px", color: "#fff", fontWeight: 700, cursor: "pointer" }}>{asking?"…":"Ask"}</button>
             </div>
-            {answer && <div style={{ marginTop:12, background:"rgba(0,0,0,0.3)", borderRadius:8, padding:12 }}>{answer}</div>}
+            {answer && <div style={{ marginTop: 14, background: "#2a2a2a", borderRadius: 12, padding: 12, fontSize: 13, color: "#eee" }}>{answer}</div>}
           </div>
         </div>
       </div>
@@ -222,20 +233,21 @@ function DocumentLibraryScreen({ storage }) {
   return (
     <div style={{ flex:1, display:"flex", flexDirection:"column" }}>
       <Header title="DOCUMENT LIBRARY" subtitle="MANUALS & CODES" />
-      <div style={{ flex:1, overflowY:"auto", padding:14 }}>
-        <div style={{ background:JLL_RED, borderRadius:12, padding:14, marginBottom:16 }}>
-          <div style={{ fontWeight:700, marginBottom:6 }}>🔍 Model / Serial Lookup</div>
-          <div style={{ display:"flex", gap:8 }}>
-            <input value={modelSerial} onChange={e=>setModelSerial(e.target.value)} placeholder="e.g. 48XC024, Trane YCD" style={{ flex:1, background:"#fff", border:"none", borderRadius:10, padding:"10px", color:"#000" }} />
-            <button onClick={handleLookup} style={{ background:BLACK, border:"none", borderRadius:10, padding:"10px 16px", color:"#fff", fontWeight:700 }}>Search</button>
+      <div style={{ flex:1, overflowY:"auto", padding: 16 }}>
+        <div style={{ background: `linear-gradient(135deg, ${JLL_RED} 0%, #a00010 100%)`, borderRadius: 16, padding: 16, marginBottom: 16, boxShadow: "0 8px 20px rgba(227,6,19,0.2)" }}>
+          <div style={{ fontWeight: 700, marginBottom: 8, fontSize: 15, display: "flex", alignItems: "center", gap: 6 }}>🔍 Model / Serial Lookup</div>
+          <div style={{ fontSize: 12, opacity: 0.9, marginBottom: 12 }}>Enter model number to find matching manuals</div>
+          <div style={{ display: "flex", gap: 10 }}>
+            <input value={modelSerial} onChange={e=>setModelSerial(e.target.value)} placeholder="e.g. 48XC024, Trane YCD" style={{ flex: 1, background: "#fff", border: "none", borderRadius: 12, padding: "12px", color: "#000", fontSize: 13 }} />
+            <button onClick={handleLookup} style={{ background: BLACK, border: "none", borderRadius: 12, padding: "0 18px", color: "#fff", fontWeight: 700, cursor: "pointer" }}>Search</button>
           </div>
-          {lookupResult && <div style={{ marginTop:10 }}>{lookupResult.map(d=> <button key={d.id} onClick={()=>{setSelectedDoc(d);setView("read");}} style={{ display:"block", width:"100%", textAlign:"left", background:"rgba(0,0,0,0.2)", border:"none", borderRadius:8, padding:"8px", marginTop:6, color:"#fff" }}>{d.name} ({d.brand})</button>)}</div>}
+          {lookupResult && <div style={{ marginTop: 12 }}>{lookupResult.map(d=> <button key={d.id} onClick={()=>{setSelectedDoc(d);setView("read");}} style={{ display: "block", width: "100%", textAlign: "left", background: "rgba(0,0,0,0.2)", border: "none", borderRadius: 10, padding: "10px", marginTop: 8, color: "#fff", cursor: "pointer" }}>{d.name} ({d.brand})</button>)}</div>}
         </div>
-        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Search manuals..." style={{ width:"100%", background:CARD, border:`1px solid ${BORDER}`, borderRadius:10, padding:"10px", color:"#fff", marginBottom:12 }} />
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Search manuals..." style={{ width: "100%", background: "#2a2a2a", border: `1px solid ${BORDER}`, borderRadius: 14, padding: "12px", color: "#fff", fontSize: 13, marginBottom: 16 }} />
         {filtered.map(doc=>(
-          <div key={doc.id} className="card-hover" onClick={()=>{setSelectedDoc(doc);setView("read");}} style={{ background:CARD, border:`1px solid ${BORDER}`, borderRadius:12, padding:12, marginBottom:10 }}>
-            <div style={{ fontWeight:700 }}>{doc.name}</div>
-            <div style={{ fontSize:11, color:JLL_RED }}>{doc.brand} · {doc.type}</div>
+          <div key={doc.id} className="card-hover" onClick={()=>{setSelectedDoc(doc);setView("read");}} style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 14, padding: 14, marginBottom: 12, cursor: "pointer" }}>
+            <div style={{ fontWeight: 700, fontSize: 14, color: "#fff" }}>{doc.name}</div>
+            <div style={{ fontSize: 12, color: JLL_RED, marginTop: 4 }}>{doc.brand} · {doc.type}</div>
           </div>
         ))}
       </div>
@@ -261,12 +273,12 @@ function PTChartScreen() {
   return (
     <div style={{ flex:1 }}>
       <Header title="PT CHART" subtitle="PRESSURE-TEMPERATURE" />
-      <div style={{ padding:14 }}>
-        <select value={ref} onChange={e=>setRef(e.target.value)} style={{ width:"100%", background:"#222", border:`1px solid ${BORDER}`, borderRadius:10, padding:"10px", color:"#fff", marginBottom:12 }}>{REFRIGERANTS.map(r=><option key={r}>{r}</option>)}</select>
-        <div style={{ display:"flex", gap:8, marginBottom:12 }}>{["P→T","T→P"].map(m=><button key={m} onClick={()=>{setMode(m);setResult(null);}} style={{ flex:1, background:mode===m?JLL_RED:"#222", border:`1px solid ${BORDER}`, borderRadius:10, padding:"9px", color:"#fff", fontWeight:700 }}>{m==="P→T"?"Pressure → Temp":"Temp → Pressure"}</button>)}</div>
+      <div style={{ padding:16 }}>
+        <select value={ref} onChange={e=>setRef(e.target.value)} style={{ width:"100%", background:"#2a2a2a", border:`1px solid ${BORDER}`, borderRadius:12, padding:"12px", color:"#fff", marginBottom:12, fontSize:14 }}>{REFRIGERANTS.map(r=><option key={r}>{r}</option>)}</select>
+        <div style={{ display:"flex", gap:8, marginBottom:12 }}>{["P→T","T→P"].map(m=><button key={m} onClick={()=>{setMode(m);setResult(null);}} style={{ flex:1, background:mode===m?JLL_RED:"#2a2a2a", border:`1px solid ${mode===m?JLL_RED:BORDER}`, borderRadius:12, padding:"10px", color:"#fff", fontWeight:700 }}>{m==="P→T"?"Pressure → Temp":"Temp → Pressure"}</button>)}</div>
         <Input label={mode==="P→T"?"PRESSURE (psig)":"TEMPERATURE (°F)"} value={inputVal} onChange={v=>{setInputVal(v);setResult(null);}} placeholder={mode==="P→T"?"Enter psig…":"Enter °F…"} type="number"/>
         <RedBtn onClick={calc} style={{ width:"100%" }}>Calculate</RedBtn>
-        {result && <div style={{ marginTop:12, background:JLL_RED, borderRadius:10, padding:12, textAlign:"center", fontWeight:700 }}>{result}</div>}
+        {result && <div style={{ marginTop: 14, background: JLL_RED, borderRadius: 14, padding: 14, textAlign: "center", fontWeight: 700, fontSize: 16, color: "#fff" }}>{result}</div>}
       </div>
     </div>
   );
@@ -285,17 +297,17 @@ function NotesScreen({ storage }) {
   return (
     <div style={{ flex:1 }}>
       <Header title="JOB NOTES" subtitle="FIELD NOTES" />
-      <div style={{ flex:1, overflowY:"auto", padding:14 }}>
-        <div style={{ background:CARD, borderRadius:14, padding:14, marginBottom:16 }}>
+      <div style={{ flex:1, overflowY:"auto", padding:16 }}>
+        <div style={{ background: CARD, borderRadius: 16, padding: 16, marginBottom: 16, border: `1px solid ${BORDER}` }}>
           <Input label="TITLE" value={title} onChange={setTitle} placeholder="e.g. Rooftop Unit 3" />
           <Textarea label="NOTE" value={body} onChange={setBody} placeholder="Write job notes..." rows={3} />
           <RedBtn onClick={save} disabled={saving||!body.trim()} style={{ width:"100%" }}>{saving?"Saving…":"Save Note"}</RedBtn>
         </div>
         {notes.map(n=>(
-          <div key={n.id} style={{ background:CARD, borderRadius:12, padding:12, marginBottom:10 }}>
-            <div style={{ display:"flex", justifyContent:"space-between" }}><div style={{ fontWeight:700 }}>{n.title}</div><button onClick={()=>del(n.id)} style={{ background:"rgba(227,6,19,0.2)", border:"none", borderRadius:6, padding:"3px 8px", color:JLL_RED, cursor:"pointer" }}>Delete</button></div>
-            <div style={{ fontSize:12, color:"#aaa", marginTop:4 }}>{n.body}</div>
-            <div style={{ fontSize:10, color:"#555", marginTop:4 }}>{timeAgo(n.createdAt)}</div>
+          <div key={n.id} style={{ background: CARD, borderRadius: 14, padding: 14, marginBottom: 12, border: `1px solid ${BORDER}` }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}><div style={{ fontWeight:700, color:"#fff" }}>{n.title}</div><button onClick={()=>del(n.id)} style={{ background:"rgba(227,6,19,0.2)", border:"none", borderRadius:8, padding:"4px 10px", color:JLL_RED, cursor:"pointer", fontSize:12 }}>Delete</button></div>
+            <div style={{ fontSize: 13, color: "#ccc", marginTop: 8, whiteSpace: "pre-wrap" }}>{n.body}</div>
+            <div style={{ fontSize: 10, color: "#777", marginTop: 8 }}>{timeAgo(n.createdAt)}</div>
           </div>
         ))}
       </div>
@@ -303,7 +315,7 @@ function NotesScreen({ storage }) {
   );
 }
 
-// ----- Equipment Screen (simplified) -----
+// ----- Equipment Screen -----
 function EquipmentScreen({ storage }) {
   const [items, setItems] = useState([]);
   const [model, setModel] = useState("");
@@ -317,17 +329,17 @@ function EquipmentScreen({ storage }) {
   return (
     <div style={{ flex:1 }}>
       <Header title="EQUIPMENT LIST" subtitle="SITE REGISTER" />
-      <div style={{ padding:14 }}>
-        <div style={{ background:CARD, borderRadius:14, padding:14, marginBottom:16 }}>
+      <div style={{ padding:16 }}>
+        <div style={{ background: CARD, borderRadius: 16, padding: 16, marginBottom: 16, border: `1px solid ${BORDER}` }}>
           <Input label="MODEL" value={model} onChange={setModel} placeholder="Model number" />
           <Input label="BRAND" value={brand} onChange={setBrand} placeholder="Brand" />
           <Input label="LOCATION" value={location} onChange={setLocation} placeholder="Rooftop, B1, etc." />
           <RedBtn onClick={save} disabled={saving||!model.trim()} style={{ width:"100%" }}>{saving?"Saving…":"Add Equipment"}</RedBtn>
         </div>
         {items.map(e=>(
-          <div key={e.id} style={{ background:CARD, borderRadius:12, padding:12, marginBottom:10 }}>
-            <div style={{ display:"flex", justifyContent:"space-between" }}><div><span style={{ fontWeight:700 }}>{e.model}</span> {e.brand && <span style={{ color:"#aaa", marginLeft:6 }}>{e.brand}</span>}</div><button onClick={()=>del(e.id)} style={{ background:"rgba(227,6,19,0.2)", border:"none", borderRadius:6, padding:"3px 8px", color:JLL_RED, cursor:"pointer" }}>Delete</button></div>
-            {e.location && <div style={{ fontSize:11, color:"#aaa", marginTop:4 }}>📍 {e.location}</div>}
+          <div key={e.id} style={{ background: CARD, borderRadius: 14, padding: 14, marginBottom: 12, border: `1px solid ${BORDER}` }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}><div><span style={{ fontWeight:700, color:"#fff" }}>{e.model}</span> {e.brand && <span style={{ color:"#aaa", marginLeft:8 }}>{e.brand}</span>}</div><button onClick={()=>del(e.id)} style={{ background:"rgba(227,6,19,0.2)", border:"none", borderRadius:8, padding:"4px 10px", color:JLL_RED, cursor:"pointer", fontSize:12 }}>Delete</button></div>
+            {e.location && <div style={{ fontSize: 12, color: "#aaa", marginTop: 6 }}>📍 {e.location}</div>}
           </div>
         ))}
       </div>
@@ -351,18 +363,18 @@ function PartsLogScreen({ storage }) {
   return (
     <div style={{ flex:1 }}>
       <Header title="PARTS LOG" subtitle="PARTS USED" />
-      <div style={{ padding:14 }}>
-        <div style={{ background:CARD, borderRadius:14, padding:14, marginBottom:16 }}>
+      <div style={{ padding:16 }}>
+        <div style={{ background: CARD, borderRadius: 16, padding: 16, marginBottom: 16, border: `1px solid ${BORDER}` }}>
           <Input label="PART NAME" value={name} onChange={setName} placeholder="e.g. Run Capacitor" />
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}><Input label="PART #" value={partNum} onChange={setPartNum} /><Input label="QTY" value={qty} onChange={setQty} type="number" /></div>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}><Input label="PART #" value={partNum} onChange={setPartNum} /><Input label="QTY" value={qty} onChange={setQty} type="number" /></div>
           <Input label="COST ($)" value={cost} onChange={setCost} placeholder="0.00" type="number" />
           <RedBtn onClick={save} disabled={saving||!name.trim()} style={{ width:"100%" }}>{saving?"Saving…":"Log Part"}</RedBtn>
         </div>
-        {parts.length>0 && <div style={{ textAlign:"right", marginBottom:8, color:JLL_RED, fontWeight:700 }}>Total: ${total.toFixed(2)}</div>}
+        {parts.length>0 && <div style={{ textAlign:"right", marginBottom:12, color: JLL_RED, fontWeight:700 }}>Total: ${total.toFixed(2)}</div>}
         {parts.map(p=>(
-          <div key={p.id} style={{ background:CARD, borderRadius:12, padding:12, marginBottom:10 }}>
-            <div style={{ display:"flex", justifyContent:"space-between" }}><div><span style={{ fontWeight:700 }}>{p.name}</span> {p.partNum && <span style={{ color:"#aaa", marginLeft:6 }}>#{p.partNum}</span>} <span style={{ marginLeft:6 }}>x{p.qty}</span></div><button onClick={()=>del(p.id)} style={{ background:"rgba(227,6,19,0.2)", border:"none", borderRadius:6, padding:"3px 8px", color:JLL_RED, cursor:"pointer" }}>Delete</button></div>
-            {p.cost && <div style={{ fontSize:12, color:JLL_RED }}>${(parseFloat(p.cost)*(parseInt(p.qty)||1)).toFixed(2)}</div>}
+          <div key={p.id} style={{ background: CARD, borderRadius: 14, padding: 14, marginBottom: 12, border: `1px solid ${BORDER}` }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}><div><span style={{ fontWeight:700, color:"#fff" }}>{p.name}</span> {p.partNum && <span style={{ color:"#aaa", marginLeft:8 }}>#{p.partNum}</span>} <span style={{ marginLeft:8, color:"#aaa" }}>x{p.qty}</span></div><button onClick={()=>del(p.id)} style={{ background:"rgba(227,6,19,0.2)", border:"none", borderRadius:8, padding:"4px 10px", color:JLL_RED, cursor:"pointer", fontSize:12 }}>Delete</button></div>
+            {p.cost && <div style={{ fontSize: 13, color: JLL_RED, marginTop: 6 }}>${(parseFloat(p.cost)*(parseInt(p.qty)||1)).toFixed(2)}</div>}
           </div>
         ))}
       </div>
@@ -384,23 +396,23 @@ function PhotoScreen({ storage }) {
   return (
     <div style={{ flex:1 }}>
       <Header title="PHOTOS" subtitle="SITE PHOTOS" />
-      <div style={{ padding:14 }}>
+      <div style={{ padding:16 }}>
         <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={onFile} style={{ display:"none" }} id="photoInput" />
         {!preview ? (
-          <label htmlFor="photoInput" style={{ display:"block", background:CARD, border:`2px dashed ${BORDER}`, borderRadius:14, padding:"40px", textAlign:"center", cursor:"pointer" }}>📷 Tap to take photo</label>
+          <label htmlFor="photoInput" style={{ display:"block", background: CARD, border: `2px dashed ${BORDER}`, borderRadius: 16, padding: "40px", textAlign: "center", cursor: "pointer", color: "#aaa" }}>📷 Tap to take photo</label>
         ) : (
-          <div style={{ marginBottom:16 }}>
-            <img src={preview} alt="preview" style={{ width:"100%", borderRadius:12, marginBottom:8 }} />
+          <div style={{ marginBottom: 16 }}>
+            <img src={preview} alt="preview" style={{ width: "100%", borderRadius: 14, marginBottom: 12 }} />
             <Input label="CAPTION" value={caption} onChange={setCaption} placeholder="Describe..." />
-            <div style={{ display:"flex", gap:8 }}><button onClick={()=>{setPreview(null);setCaption("");}} style={{ flex:1, background:"#222", border:`1px solid ${BORDER}`, borderRadius:10, padding:"8px", color:"#fff" }}>Retake</button><RedBtn onClick={savePhoto} style={{ flex:1 }}>Save</RedBtn></div>
+            <div style={{ display:"flex", gap:10 }}><button onClick={()=>{setPreview(null);setCaption("");}} style={{ flex:1, background:"#2a2a2a", border:`1px solid ${BORDER}`, borderRadius:12, padding:"10px", color:"#fff", cursor:"pointer" }}>Retake</button><RedBtn onClick={savePhoto} style={{ flex:1 }}>Save</RedBtn></div>
           </div>
         )}
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginTop:16 }}>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginTop:16 }}>
           {photos.map(p=>(
-            <div key={p.id} style={{ background:CARD, borderRadius:12, overflow:"hidden" }}>
-              <img src={p.data} alt={p.caption} style={{ width:"100%", height:120, objectFit:"cover" }} />
-              {p.caption && <div style={{ padding:"4px 8px", fontSize:10, color:"#aaa" }}>{p.caption}</div>}
-              <button onClick={()=>del(p.id)} style={{ width:"100%", background:"rgba(227,6,19,0.2)", border:"none", padding:"5px", color:JLL_RED, cursor:"pointer" }}>Delete</button>
+            <div key={p.id} style={{ background: CARD, borderRadius: 14, overflow: "hidden", border: `1px solid ${BORDER}` }}>
+              <img src={p.data} alt={p.caption} style={{ width:"100%", height:130, objectFit:"cover" }} />
+              {p.caption && <div style={{ padding:"6px 8px", fontSize:11, color:"#ccc" }}>{p.caption}</div>}
+              <button onClick={()=>del(p.id)} style={{ width:"100%", background:"rgba(227,6,19,0.2)", border:"none", padding:"8px", color:JLL_RED, cursor:"pointer", fontSize:12 }}>Delete</button>
             </div>
           ))}
         </div>
@@ -422,16 +434,16 @@ function ServiceHistoryScreen({ storage }) {
   return (
     <div style={{ flex:1 }}>
       <Header title="SERVICE HISTORY" subtitle="MAINTENANCE LOG" />
-      <div style={{ padding:14 }}>
-        <div style={{ background:CARD, borderRadius:14, padding:14, marginBottom:16 }}>
+      <div style={{ padding:16 }}>
+        <div style={{ background: CARD, borderRadius: 16, padding: 16, marginBottom: 16, border: `1px solid ${BORDER}` }}>
           <Input label="UNIT / ASSET" value={unit} onChange={setUnit} placeholder="Unit ID" />
           <Textarea label="WORK PERFORMED" value={work} onChange={setWork} placeholder="Describe work done..." rows={3} />
           <RedBtn onClick={save} disabled={saving||!work.trim()} style={{ width:"100%" }}>{saving?"Saving…":"Log Visit"}</RedBtn>
         </div>
         {logs.map(l=>(
-          <div key={l.id} style={{ background:CARD, borderRadius:12, padding:12, marginBottom:10 }}>
-            <div style={{ display:"flex", justifyContent:"space-between" }}><div><span style={{ fontWeight:700 }}>{l.unit||"No unit"}</span></div><button onClick={()=>del(l.id)} style={{ background:"rgba(227,6,19,0.2)", border:"none", borderRadius:6, padding:"3px 8px", color:JLL_RED, cursor:"pointer" }}>Delete</button></div>
-            <div style={{ fontSize:12, color:"#aaa", marginTop:4 }}>{l.work}</div>
+          <div key={l.id} style={{ background: CARD, borderRadius: 14, padding: 14, marginBottom: 12, border: `1px solid ${BORDER}` }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}><div><span style={{ fontWeight:700, color:"#fff" }}>{l.unit || "No unit"}</span></div><button onClick={()=>del(l.id)} style={{ background:"rgba(227,6,19,0.2)", border:"none", borderRadius:8, padding:"4px 10px", color:JLL_RED, cursor:"pointer", fontSize:12 }}>Delete</button></div>
+            <div style={{ fontSize: 13, color: "#ccc", marginTop: 8, whiteSpace: "pre-wrap" }}>{l.work}</div>
           </div>
         ))}
       </div>
@@ -444,20 +456,20 @@ function ChatListScreen({ chats, onOpen, onCreate, onDelete, deletingId }) {
   return (
     <div style={{ flex:1, display:"flex", flexDirection:"column" }}>
       <Header title="MTS ASSISTANT" subtitle="FIELD AI CHAT" right={<OnlineBadge/>} />
-      <div style={{ flex:1, overflowY:"auto", padding:14 }}>
-        {chats.length===0 && <div style={{ textAlign:"center", padding:"50px" }}>No jobs yet. Tap + NEW JOB</div>}
+      <div style={{ flex:1, overflowY:"auto", padding:16 }}>
+        {chats.length===0 && <div style={{ textAlign:"center", padding:"50px", color:"#aaa" }}>No jobs yet. Tap + NEW JOB</div>}
         {chats.map(c=>{
           const last = c.messages[c.messages.length-1];
           return (
-            <div key={c.id} className="card-hover" onClick={()=>onOpen(c.id)} style={{ background:CARD, borderRadius:14, padding:12, marginBottom:10 }}>
-              <div style={{ fontWeight:700 }}>{c.title}</div>
-              <div style={{ fontSize:11, color:"#aaa" }}>{last ? last.content.slice(0,60)+"…" : "No messages"}</div>
-              <div style={{ display:"flex", justifyContent:"space-between", marginTop:6 }}><span style={{ fontSize:10, color:"#555" }}>{timeAgo(c.updatedAt)}</span><button onClick={e=>{e.stopPropagation();onDelete(c.id);}} style={{ background:"rgba(227,6,19,0.2)", border:"none", borderRadius:6, padding:"3px 8px", color:JLL_RED }}>Delete</button></div>
+            <div key={c.id} className="card-hover" onClick={()=>onOpen(c.id)} style={{ background: CARD, borderRadius: 14, padding: 14, marginBottom: 12, border: `1px solid ${BORDER}` }}>
+              <div style={{ fontWeight: 700, color: "#fff" }}>{c.title}</div>
+              <div style={{ fontSize: 12, color: "#aaa", marginTop: 4 }}>{last ? last.content.slice(0,60)+"…" : "No messages"}</div>
+              <div style={{ display:"flex", justifyContent:"space-between", marginTop: 8 }}><span style={{ fontSize: 10, color: "#777" }}>{timeAgo(c.updatedAt)}</span><button onClick={e=>{e.stopPropagation();onDelete(c.id);}} style={{ background:"rgba(227,6,19,0.2)", border:"none", borderRadius:6, padding:"4px 8px", color:JLL_RED, cursor:"pointer", fontSize:11 }}>Delete</button></div>
             </div>
           );
         })}
       </div>
-      <div style={{ padding:12, borderTop:`1px solid ${BORDER}` }}><RedBtn onClick={onCreate} style={{ width:"100%" }}>+ NEW JOB</RedBtn></div>
+      <div style={{ padding: 16, borderTop: `1px solid ${BORDER}` }}><RedBtn onClick={onCreate} style={{ width:"100%" }}>+ NEW JOB</RedBtn></div>
     </div>
   );
 }
@@ -469,18 +481,18 @@ function ChatScreen({ chat, onBack, onSend, loading }) {
   return (
     <div style={{ flex:1, display:"flex", flexDirection:"column" }}>
       <Header title={chat?.title||"New Job"} subtitle="AI CHAT" onBack={onBack} right={<OnlineBadge/>} />
-      <div style={{ flex:1, overflowY:"auto", padding:14 }}>
+      <div style={{ flex:1, overflowY:"auto", padding:16 }}>
         {chat?.messages.map((msg,i)=>(
           <div key={i} style={{ display:"flex", justifyContent:msg.role==="user"?"flex-end":"flex-start", marginBottom:12 }}>
-            <div style={{ maxWidth:"80%", background:msg.role==="user"?JLL_RED:CARD, borderRadius:16, padding:"10px 14px", color:"#fff" }}>{msg.content}</div>
+            <div style={{ maxWidth:"80%", background:msg.role==="user"?JLL_RED:CARD, borderRadius:16, padding:"10px 14px", color:"#fff", border:msg.role==="user"?"none":`1px solid ${BORDER}` }}>{msg.content}</div>
           </div>
         ))}
         {loading && <div style={{ display:"flex", gap:5, padding:8 }}>{[0,1,2].map(i=><div key={i} style={{ width:7, height:7, borderRadius:"50%", background:JLL_RED, animation:"bounce 1.2s infinite", animationDelay:`${i*0.2}s` }} />)}</div>}
         <div ref={bottomRef} />
       </div>
-      <div style={{ borderTop:`1px solid ${BORDER}`, padding:10, display:"flex", gap:8 }}>
-        <textarea value={input} onChange={e=>setInput(e.target.value)} placeholder="Type your message..." rows={1} style={{ flex:1, background:CARD, border:"none", borderRadius:12, padding:"10px", color:"#fff", resize:"none" }} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();}}} />
-        <button onClick={send} disabled={loading} style={{ background:JLL_RED, border:"none", borderRadius:12, padding:"10px 16px", color:"#fff", fontWeight:700 }}>Send</button>
+      <div style={{ borderTop: `1px solid ${BORDER}`, padding: 12, display: "flex", gap: 10 }}>
+        <textarea value={input} onChange={e=>setInput(e.target.value)} placeholder="Type your message..." rows={1} style={{ flex:1, background:"#2a2a2a", border:`1px solid ${BORDER}`, borderRadius:12, padding:"10px", color:"#fff", resize:"none" }} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();}}} />
+        <button onClick={send} disabled={loading} style={{ background:JLL_RED, border:"none", borderRadius:12, padding:"0 18px", color:"#fff", fontWeight:700, cursor:"pointer" }}>Send</button>
       </div>
     </div>
   );
@@ -492,19 +504,19 @@ function DashboardScreen({ profile, stats, onNav, onStartJob, recentChats, onOpe
   const greeting = hour<12?"Good morning":hour<17?"Good afternoon":"Good evening";
   return (
     <div style={{ flex:1, display:"flex", flexDirection:"column" }}>
-      <div style={{ background:BLACK, borderBottom:`3px solid ${JLL_RED}`, padding:"16px" }}>
-        <div style={{ display:"flex", justifyContent:"space-between" }}><div><div style={{ fontSize:12, color:"#aaa" }}>{greeting},</div><div style={{ fontSize:22, fontWeight:800 }}>{profile.name.toUpperCase()}</div></div><Logo size="small" variant="icon" /></div>
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8, marginTop:16 }}>
-          {[{label:"Jobs",value:stats.chats},{label:"Parts",value:stats.parts},{label:"Notes",value:stats.notes},{label:"History",value:stats.history}].map(s=><div key={s.label} style={{ background:"rgba(255,255,255,0.05)", borderRadius:8, padding:"8px", textAlign:"center" }}><div style={{ fontSize:20, fontWeight:800 }}>{s.value}</div><div style={{ fontSize:10, color:"#aaa" }}>{s.label}</div></div>)}
+      <div style={{ background: "linear-gradient(135deg, #000000 0%, #1a0000 100%)", borderBottom: `3px solid ${JLL_RED}`, padding: "16px" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}><div><div style={{ fontSize:12, color:"#aaa" }}>{greeting},</div><div style={{ fontSize:22, fontWeight:800, color:"#fff" }}>{profile.name.toUpperCase()}</div></div><Logo size="small" variant="icon" /></div>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:10, marginTop:16 }}>
+          {[{label:"Jobs",value:stats.chats},{label:"Parts",value:stats.parts},{label:"Notes",value:stats.notes},{label:"History",value:stats.history}].map(s=><div key={s.label} style={{ background:"rgba(255,255,255,0.08)", borderRadius:12, padding:"10px", textAlign:"center", backdropFilter:"blur(4px)" }}><div style={{ fontSize:20, fontWeight:800, color:"#fff" }}>{s.value}</div><div style={{ fontSize:10, color:"#aaa" }}>{s.label}</div></div>)}
         </div>
       </div>
-      <div style={{ flex:1, overflowY:"auto", padding:14 }}>
-        <button onClick={onStartJob} className="red-btn" style={{ width:"100%", background:JLL_RED, border:"none", borderRadius:14, padding:"14px", marginBottom:16, display:"flex", justifyContent:"space-between" }}><span>+ START NEW JOB</span><span>💬</span></button>
+      <div style={{ flex:1, overflowY:"auto", padding:16 }}>
+        <button onClick={onStartJob} className="red-btn" style={{ width:"100%", marginBottom:20, display:"flex", justifyContent:"space-between", alignItems:"center" }}><span>+ START NEW JOB</span><span>💬</span></button>
         <SectionTitle>RECENT JOBS</SectionTitle>
-        {recentChats.slice(0,3).map(c=><div key={c.id} className="card-hover" onClick={()=>onOpenChat(c.id)} style={{ background:CARD, borderRadius:12, padding:12, marginBottom:8 }}><div style={{ fontWeight:700 }}>{c.title}</div><div style={{ fontSize:11, color:"#aaa" }}>{c.messages[c.messages.length-1]?.content.slice(0,50)}</div></div>)}
+        {recentChats.slice(0,3).map(c=><div key={c.id} className="card-hover" onClick={()=>onOpenChat(c.id)} style={{ background: CARD, borderRadius: 14, padding: 14, marginBottom: 12, border: `1px solid ${BORDER}` }}><div style={{ fontWeight:700, color:"#fff" }}>{c.title}</div><div style={{ fontSize:12, color:"#aaa", marginTop:4 }}>{c.messages[c.messages.length-1]?.content.slice(0,50)}</div></div>)}
         <SectionTitle>TOOLS</SectionTitle>
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:8 }}>
-          {[{id:"docs",icon:"📚",label:"Docs"},{id:"pt",icon:"🌡️",label:"PT Chart"},{id:"notes",icon:"📝",label:"Notes"},{id:"equip",icon:"🏭",label:"Equipment"},{id:"parts",icon:"🔩",label:"Parts"},{id:"photos",icon:"📷",label:"Photos"},{id:"history",icon:"📋",label:"History"}].map(t=><button key={t.id} onClick={()=>onNav(t.id)} style={{ background:CARD, border:`1px solid ${BORDER}`, borderRadius:10, padding:"12px", display:"flex", flexDirection:"column", alignItems:"center", gap:4 }}><span style={{ fontSize:24 }}>{t.icon}</span><span style={{ fontSize:10 }}>{t.label}</span></button>)}
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:12 }}>
+          {[{id:"docs",icon:"📚",label:"Docs"},{id:"pt",icon:"🌡️",label:"PT Chart"},{id:"notes",icon:"📝",label:"Notes"},{id:"equip",icon:"🏭",label:"Equipment"},{id:"parts",icon:"🔩",label:"Parts"},{id:"photos",icon:"📷",label:"Photos"},{id:"history",icon:"📋",label:"History"}].map(t=><button key={t.id} onClick={()=>onNav(t.id)} style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 14, padding: "14px 8px", display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer" }}><span style={{ fontSize: 26 }}>{t.icon}</span><span style={{ fontSize: 11, color: "#fff", fontWeight: 500 }}>{t.label}</span></button>)}
         </div>
       </div>
     </div>
@@ -575,19 +587,19 @@ function MTSAssistant() {
         {tab==="tools" && toolView==="parts" && <PartsLogScreen storage={storage} />}
         {tab==="tools" && toolView==="photos" && <PhotoScreen storage={storage} />}
         {tab==="tools" && toolView==="history" && <ServiceHistoryScreen storage={storage} />}
-        {tab==="tools" && !toolView && <div style={{ flex:1, padding:20 }}><button onClick={()=>setToolView("pt")} className="card-hover" style={{ background:CARD, padding:20, margin:8, borderRadius:12 }}>🌡️ PT Chart</button><button onClick={()=>setToolView("notes")} style={{ background:CARD, padding:20, margin:8, borderRadius:12 }}>📝 Job Notes</button><button onClick={()=>setToolView("equip")} style={{ background:CARD, padding:20, margin:8, borderRadius:12 }}>🏭 Equipment</button><button onClick={()=>setToolView("parts")} style={{ background:CARD, padding:20, margin:8, borderRadius:12 }}>🔩 Parts Log</button><button onClick={()=>setToolView("photos")} style={{ background:CARD, padding:20, margin:8, borderRadius:12 }}>📷 Photos</button><button onClick={()=>setToolView("history")} style={{ background:CARD, padding:20, margin:8, borderRadius:12 }}>📋 History</button></div>}
+        {tab==="tools" && !toolView && <div style={{ flex:1, padding:20 }}><div style={{ display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:12 }}><button onClick={()=>setToolView("pt")} className="card-hover" style={{ background:CARD, padding:20, borderRadius:14 }}>🌡️ PT Chart</button><button onClick={()=>setToolView("notes")} style={{ background:CARD, padding:20, borderRadius:14 }}>📝 Job Notes</button><button onClick={()=>setToolView("equip")} style={{ background:CARD, padding:20, borderRadius:14 }}>🏭 Equipment</button><button onClick={()=>setToolView("parts")} style={{ background:CARD, padding:20, borderRadius:14 }}>🔩 Parts Log</button><button onClick={()=>setToolView("photos")} style={{ background:CARD, padding:20, borderRadius:14 }}>📷 Photos</button><button onClick={()=>setToolView("history")} style={{ background:CARD, padding:20, borderRadius:14 }}>📋 History</button></div></div>}
       </div>
-      <div style={{ background:BLACK, borderTop:`2px solid rgba(227,6,19,0.3)`, display:"flex" }}>
+      <div style={{ background:BLACK, borderTop:`2px solid ${BORDER}`, display:"flex" }}>
         {[
           { id:"home", icon:"🏠", label:"Home" },
           { id:"chat", icon:"💬", label:"Chat" },
           { id:"docs", icon:"📚", label:"Docs" },
           { id:"tools", icon:"🛠️", label:"Tools" }
         ].map(t=>(
-          <button key={t.id} onClick={()=>navTo(t.id)} style={{ flex:1, background:"transparent", border:"none", padding:"8px 2px 5px", cursor:"pointer", display:"flex", flexDirection:"column", alignItems:"center", gap:1, color:tab===t.id?JLL_RED:"rgba(255,255,255,0.4)" }}>
+          <button key={t.id} onClick={()=>navTo(t.id)} style={{ flex:1, background:"transparent", border:"none", padding:"10px 2px 6px", cursor:"pointer", display:"flex", flexDirection:"column", alignItems:"center", gap:2, color:tab===t.id?JLL_RED:"rgba(255,255,255,0.5)" }}>
             <span style={{ fontSize:20 }}>{t.icon}</span>
-            <span style={{ fontSize:9, fontWeight:700 }}>{t.label}</span>
-            {tab===t.id && <div style={{ width:18, height:2, background:JLL_RED, marginTop:2 }} />}
+            <span style={{ fontSize:9, fontWeight:700, letterSpacing:"0.03em" }}>{t.label}</span>
+            {tab===t.id && <div style={{ width:20, height:2, background:JLL_RED, borderRadius:1, marginTop:2 }} />}
           </button>
         ))}
       </div>
