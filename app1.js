@@ -113,10 +113,51 @@ function toggleThemeAndSync(evt) {
   }
 }
 
-const PROXY = "https://api.anthropic.com/v1/messages"; // direct API
+const GEMINI_KEY = "AQ.Ab8RN6KCPlloiLXjIKcaMKDGaj4yOxygTf14BSMOIFL-z33g4Q";
+const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
 
-// ── STORAGE ──────────────────────────────────────────────────────────────
-const _mem = {};
+async function ai(system, prompt, retries = 2, history = []) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      // Build contents array with history
+      const contents = [];
+      for (const h of history) {
+        contents.push({
+          role: h.role === "assistant" ? "model" : "user",
+          parts: [{ text: h.parts[0].text }]
+        });
+      }
+      contents.push({ role: "user", parts: [{ text: prompt }] });
+
+      const r = await fetch(`${GEMINI_URL}?key=${GEMINI_KEY}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: system }] },
+          contents: contents,
+          generationConfig: { maxOutputTokens: 1024, temperature: 0.7 }
+        })
+      });
+      if (!r.ok) {
+        if (attempt < retries && r.status >= 500) {
+          await new Promise(res => setTimeout(res, 1000 * (attempt + 1)));
+          continue;
+        }
+        const errData = await r.json().catch(() => ({}));
+        return "⚠️ Error " + r.status + ": " + (errData?.error?.message || "Please try again.");
+      }
+      const d = await r.json();
+      if (d.error) return "⚠️ " + (d.error.message || "An error occurred.");
+      return d.candidates?.[0]?.content?.parts?.[0]?.text || "No response.";
+    } catch (e) {
+      if (attempt < retries) {
+        await new Promise(res => setTimeout(res, 1000 * (attempt + 1)));
+        continue;
+      }
+      return "⚠️ Connection error: " + e.message + ". Please check your network.";
+    }
+  }
+}const _mem = {};
 const _hasLS = (() => {
   try {
     localStorage.setItem("_t", "1");
@@ -166,47 +207,6 @@ const S = {
 };
 
 // ── AI CALL ──────────────────────────────────────────────────────────────
-async function ai(system, prompt, retries = 2, history = []) {
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    try {
-      const messages = [
-        ...history.map(h => ({role: h.role, content: h.parts[0].text})),
-        {role: "user", content: prompt}
-      ];
-      const r = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "anthropic-dangerous-direct-browser-access": "true"
-        },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-6",
-          max_tokens: 1024,
-          system: system,
-          messages: messages
-        })
-      });
-      if (!r.ok) {
-        if (attempt < retries && r.status >= 500) {
-          await new Promise(res => setTimeout(res, 1000 * (attempt + 1)));
-          continue;
-        }
-        const errData = await r.json().catch(() => ({}));
-        return "⚠️ Error " + r.status + ": " + (errData?.error?.message || "Please try again.");
-      }
-      const d = await r.json();
-      if (d.error) return "⚠️ " + (d.error.message || "An error occurred.");
-      return d.content?.[0]?.text || "No response.";
-    } catch (e) {
-      if (attempt < retries) {
-        await new Promise(res => setTimeout(res, 1000 * (attempt + 1)));
-        continue;
-      }
-      return "⚠️ Connection error: " + e.message + ". Please check your network.";
-    }
-  }
-}
-
 // ── HELPERS ──────────────────────────────────────────────────────────────
 const gid = () => "id" + Date.now() + Math.random().toString(36).slice(2, 5);
 const ago = t => {
