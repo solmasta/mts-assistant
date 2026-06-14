@@ -11,8 +11,8 @@
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;background:#0a0a0a;font-family:system-ui,-apple-system,sans-serif;overflow:hidden}
-#root{height:100%}
+html,body{height:100%;height:100dvh;background:#0a0a0a;font-family:system-ui,-apple-system,sans-serif;overflow:hidden}
+#root{height:100%;height:100dvh;display:flex;flex-direction:column}
 #splash{position:fixed;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .5s}
 #splash img{width:220px;border-radius:8px;margin-bottom:20px}
 .bar{width:180px;height:3px;background:#222;border-radius:2px;overflow:hidden}
@@ -35,6 +35,1293 @@ input,select,textarea{font-family:inherit}
 <script type="text/babel">
 
 const {useState,useEffect,useRef}=React;
+const RED="#E30613",BG="#0a0a0a",CARD="#161616",DARK="#111",BORDER="rgba(227,6,19,0.2)";
+const PROXY="https://mts-proxy-omega.vercel.app/api/proxy";
+
+// ── STORAGE ──────────────────────────────────────────────────────────────
+const _mem={};
+const _hasLS=(()=>{try{localStorage.setItem("_t","1");localStorage.removeItem("_t");return true;}catch{return false;}})();
+const S={
+  get:async k=>{
+    if(_hasLS){const v=localStorage.getItem('m__'+k);if(v===null)throw 0;return{value:v};}
+    if(!(_mem['m__'+k]!==undefined))throw 0;return{value:_mem['m__'+k]};
+  },
+  set:async(k,v)=>{
+    if(_hasLS)localStorage.setItem('m__'+k,v);
+    else _mem['m__'+k]=v;
+    return{value:v};
+  },
+  del:async k=>{
+    if(_hasLS)localStorage.removeItem('m__'+k);
+    else delete _mem['m__'+k];
+  },
+  list:async p=>{
+    const out=[];
+    if(_hasLS){for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('m__'+(p||'')))out.push(k.slice(3));}}
+    else{for(const k of Object.keys(_mem)){if(k.startsWith('m__'+(p||'')))out.push(k.slice(3));}}
+    return out;
+  }
+};
+
+// ── AI CALL ──────────────────────────────────────────────────────────────
+async function ai(system,prompt,retries=2,history=[]){
+  for(let attempt=0;attempt<=retries;attempt++){
+    try{
+      const contents=[
+        ...history,
+        {role:"user",parts:[{text:prompt}]}
+      ];
+      const r=await fetch(PROXY,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          systemInstruction:{parts:[{text:system}]},
+          contents,
+          generationConfig:{maxOutputTokens:2000}
+        })
+      });
+      if(!r.ok){
+        if(attempt<retries&&r.status>=500){await new Promise(res=>setTimeout(res,1000*(attempt+1)));continue;}
+        return"⚠️ Server error ("+r.status+"). Please try again.";
+      }
+      const d=await r.json();
+      if(d.error)return"⚠️ "+(d.error.message||"An error occurred. Please try again.");
+      return d.candidates?.[0]?.content?.parts?.map(p=>p.text).join("")||"No response.";
+    }catch(e){
+      if(attempt<retries){await new Promise(res=>setTimeout(res,1000*(attempt+1)));continue;}
+      return"⚠️ Connection error. Please check your network and try again.";
+    }
+  }
+}
+
+// ── HELPERS ──────────────────────────────────────────────────────────────
+const gid=()=>"id"+Date.now()+Math.random().toString(36).slice(2,5);
+const ago=t=>{const m=Math.floor((Date.now()-t)/60000);return m<1?"now":m<60?m+"m":Math.floor(m/60)+"h";};
+const BRANDS=["Carrier","Trane","York","Lennox","Daikin","Mitsubishi","LG","Goodman","Rheem","Ruud","Bryant","Bosch","American Standard","Amana"];
+const REFS=["R-410A","R-22","R-32","R-454B","R-407C","R-134a"];
+// Global nav ref — set by App, used by any component to navigate home
+const _nav={go:null};
+
+// ── UI PRIMITIVES ────────────────────────────────────────────────────────
+function Btn({c,onClick,disabled,red,style={}}){
+  return <button onClick={onClick} disabled={disabled} style={{
+    background:red?"linear-gradient(135deg,#E30613,#b00010)":CARD,
+    border:red?"none":`1px solid ${BORDER}`,
+    borderRadius:12,padding:"11px 18px",color:"#fff",fontWeight:700,
+    fontSize:14,cursor:"pointer",opacity:disabled?.4:1,
+    boxShadow:red?"0 4px 16px rgba(227,6,19,.3)":"none",...style
+  }}>{c}</button>;
+}
+
+function Inp({label,val,set,ph,type="text",rows}){
+  const s={width:"100%",background:"#1a1a1a",border:`1px solid ${BORDER}`,
+    borderRadius:10,padding:"10px 12px",color:"#fff",fontSize:14,outline:"none",fontFamily:"inherit"};
+  return <div style={{marginBottom:12}}>
+    {label&&<div style={{fontSize:11,color:"rgba(255,255,255,.5)",fontWeight:700,marginBottom:4,letterSpacing:".08em"}}>{label}</div>}
+    {rows
+      ?<textarea value={val} onChange={e=>set(e.target.value)} placeholder={ph} rows={rows} style={{...s,resize:"vertical"}}/>
+      :<input type={type} value={val} onChange={e=>set(e.target.value)} placeholder={ph} style={s}/>
+    }
+  </div>;
+}
+
+function Sel({label,val,set,opts}){
+  return <div style={{marginBottom:12}}>
+    {label&&<div style={{fontSize:11,color:"rgba(255,255,255,.5)",fontWeight:700,marginBottom:4,letterSpacing:".08em"}}>{label}</div>}
+    <select value={val} onChange={e=>set(e.target.value)} style={{
+      width:"100%",background:"#1a1a1a",border:`1px solid ${BORDER}`,borderRadius:10,
+      padding:"10px 12px",color:val?"#fff":"rgba(255,255,255,.35)",fontSize:14,outline:"none",fontFamily:"inherit"}}>
+      <option value="">Select…</option>
+      {opts.map(o=><option key={o}>{o}</option>)}
+    </select>
+  </div>;
+}
+
+function Spin({label}){
+  return <div style={{padding:"60px 20px",textAlign:"center"}}>
+    <div style={{display:"flex",justifyContent:"center",gap:6,marginBottom:14}}>
+      {[0,1,2].map(i=><div key={i} style={{width:9,height:9,borderRadius:"50%",background:RED,
+        animation:"bounce 1.2s infinite",animationDelay:i*.2+"s"}}/>)}
+    </div>
+    <div style={{color:"rgba(255,255,255,.4)",fontSize:12,letterSpacing:".1em"}}>{label}</div>
+  </div>;
+}
+
+function Hdr({title,sub,onBack,onHome}){
+  return <div style={{background:DARK,borderBottom:`3px solid ${RED}`,padding:"12px 16px",display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
+    {onBack&&<button onClick={onBack} style={{background:"rgba(255,255,255,.08)",border:"none",borderRadius:8,padding:"6px 12px",color:"#fff",fontSize:18,cursor:"pointer"}}>←</button>}
+    {onHome&&!onBack&&<button onClick={onHome} style={{background:"rgba(255,255,255,.08)",border:"none",borderRadius:8,padding:"6px 12px",color:"#fff",fontSize:18,cursor:"pointer"}}>🏠</button>}
+    <div style={{flex:1}}>
+      <div style={{fontSize:17,fontWeight:800,color:"#fff"}}>{title}</div>
+      <div style={{fontSize:11,color:RED,fontWeight:600,marginTop:2}}>{sub}</div>
+    </div>
+  </div>;
+}
+
+function Card({c,style={},onClick}){
+  return <div onClick={onClick} style={{background:CARD,border:`1px solid ${BORDER}`,
+    borderRadius:14,padding:14,marginBottom:10,...style,cursor:onClick?"pointer":"default"}}>{c}</div>;
+}
+
+// ── ONBOARDING ───────────────────────────────────────────────────────────
+function Onboarding({onDone}){
+  const [name,setName]=useState("");
+  const [region,setRegion]=useState("");
+  return <div style={{height:"100vh",background:BG,display:"flex",flexDirection:"column"}}>
+    <div style={{background:RED,padding:"40px 24px 28px"}}>
+      <div style={{fontSize:11,color:"rgba(255,255,255,.7)",letterSpacing:".15em",marginBottom:6}}>JLL MTS</div>
+      <div style={{fontSize:32,fontWeight:900,color:"#fff",lineHeight:1}}>MTS ASSISTANT</div>
+      <div style={{fontSize:13,color:"rgba(255,255,255,.8)",marginTop:4}}>AI Field Assistant</div>
+    </div>
+    <div style={{flex:1,overflowY:"auto",padding:20}}>
+      <div style={{fontSize:20,fontWeight:800,color:"#fff",marginBottom:6}}>Quick setup</div>
+      <div style={{fontSize:13,color:"rgba(255,255,255,.4)",marginBottom:20}}>30 seconds. Personalises your reports.</div>
+      <Inp label="YOUR NAME *" val={name} set={setName} ph="e.g. Luke Johnson"/>
+      <Sel label="REGION" val={region} set={setRegion}
+        opts={["AMER – North","AMER – South","AMER – East","AMER – West","APAC","EMEA"]}/>
+      <Btn red c="Get Started →" onClick={()=>onDone({name,region,joined:Date.now()})}
+        disabled={!name.trim()} style={{width:"100%",padding:14,fontSize:15,marginTop:8}}/>
+    </div>
+  </div>;
+}
+
+// ── DASHBOARD ────────────────────────────────────────────────────────────
+function Dashboard({profile,jobs,onNewJob,onStartChat,onNav}){
+  const hr=new Date().getHours();
+  const greet=hr<12?"Good morning":hr<17?"Good afternoon":"Good evening";
+  return <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+    <div style={{background:DARK,borderBottom:`3px solid ${RED}`,padding:"14px 16px"}}>
+      <div style={{fontSize:11,color:"rgba(255,255,255,.4)",fontWeight:600}}>JLL MTS · {greet},</div>
+      <div style={{fontSize:24,fontWeight:900,color:"#fff",letterSpacing:".02em"}}>{profile.name.toUpperCase()}</div>
+      {profile.region&&<div style={{fontSize:11,color:RED,fontWeight:600,marginTop:2}}>{profile.region}</div>}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6,marginTop:12}}>
+        {[{l:"Jobs",v:jobs},{l:"Docs",v:5},{l:"Agents",v:6}].map(s=>
+          <div key={s.l} style={{background:"rgba(255,255,255,.05)",borderRadius:8,padding:"7px 0",textAlign:"center",border:`1px solid ${BORDER}`}}>
+            <div style={{fontSize:20,fontWeight:800,color:"#fff"}}>{s.v}</div>
+            <div style={{fontSize:9,color:"rgba(255,255,255,.35)",fontWeight:700,letterSpacing:".06em"}}>{s.l.toUpperCase()}</div>
+          </div>
+        )}
+      </div>
+    </div>
+    <div style={{flex:1,overflowY:"auto",padding:14,paddingBottom:24}}>
+      {/* AI Chat hero CTA */}
+      <button onClick={onNewJob} style={{
+        width:"100%",background:`linear-gradient(135deg,${RED},#b00010)`,border:"none",borderRadius:16,padding:"18px 16px",
+        cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",
+        marginBottom:14,boxShadow:"0 6px 24px rgba(227,6,19,.4)"}}>
+        <div style={{textAlign:"left"}}>
+          <div style={{fontSize:16,fontWeight:800,color:"#fff",letterSpacing:".03em",marginBottom:3}}>💬 ASK THE AI ASSISTANT</div>
+          <div style={{fontSize:12,color:"rgba(255,255,255,.8)",lineHeight:1.5}}>Fault diagnosis · Part numbers · Safety<br/>Refrigerant charging · Service reports</div>
+        </div>
+        <div style={{width:44,height:44,background:"rgba(255,255,255,.2)",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🔧</div>
+      </button>
+
+      {/* Quick chat prompts */}
+      <div style={{fontSize:11,color:"rgba(255,255,255,.4)",fontWeight:700,letterSpacing:".1em",marginBottom:8}}>QUICK ASK</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
+        {[
+          {i:"🔍",l:"Diagnose a fault",p:"I have a fault on an HVAC unit. Let me describe it and you help diagnose."},
+          {i:"🧊",l:"Refrigerant charge",p:"I need help checking the refrigerant charge. Walk me through superheat and subcooling."},
+          {i:"⚡",l:"Electrical issue",p:"I'm troubleshooting an electrical problem. Help me work through it step by step."},
+          {i:"🦺",l:"Safety checklist",p:"What PPE and safety steps do I need before starting this job?"},
+        ].map(q=><button key={q.l} onClick={()=>onStartChat(q.p)} style={{
+          background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:"12px 10px",
+          cursor:"pointer",display:"flex",alignItems:"center",gap:10,textAlign:"left"}}>
+          <span style={{fontSize:20}}>{q.i}</span>
+          <span style={{fontSize:12,fontWeight:700,color:"#fff",lineHeight:1.3}}>{q.l}</span>
+        </button>)}
+      </div>
+
+      <div style={{background:"rgba(227,6,19,.08)",border:`1px solid rgba(227,6,19,.25)`,borderRadius:12,padding:14,marginBottom:14}}>
+        <div style={{fontSize:11,color:RED,fontWeight:700,letterSpacing:".08em",marginBottom:6}}>⚡ CONNECTED WORKFLOW</div>
+        <div style={{fontSize:12,color:"rgba(255,255,255,.55)",lineHeight:1.6,marginBottom:10}}>
+          Fault Diagnosis → pre-fills Safety Briefing → pre-fills Service Report. One job, zero re-entry.
+        </div>
+        <button onClick={()=>onNav("agents","diag")} style={{background:RED,border:"none",borderRadius:8,padding:"8px 14px",cursor:"pointer",fontSize:12,fontWeight:700,color:"#fff"}}>Start Workflow →</button>
+      </div>
+      <div style={{fontSize:11,color:"rgba(255,255,255,.4)",fontWeight:700,letterSpacing:".1em",marginBottom:10}}>ALL TOOLS</div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}}>
+        {[{t:"docs",i:"📚",l:"Docs"},{t:"tools",s:"pt",i:"🌡️",l:"PT Chart"},{t:"tools",s:"equip",i:"🏢",l:"Equip Log"},{t:"tools",s:"notes",i:"📝",l:"Notes"},{t:"agents",i:"🤖",l:"All Agents"},{t:"chat",i:"💬",l:"AI Chat"}]
+          .map(it=><button key={it.l} onClick={()=>onNav(it.t,it.s)} style={{
+            background:CARD,border:`1px solid ${BORDER}`,borderRadius:10,padding:"12px 6px",
+            cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+            <span style={{fontSize:22}}>{it.i}</span>
+            <span style={{fontSize:10,fontWeight:600,color:"rgba(255,255,255,.55)"}}>{it.l}</span>
+          </button>)}
+      </div>
+    </div>
+  </div>;
+}
+
+// ── AGENTS ───────────────────────────────────────────────────────────────
+function AgentScreen({title,sub,intro,form,onRun,canRun,onReset,resetLabel,chainBtns}){
+  const [step,setStep]=useState(0);
+  const [res,setRes]=useState("");
+  const [err,setErr]=useState("");
+  async function run(){
+    setStep(1);setErr("");
+    try{
+      const r=await onRun();
+      setRes(r);
+      setStep(2);
+    }catch(e){
+      setErr("An error occurred. Please try again.");
+      setStep(0);
+    }
+  }
+  function reset(){setStep(0);setRes("");setErr("");if(onReset)onReset();}
+  return <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+    <Hdr title={title} sub={step===1?"WORKING…":step===2?"COMPLETE":sub} onHome={()=>_nav.go&&_nav.go("home")}/>
+    <div style={{flex:1,overflowY:"auto",padding:14}}>
+      {step===0&&<>
+        {err&&<div style={{background:"rgba(227,6,19,.12)",border:"1px solid rgba(227,6,19,.4)",borderRadius:10,padding:"10px 12px",fontSize:12,color:"#ff6b6b",marginBottom:12}}>{err}</div>}
+        {intro&&<Card style={{background:"rgba(227,6,19,.06)",marginBottom:14}} c={<div style={{fontSize:12,color:"rgba(255,255,255,.6)",lineHeight:1.5}}>{intro}</div>}/>}
+        {form}
+        <Btn red c="▶ Run Agent" onClick={run} disabled={!canRun} style={{width:"100%",padding:13,marginTop:4}}/>
+      </>}
+      {step===1&&<Spin label="ANALYSING…"/>}
+      {step===2&&<>
+        <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:14,
+          whiteSpace:"pre-wrap",fontSize:13,color:"#ddd",lineHeight:1.7,marginBottom:12}}>{res}</div>
+        {chainBtns&&<div style={{background:"rgba(227,6,19,.07)",border:`1px solid rgba(227,6,19,.25)`,borderRadius:12,padding:12,marginBottom:12}}>
+          <div style={{fontSize:11,color:RED,fontWeight:700,marginBottom:8}}>⚡ CONTINUE WORKFLOW</div>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{chainBtns}</div>
+        </div>}
+        <Btn red c={resetLabel||"Run Again"} onClick={reset} style={{width:"100%"}}/>
+      </>}
+    </div>
+  </div>;
+}
+
+// 1. Fault Diagnosis
+function DiagAgent({ctx,setCtx,onChain}){
+  const [brand,setBrand]=useState(ctx?.diagBrand||"");
+  const [model,setModel]=useState(ctx?.diagModel||"");
+  const [equip,setEquip]=useState(ctx?.diagEquip||"");
+  const [fault,setFault]=useState("");
+  const [ref,setRef]=useState(ctx?.diagRef||"");
+  const [age,setAge]=useState("");
+  const [symp,setSymp]=useState(ctx?.diagSymp||"");
+  return <AgentScreen
+    title="FAULT DIAGNOSIS" sub="AI DIAGNOSTIC AGENT"
+    intro="🤖 Describe the fault — the AI ranks causes by probability and gives a full diagnostic procedure."
+    canRun={!!symp.trim()}
+    onRun={async()=>{
+      const r=await ai(
+        "You are an expert HVAC fault diagnosis agent for JLL MTS. Give structured ranked diagnosis with probability percentages. Flag safety items with ⚠️. Be concise and field-ready.",
+        `Diagnose this HVAC fault:\nEquipment: ${equip||"Unknown"} - ${brand||"Unknown"} ${model||""}\nFault code: ${fault||"None"}\nRefrigerant: ${ref||"Unknown"}\nAge: ${age||"Unknown"} years\nSymptoms: ${symp}\n\nProvide:\n1) TOP 3 CAUSES ranked by probability %\n2) IMMEDIATE on-site checks\n3) STEP-BY-STEP diagnostic procedure\n4) ⚠️ SAFETY notes\n5) When to escalate`
+      );
+      if(setCtx)setCtx({diagBrand:brand,diagModel:model,diagEquip:equip,diagRef:ref,diagSymp:symp});
+      return r;
+    }}
+    chainBtns={onChain&&<>
+      <button onClick={()=>onChain("safety")} style={{background:RED,border:"none",borderRadius:8,padding:"8px 12px",cursor:"pointer",fontSize:12,fontWeight:700,color:"#fff"}}>🦺 Safety →</button>
+      <button onClick={()=>onChain("parts")} style={{background:"#222",border:`1px solid ${BORDER}`,borderRadius:8,padding:"8px 12px",cursor:"pointer",fontSize:12,fontWeight:700,color:"#fff"}}>🔩 Parts →</button>
+      <button onClick={()=>onChain("report")} style={{background:"#222",border:`1px solid ${BORDER}`,borderRadius:8,padding:"8px 12px",cursor:"pointer",fontSize:12,fontWeight:700,color:"#fff"}}>📄 Report →</button>
+    </>}
+    form={<>
+      <Sel label="EQUIPMENT TYPE" val={equip} set={setEquip} opts={["RTU","Chiller","Split System","VRF/VRV","Air Handler","Heat Pump","Mini-Split","FCU","Boiler"]}/>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+        <Sel label="BRAND" val={brand} set={setBrand} opts={BRANDS}/>
+        <Inp label="MODEL #" val={model} set={setModel} ph="e.g. 48XC024"/>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+        <Inp label="FAULT CODE" val={fault} set={setFault} ph="e.g. E79"/>
+        <Sel label="REFRIGERANT" val={ref} set={setRef} opts={REFS}/>
+      </div>
+      <Inp label="UNIT AGE (years)" val={age} set={setAge} ph="e.g. 7" type="number"/>
+      <Inp label="SYMPTOMS *" val={symp} set={setSymp} ph="Describe what the unit is doing…" rows={4}/>
+    </>}
+  />;
+}
+
+// 2. Predictive Maintenance
+function PredAgent(){
+  const [equip,setEquip]=useState("");
+  const [brand,setBrand]=useState("");
+  const [age,setAge]=useState("");
+  const [hours,setHours]=useState("");
+  const [obs,setObs]=useState([]);
+  const [issues,setIssues]=useState("");
+  const OBS=["Unusual noise","High amps","Frequent cycling","Reduced airflow","Ice formation","Oil stains","Vibration","Longer run times","Refrigerant loss","Delayed startup"];
+  const tog=o=>setObs(p=>p.includes(o)?p.filter(x=>x!==o):[...p,o]);
+  return <AgentScreen
+    title="PREDICTIVE MAINT." sub="FAILURE PREDICTION AGENT"
+    intro="📈 Analyses equipment age, runtime, and observations to predict what will fail next."
+    canRun={!!equip}
+    onRun={()=>ai(
+      "You are an expert HVAC predictive maintenance agent. Predict component failures by risk level. Be specific about which components and timeframes.",
+      `Predictive maintenance analysis:\nEquipment: ${equip} - ${brand||"Unknown"}\nAge: ${age||"Unknown"} years\nRun hours: ${hours||"Unknown"}\nObservations: ${obs.join(", ")||"None"}\nKnown issues: ${issues||"None"}\n\nProvide:\n1) 🔴 IMMEDIATE failures (within 30 days)\n2) 🟡 SHORT-TERM risks (3 months)\n3) 🟢 SCHEDULE soon (6 months)\n4) Component health ratings\n5) Recommended PM actions\n6) 12-month PM schedule`
+    )}
+    onReset={()=>setObs([])}
+    form={<>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+        <Sel label="EQUIPMENT" val={equip} set={setEquip} opts={["RTU","Chiller","Split System","VRF/VRV","Air Handler","Heat Pump","FCU","Cooling Tower"]}/>
+        <Sel label="BRAND" val={brand} set={setBrand} opts={BRANDS}/>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+        <Inp label="AGE (years)" val={age} set={setAge} ph="e.g. 12" type="number"/>
+        <Inp label="RUN HOURS" val={hours} set={setHours} ph="e.g. 35000" type="number"/>
+      </div>
+      <div style={{marginBottom:12}}>
+        <div style={{fontSize:11,color:"rgba(255,255,255,.5)",fontWeight:700,marginBottom:8,letterSpacing:".08em"}}>OBSERVATIONS</div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+          {OBS.map(o=><button key={o} onClick={()=>tog(o)} style={{
+            background:obs.includes(o)?RED:"#1a1a1a",border:`1px solid ${obs.includes(o)?RED:BORDER}`,
+            borderRadius:20,padding:"5px 11px",cursor:"pointer",fontSize:11,color:"#fff",
+            fontWeight:obs.includes(o)?700:400}}>{o}</button>)}
+        </div>
+      </div>
+      <Inp label="KNOWN ISSUES" val={issues} set={setIssues} ph="Recurring problems…" rows={2}/>
+    </>}
+  />;
+}
+
+// 3. Parts Finder
+function PartsAgent({ctx}){
+  const [brand,setBrand]=useState(ctx?.diagBrand||"");
+  const [model,setModel]=useState(ctx?.diagModel||"");
+  const [part,setPart]=useState("");
+  const [desc,setDesc]=useState("");
+  const PARTS=["Run Capacitor","Start Capacitor","Contactor","Condenser Fan Motor","Evaporator Fan Motor","Compressor","TXV / Expansion Valve","Filter Drier","Control Board","Thermostat","Pressure Switch (High)","Pressure Switch (Low)","Gas Valve","Reversing Valve","Other"];
+  return <AgentScreen
+    title="PARTS FINDER" sub="OEM + COMPATIBLE PARTS"
+    intro="🔩 Enter the failed part — returns OEM and compatible alternatives with specs."
+    canRun={!!part}
+    onRun={()=>ai(
+      "You are an expert HVAC parts specialist for JLL MTS. Provide OEM and compatible part numbers with specifications. Real part numbers when possible.",
+      `Find replacement parts:\nBrand: ${brand||"Unknown"} Model: ${model||"Unknown"}\nFailed part: ${part}\nDetails: ${desc||"None"}\n\nProvide:\n1) OEM part number and specs\n2) 2-3 compatible alternatives\n3) Key specs to verify\n4) Suppliers (Johnstone, Wesco, Grainger)\n5) Install notes\n6) ⚠️ Warnings`
+    )}
+    form={<>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+        <Sel label="BRAND" val={brand} set={setBrand} opts={BRANDS}/>
+        <Inp label="MODEL #" val={model} set={setModel} ph="Optional"/>
+      </div>
+      <Sel label="FAILED PART *" val={part} set={setPart} opts={PARTS}/>
+      <Inp label="ADDITIONAL DETAILS" val={desc} set={setDesc} ph="Known specs, voltage, µF…" rows={2}/>
+    </>}
+  />;
+}
+
+// 4. Refrigerant Calc
+function RefAgent(){
+  const [ref,setRef]=useState("");
+  const [equip,setEquip]=useState("");
+  const [sp,setSp]=useState("");const [dp,setDp]=useState("");
+  const [st,setSt]=useState("");const [lt,setLt]=useState("");const [at,setAt]=useState("");
+  return <AgentScreen
+    title="REFRIGERANT CALC" sub="SUPERHEAT · SUBCOOLING · CHARGE"
+    intro="🧊 Enter pressures and temps — the agent calculates superheat, subcooling, and recommends charge action."
+    canRun={!!ref&&(sp!==""||st!=="")}
+    onRun={()=>ai(
+      "You are an expert HVAC refrigerant charging agent. Show calculations clearly with target ranges. Include EPA 608 compliance notes.",
+      `Refrigerant calculation:\nRefrigerant: ${ref}\nEquipment: ${equip||"Unknown"}\nSuction pressure: ${sp||"Unknown"} psig\nDischarge pressure: ${dp||"Unknown"} psig\nSuction line temp: ${st||"Unknown"}°F\nLiquid line temp: ${lt||"Unknown"}°F\nAmbient: ${at||"Unknown"}°F\n\nCalculate:\n1) Saturation temps from pressures\n2) Actual superheat + target + assessment\n3) Actual subcooling + target + assessment\n4) Charge assessment (under/over/correct)\n5) Recommended action with estimated amount\n6) ⚠️ EPA 608 notes`
+    )}
+    form={<>
+      <Sel label="REFRIGERANT *" val={ref} set={setRef} opts={REFS}/>
+      <Sel label="EQUIPMENT" val={equip} set={setEquip} opts={["RTU","Split System","Heat Pump","Chiller","VRF/VRV","Mini-Split"]}/>
+      <div style={{background:"#1a1a1a",borderRadius:10,padding:12,marginBottom:12}}>
+        <div style={{fontSize:11,color:RED,fontWeight:700,marginBottom:10}}>PRESSURES (psig)</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+          <Inp label="SUCTION" val={sp} set={setSp} ph="e.g. 130" type="number"/>
+          <Inp label="DISCHARGE" val={dp} set={setDp} ph="e.g. 380" type="number"/>
+        </div>
+      </div>
+      <div style={{background:"#1a1a1a",borderRadius:10,padding:12,marginBottom:12}}>
+        <div style={{fontSize:11,color:RED,fontWeight:700,marginBottom:10}}>TEMPS (°F)</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+          <Inp label="SUCTION LINE" val={st} set={setSt} ph="e.g. 55" type="number"/>
+          <Inp label="LIQUID LINE" val={lt} set={setLt} ph="e.g. 90" type="number"/>
+        </div>
+        <Inp label="AMBIENT" val={at} set={setAt} ph="e.g. 95" type="number"/>
+      </div>
+    </>}
+  />;
+}
+
+// 5. Safety Briefing
+function SafetyAgent({ctx}){
+  const [job,setJob]=useState("");
+  const [equip,setEquip]=useState(ctx?.diagEquip||"");
+  const [ref,setRef]=useState(ctx?.diagRef||"");
+  const [loc,setLoc]=useState("");
+  const [haz,setHaz]=useState([]);
+  const JOBS=["Fault Diagnosis","Electrical Work","Refrigerant Handling","Compressor Replacement","Coil Cleaning","Control Board Replacement","Gas Heat Repair","Rooftop Access","Preventive Maintenance"];
+  const LOCS=["Rooftop","Basement / Plant Room","Electrical Room","Confined Space","Outdoors","Indoor – Occupied"];
+  const HAZS=["Electrical >50V","Refrigerant present","Gas / flame","Height >6ft","Confined space","Occupied building","Working alone","Extreme heat"];
+  const tog=h=>setHaz(p=>p.includes(h)?p.filter(x=>x!==h):[...p,h]);
+  return <AgentScreen
+    title="SAFETY BRIEFING" sub="PRE-JOB SAFETY AGENT"
+    intro="🦺 Generates task-specific PPE, LOTO procedure, and hazard checklist before you start."
+    canRun={!!job}
+    onRun={()=>ai(
+      "You are an expert HVAC safety officer for JLL MTS. Generate thorough task-specific safety briefings covering OSHA, NFPA 70E, and EPA 608 requirements. Be specific about exact PPE items with ratings and standards.",
+      `Pre-job safety briefing:\nJob: ${job}\nEquipment: ${equip||"Not specified"}\nLocation: ${loc||"Not specified"}\nRefrigerant: ${ref||"Not specified"}\nAdditional hazards: ${haz.join(", ")||"None"}\n\nGenerate this exact structure:\n\n⚠️ CRITICAL SAFETY WARNINGS\n(2-3 top hazards for this specific job)\n\n🦺 REQUIRED PPE - JOB SPECIFIC\nList every item the tech must wear, with ratings/standards. Cover:\n- Head/eye protection (safety glasses ANSI Z87.1, face shield if needed)\n- Hand protection (cut-resistant, electrical-rated, cryogenic for refrigerant — specify which)\n- Foot protection (steel-toe ASTM F2413, slip-resistant for rooftop)\n- Hearing protection (if equipment >85 dB)\n- High-vis vest (rooftop, occupied building)\n- Arc flash gear (NFPA 70E Cat 2 for electrical work — specify cal/cm² rating)\n- Respiratory protection (refrigerant exposure, dust)\n- Fall protection (>6ft height — harness, lanyard, anchor point)\n- Body protection (long sleeves, FR clothing for electrical)\n\n🔐 LOTO PROCEDURE\n(Step-by-step for THIS equipment)\n\n☢️ REFRIGERANT SAFETY (if applicable)\n\n⚡ ELECTRICAL SAFETY\n\n✅ PRE-JOB CHECKLIST (8-10 items)\n\n📞 EMERGENCY RESPONSE`
+    )}
+    onReset={()=>setHaz([])}
+    form={<>
+      {(ctx?.diagEquip||ctx?.diagRef)&&<Card style={{background:"rgba(39,174,96,.08)",border:"1px solid rgba(39,174,96,.25)",marginBottom:12}} c={<div style={{fontSize:11,color:"#27AE60"}}>⚡ Pre-filled from Diagnosis: {[ctx?.diagEquip,ctx?.diagRef].filter(Boolean).join(" · ")}</div>}/>}
+      <Sel label="JOB TYPE *" val={job} set={setJob} opts={JOBS}/>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+        <Sel label="EQUIPMENT" val={equip} set={setEquip} opts={["RTU","Chiller","Split System","VRF/VRV","Air Handler","Heat Pump","FCU","Boiler"]}/>
+        <Sel label="LOCATION" val={loc} set={setLoc} opts={LOCS}/>
+      </div>
+      <Sel label="REFRIGERANT" val={ref} set={setRef} opts={REFS}/>
+      <div style={{marginBottom:12}}>
+        <div style={{fontSize:11,color:"rgba(255,255,255,.5)",fontWeight:700,marginBottom:8}}>HAZARDS</div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+          {HAZS.map(h=><button key={h} onClick={()=>tog(h)} style={{
+            background:haz.includes(h)?RED:"#1a1a1a",border:`1px solid ${haz.includes(h)?RED:BORDER}`,
+            borderRadius:20,padding:"5px 11px",cursor:"pointer",fontSize:11,color:"#fff",
+            fontWeight:haz.includes(h)?700:400}}>{h}</button>)}
+        </div>
+      </div>
+    </>}
+  />;
+}
+
+// 6. Service Report
+function ReportAgent({ctx,profile}){
+  const [tech,setTech]=useState(profile?.name||"");
+  const [site,setSite]=useState("");
+  const [unit,setUnit]=useState(ctx?.diagModel||"");
+  const [date,setDate]=useState(new Date().toISOString().split("T")[0]);
+  const [work,setWork]=useState(ctx?.diagSymp?"Fault: "+ctx.diagSymp:"");
+  const [outcome,setOutcome]=useState("Completed");
+  return <AgentScreen
+    title="SERVICE REPORT" sub="PROFESSIONAL REPORT AGENT"
+    intro="📄 Auto-imports your work and generates a professional report ready to send to a client."
+    canRun={!!work.trim()}
+    onRun={()=>ai(
+      "You are a professional service report writer for JLL MTS. Generate clear professional reports suitable for facilities managers and clients.",
+      `Generate service report:\nTechnician: ${tech||"Unknown"}\nSite: ${site||"Unknown"}\nUnit: ${unit||"Unknown"}\nDate: ${date}\nWork: ${work}\nOutcome: ${outcome}\n\nGenerate a complete professional report including: header, fault description, work performed, test results, outcome, recommendations, and sign-off.`
+    )}
+    form={<>
+      {ctx?.diagSymp&&<Card style={{background:"rgba(39,174,96,.08)",border:"1px solid rgba(39,174,96,.25)",marginBottom:12}} c={<div style={{fontSize:11,color:"#27AE60"}}>⚡ Pre-filled from Diagnosis</div>}/>}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+        <Inp label="TECHNICIAN" val={tech} set={setTech} ph="Your name"/>
+        <Inp label="DATE" val={date} set={setDate} type="date"/>
+      </div>
+      <Inp label="SITE / ADDRESS" val={site} set={setSite} ph="Building name"/>
+      <Inp label="UNIT / ASSET" val={unit} set={setUnit} ph="Unit ID, model"/>
+      <Inp label="WORK PERFORMED *" val={work} set={setWork} ph="Describe what you did…" rows={4}/>
+      <Sel label="OUTCOME" val={outcome} set={setOutcome} opts={["Completed","Pending Parts","Requires Follow-up","Monitor"]}/>
+    </>}
+  />;
+}
+
+function AgentsHub({onSel,onHome}){
+  const A=[
+    {id:"diag",i:"🔍",c:RED,t:"Fault Diagnosis",d:"Ranks causes by probability with full procedure"},
+    {id:"predict",i:"📈",c:"#9B59B6",t:"Predictive Maintenance",d:"Predicts failures before they happen"},
+    {id:"parts",i:"🔩",c:"#E67E22",t:"Parts Finder",d:"OEM + compatible parts with specs"},
+    {id:"refcalc",i:"🧊",c:"#2980B9",t:"Refrigerant Calc",d:"Superheat, subcooling, charge"},
+    {id:"safety",i:"🦺",c:"#F39C12",t:"Safety Briefing",d:"Task-specific PPE + LOTO checklist"},
+    {id:"report",i:"📄",c:"#27AE60",t:"Service Report",d:"Professional report ready to send"},
+  ];
+  return <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+    <div style={{background:DARK,borderBottom:`3px solid ${RED}`,padding:"12px 16px",display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
+      <button onClick={onHome} aria-label="Home" style={{background:"rgba(255,255,255,.08)",border:"none",borderRadius:8,padding:"6px 12px",color:"#fff",fontSize:18,cursor:"pointer"}}>🏠</button>
+      <div>
+        <div style={{fontSize:17,fontWeight:800,color:"#fff"}}>AI AGENTS</div>
+        <div style={{fontSize:11,color:RED,fontWeight:600,marginTop:2}}>6 SPECIALIST AGENTS</div>
+      </div>
+    </div>
+    <div style={{flex:1,overflowY:"auto",padding:14}}>
+      <div style={{fontSize:12,color:"rgba(255,255,255,.4)",lineHeight:1.5,marginBottom:14}}>Each agent delivers a complete structured result end-to-end.</div>
+      {A.map(a=><button key={a.id} onClick={()=>onSel(a.id)} style={{
+        width:"100%",background:CARD,border:`1px solid rgba(227,6,19,.15)`,borderRadius:14,
+        padding:14,marginBottom:10,cursor:"pointer",display:"flex",alignItems:"center",
+        gap:12,textAlign:"left",borderLeft:`4px solid ${a.c}`}}>
+        <div style={{width:44,height:44,borderRadius:11,background:a.c,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{a.i}</div>
+        <div>
+          <div style={{fontSize:14,fontWeight:700,color:"#fff",marginBottom:3}}>{a.t}</div>
+          <div style={{fontSize:11,color:"rgba(255,255,255,.4)"}}>{a.d}</div>
+        </div>
+      </button>)}
+    </div>
+  </div>;
+}
+
+// ── CHAT ─────────────────────────────────────────────────────────────────
+function ChatList({chats,onOpen,onCreate,onDel}){
+  return <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+    <div style={{background:DARK,borderBottom:`3px solid ${RED}`,padding:"14px 16px",flexShrink:0}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+        <div>
+          <div style={{fontSize:18,fontWeight:800,color:"#fff"}}>AI CHAT</div>
+          <div style={{fontSize:11,color:RED,fontWeight:600,marginTop:1}}>HVAC FIELD ASSISTANT</div>
+        </div>
+        <Btn red c="+ New Job" onClick={onCreate} style={{padding:"9px 16px",fontSize:13}}/>
+      </div>
+      <button onClick={onCreate} style={{
+        width:"100%",background:"rgba(227,6,19,.1)",border:`1px solid rgba(227,6,19,.3)`,
+        borderRadius:10,padding:"10px 14px",cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:10}}>
+        <span style={{fontSize:18}}>💬</span>
+        <span style={{fontSize:13,color:"rgba(255,255,255,.5)"}}>Ask anything about HVAC…</span>
+      </button>
+    </div>
+    <div style={{flex:1,overflowY:"auto",padding:14}}>
+      {chats.length===0&&<div style={{textAlign:"center",padding:"40px 20px"}}>
+        <div style={{fontSize:40,marginBottom:12}}>🔧</div>
+        <div style={{fontSize:15,fontWeight:700,color:"#fff",marginBottom:6}}>Your expert is ready</div>
+        <div style={{fontSize:13,color:"rgba(255,255,255,.4)",lineHeight:1.6,marginBottom:20}}>Fault diagnosis, refrigerant charging, part numbers, safety checklists — tap New Job to start.</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+          {[
+            {i:"🔍",t:"Diagnose a fault"},
+            {i:"🧊",t:"Check refrigerant charge"},
+            {i:"⚡",t:"Electrical troubleshooting"},
+            {i:"🦺",t:"Safety & PPE guidance"},
+          ].map(q=><button key={q.t} onClick={onCreate} style={{
+            background:CARD,border:`1px solid ${BORDER}`,borderRadius:10,padding:"12px 10px",
+            cursor:"pointer",textAlign:"left",fontSize:12,color:"rgba(255,255,255,.65)",lineHeight:1.4}}>
+            <span style={{fontSize:18,display:"block",marginBottom:4}}>{q.i}</span>{q.t}
+          </button>)}
+        </div>
+      </div>}
+      {chats.length>0&&<div style={{fontSize:11,color:"rgba(255,255,255,.3)",fontWeight:700,letterSpacing:".08em",marginBottom:10}}>RECENT JOBS</div>}
+      {chats.map(c=>{
+        const last=c.messages?.[c.messages.length-1];
+        return <div key={c.id} onClick={()=>onOpen(c.id)} style={{
+          background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,
+          padding:"12px 14px",marginBottom:8,cursor:"pointer",display:"flex",alignItems:"center",gap:12}}>
+          <div style={{width:40,height:40,background:`rgba(227,6,19,.15)`,border:`1px solid rgba(227,6,19,.3)`,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>
+            {last?.role==="assistant"?"🔧":"💬"}
+          </div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:13,fontWeight:700,color:"#fff",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",marginBottom:3}}>{c.title}</div>
+            {last&&<div style={{fontSize:11,color:"rgba(255,255,255,.35)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
+              {last.role==="assistant"?"🔧 ":"You: "}{last.content.slice(0,60)}{last.content.length>60?"…":""}
+            </div>}
+            <div style={{fontSize:10,color:"rgba(255,255,255,.25)",marginTop:2}}>{ago(c.updatedAt)} ago · {c.messages?.length||0} messages</div>
+          </div>
+          <button onClick={e=>{e.stopPropagation();onDel(c.id);}} style={{background:"none",border:"none",color:"rgba(255,255,255,.2)",cursor:"pointer",fontSize:18,padding:"4px 8px",flexShrink:0}}>×</button>
+        </div>;
+      })}
+    </div>
+  </div>;
+}
+
+function ChatConvo({chat,onBack,onSend,busy}){
+  const [text,setText]=useState("");
+  const [copied,setCopied]=useState(null);
+  const endRef=useRef(null);
+  useEffect(()=>{endRef.current?.scrollIntoView({behavior:"smooth"});},[chat?.messages,busy]);
+  const isComposing=useRef(false);
+  const send=()=>{if(text.trim()&&!busy){onSend(text.trim());setText("");}};
+  const handleKey=e=>{
+    if(e.key==="Enter"&&!e.shiftKey&&!isComposing.current){e.preventDefault();send();}
+  };
+  function copyMsg(content,idx){
+    navigator.clipboard?.writeText(content).then(()=>{setCopied(idx);setTimeout(()=>setCopied(null),1500);});
+  }
+  const QUICK=[
+    {i:"🔍",t:"Diagnose fault",p:"I have a fault on an HVAC unit. Let me describe it and you help diagnose."},
+    {i:"🧊",t:"Refrigerant charge",p:"I need help checking the refrigerant charge. Walk me through superheat and subcooling."},
+    {i:"⚡",t:"Electrical issue",p:"I'm troubleshooting an electrical problem. Help me work through it step by step."},
+    {i:"🦺",t:"Safety checklist",p:"What PPE and safety steps do I need before starting this job?"},
+    {i:"🔩",t:"Find a part",p:"I need to find a replacement part. What information do you need?"},
+    {i:"📄",t:"Write report",p:"Help me write a service report for the job I just completed."},
+  ];
+  const hasMessages=chat?.messages?.length>0;
+  return <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+    {/* Header */}
+    <div style={{background:DARK,borderBottom:`3px solid ${RED}`,padding:"10px 14px",display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
+      <button onClick={onBack} style={{background:"rgba(255,255,255,.08)",border:"none",borderRadius:8,padding:"6px 12px",color:"#fff",fontSize:18,cursor:"pointer"}}>←</button>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{fontSize:14,fontWeight:700,color:"#fff",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{chat?.title||"New Job"}</div>
+        <div style={{fontSize:10,color:RED,fontWeight:600,marginTop:1}}>JLL MTS AI ASSISTANT</div>
+      </div>
+      {hasMessages&&<div style={{fontSize:10,color:"rgba(255,255,255,.3)"}}>{chat.messages.length} msg{chat.messages.length!==1?"s":""}</div>}
+    </div>
+
+    {/* Messages */}
+    <div style={{flex:1,overflowY:"auto",padding:14,background:BG}}>
+
+      {/* Empty state — quick prompts */}
+      {!hasMessages&&<>
+        <div style={{textAlign:"center",padding:"20px 0 16px"}}>
+          <div style={{width:52,height:52,background:`rgba(227,6,19,.15)`,border:`1px solid rgba(227,6,19,.3)`,borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,margin:"0 auto 10px"}}>🔧</div>
+          <div style={{fontSize:14,fontWeight:700,color:"#fff",marginBottom:4}}>MTS Field Assistant</div>
+          <div style={{fontSize:12,color:"rgba(255,255,255,.4)",lineHeight:1.6}}>Expert HVAC help in the field.<br/>Diagnosis, parts, safety, reports.</div>
+        </div>
+        <div style={{fontSize:11,color:"rgba(255,255,255,.35)",fontWeight:700,letterSpacing:".08em",marginBottom:8,textAlign:"center"}}>QUICK START</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:4}}>
+          {QUICK.map(q=><button key={q.t} onClick={()=>onSend(q.p)} style={{
+            background:CARD,border:`1px solid ${BORDER}`,borderRadius:10,padding:"11px 10px",
+            cursor:"pointer",textAlign:"left",lineHeight:1.4}}>
+            <span style={{fontSize:18,display:"block",marginBottom:5}}>{q.i}</span>
+            <span style={{fontSize:12,fontWeight:600,color:"#fff",display:"block",marginBottom:2}}>{q.t}</span>
+            <span style={{fontSize:10,color:"rgba(255,255,255,.4)",lineHeight:1.4}}>{q.p.slice(0,45)}…</span>
+          </button>)}
+        </div>
+      </>}
+
+      {/* Messages */}
+      {chat?.messages?.map((m,i)=><div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start",marginBottom:12,alignItems:"flex-end",gap:8}}>
+        {m.role==="assistant"&&<div style={{width:30,height:30,background:`rgba(227,6,19,.2)`,border:`1px solid rgba(227,6,19,.35)`,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0,marginBottom:2}}>🔧</div>}
+        <div style={{maxWidth:"82%",display:"flex",flexDirection:"column",alignItems:m.role==="user"?"flex-end":"flex-start"}}>
+          <div style={{
+            background:m.role==="user"?RED:CARD,
+            borderRadius:m.role==="user"?"14px 14px 4px 14px":"14px 14px 14px 4px",
+            padding:"10px 14px",fontSize:13,color:"#fff",lineHeight:1.65,whiteSpace:"pre-wrap",
+            boxShadow:m.role==="user"?"0 2px 8px rgba(227,6,19,.25)":"none"
+          }}>{m.content}</div>
+          {m.role==="assistant"&&<button onClick={()=>copyMsg(m.content,i)} style={{
+            background:"none",border:"none",color:copied===i?"#27AE60":"rgba(255,255,255,.2)",
+            cursor:"pointer",fontSize:10,padding:"4px 2px",marginTop:2,fontFamily:"inherit"}}>
+            {copied===i?"✓ Copied":"Copy"}
+          </button>}
+        </div>
+      </div>)}
+
+      {/* Typing indicator */}
+      {busy&&<div style={{display:"flex",alignItems:"flex-end",gap:8,marginBottom:12}}>
+        <div style={{width:30,height:30,background:`rgba(227,6,19,.2)`,border:`1px solid rgba(227,6,19,.35)`,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0}}>🔧</div>
+        <div style={{background:CARD,borderRadius:"14px 14px 14px 4px",padding:"12px 16px",display:"flex",gap:5,alignItems:"center"}}>
+          {[0,1,2].map(i=><div key={i} style={{width:7,height:7,borderRadius:"50%",background:RED,animation:"bounce 1.2s infinite",animationDelay:i*.2+"s"}}/>)}
+        </div>
+      </div>}
+      <div ref={endRef}/>
+    </div>
+
+    {/* Input */}
+    <div style={{background:DARK,borderTop:`2px solid rgba(227,6,19,.2)`,padding:"10px 12px",flexShrink:0}}>
+      {hasMessages&&!busy&&<div style={{display:"flex",gap:6,overflowX:"auto",marginBottom:8,paddingBottom:2}}>
+        {["More detail","Step by step","Parts needed","Safety check","Summarise"].map(s=><button key={s} onClick={()=>onSend(s)} style={{
+          background:"rgba(255,255,255,.06)",border:`1px solid ${BORDER}`,borderRadius:20,
+          padding:"4px 12px",cursor:"pointer",fontSize:11,color:"rgba(255,255,255,.6)",whiteSpace:"nowrap",fontFamily:"inherit"}}>{s}</button>)}
+      </div>}
+      <div style={{display:"flex",gap:8,alignItems:"flex-end"}}>
+        <textarea value={text} onChange={e=>setText(e.target.value)}
+          onKeyDown={handleKey}
+          onCompositionStart={()=>{isComposing.current=true;}}
+          onCompositionEnd={()=>{isComposing.current=false;}}
+          placeholder="Ask anything about HVAC…"
+          aria-label="Chat message input"
+          rows={text.split("\n").length>1?Math.min(text.split("\n").length,4):1}
+          style={{flex:1,background:"#1a1a1a",border:`1px solid ${BORDER}`,borderRadius:12,
+            padding:"10px 14px",color:"#fff",fontSize:14,outline:"none",fontFamily:"inherit",
+            resize:"none",lineHeight:1.5,maxHeight:100,overflowY:"auto"}}/>
+        <button onClick={send} disabled={!text.trim()||busy} style={{
+          background:(!text.trim()||busy)?"#222":RED,border:"none",borderRadius:12,
+          width:44,height:44,cursor:"pointer",color:"#fff",fontSize:20,
+          opacity:(!text.trim()||busy)?.5:1,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",
+          transition:"all .15s",boxShadow:(!text.trim()||busy)?"none":"0 2px 10px rgba(227,6,19,.4)"}}>▶</button>
+      </div>
+    </div>
+  </div>;
+}
+
+// ── DOCS ─────────────────────────────────────────────────────────────────
+const DOCS=[
+  {id:"d1",name:"Carrier 48/50XC Service Manual",brand:"Carrier",type:"Service Manual",tags:["RTU","fault codes","R-410A"],
+   content:"Carrier 48/50XC RTU. R-410A. Fault codes: E79=High pressure lockout (check charge, condenser coil, fan motor). E31=Low pressure (check charge, filter, TXV). E8=Compressor over-temp. Electrical: 208/230V or 460V 3-phase. Startup: verify voltage ±10%, subcooling target 10-15°F at 95°F ambient."},
+  {id:"d2",name:"Trane YCD/YCH Fault Codes",brand:"Trane",type:"Fault Code Library",tags:["RTU","fault codes"],
+   content:"Trane YCD/YCH: 1=High pressure (check condenser airflow, charge). 2=Low pressure (check suction pressure, TXV, filter drier). 4=Compressor over-temp. 6=High discharge temp. 10=Loss of charge (check leaks)."},
+  {id:"d3",name:"Daikin VRV IV Commissioning",brand:"Daikin",type:"Commissioning",tags:["VRF","VRV","startup"],
+   content:"Daikin VRV IV: Power outdoor unit 12hr before startup for crankcase heaters. Test run via BRC1H52. Pressures: suction 100-180 psig, discharge 350-450 psig. Document: charge log, parameters at 30/60/90 min."},
+  {id:"d4",name:"R-410A Safety SOP",brand:"General",type:"JLL SOP",tags:["R-410A","safety","EPA 608","PPE"],
+   content:"R-410A handling: PPE: safety glasses, cryogenic gloves, long sleeves. EPA 608 certification required. Recover before opening system. Never heat cylinders. Store upright. Leak detection: electronic detector. Max leak rate 15% comfort cooling over 50 lbs."},
+  {id:"d5",name:"Low Voltage Control Wiring Reference",brand:"General",type:"Wiring Reference",tags:["controls","24V","thermostat"],
+   content:"Low voltage 24VAC: R=24V power, C=common, Y=cooling, W=heat, G=fan, O=rev valve cool, B=rev valve heat. Troubleshoot: 1) Check transformer 24-28VAC R-C. 2) Check fuse. 3) Verify R-C at thermostat. 4) Check shorts to ground. 5) Verify signals: R-G=fan, R-Y=compressor, R-W=heat. Common: shorted Y causes compressor lockout, open C causes intermittent."},
+];
+
+function Docs(){
+  const [view,setView]=useState("list");
+  const [doc,setDoc]=useState(null);
+  const [q,setQ]=useState("");const [ans,setAns]=useState("");const [busy,setBusy]=useState(false);
+  const [search,setSearch]=useState("");
+  const filtered=DOCS.filter(d=>!search||[d.name,d.brand,d.type,...d.tags].join(" ").toLowerCase().includes(search.toLowerCase()));
+  async function askDoc(){
+    if(!q.trim())return;
+    setBusy(true);setAns("");
+    const r=await ai("You are an HVAC technical documentation expert. Answer precisely from the document provided.",
+      `Document: "${doc.name}"\nContent: ${doc.content}\n\nQuestion: ${q}`);
+    setAns(r);setBusy(false);
+  }
+  if(view==="read"&&doc)return <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+    <div style={{background:DARK,borderBottom:`3px solid ${RED}`,padding:"10px 14px",display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
+      <button onClick={()=>{setView("list");setAns("");setQ("");}} style={{background:"rgba(255,255,255,.08)",border:"none",borderRadius:8,padding:"6px 12px",color:"#fff",fontSize:18,cursor:"pointer"}}>←</button>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{fontSize:13,fontWeight:700,color:"#fff",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{doc.name}</div>
+        <div style={{fontSize:10,color:RED,fontWeight:600}}>{doc.brand} · {doc.type}</div>
+      </div>
+      <button onClick={()=>_nav.go&&_nav.go("home")} style={{background:"rgba(255,255,255,.08)",border:"none",borderRadius:8,padding:"6px 12px",color:"#fff",fontSize:18,cursor:"pointer"}}>🏠</button>
+    </div>
+    <div style={{flex:1,overflowY:"auto",padding:14}}>
+      <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:12}}>
+        {doc.tags.map(t=><span key={t} style={{background:"rgba(227,6,19,.12)",border:`1px solid rgba(227,6,19,.25)`,borderRadius:20,padding:"3px 10px",fontSize:10,color:RED,fontWeight:600}}>{t}</span>)}
+      </div>
+      <Card style={{marginBottom:14}} c={<>
+        <div style={{fontSize:10,color:"rgba(255,255,255,.3)",fontWeight:700,marginBottom:8}}>CONTENT</div>
+        <div style={{fontSize:13,color:"rgba(255,255,255,.75)",lineHeight:1.7}}>{doc.content}</div>
+      </>}/>
+      <Card style={{border:`1px solid rgba(227,6,19,.3)`}} c={<>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+          <div style={{width:32,height:32,background:RED,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>🤖</div>
+          <div>
+            <div style={{fontSize:13,fontWeight:700,color:"#fff"}}>Ask AI About This Document</div>
+            <div style={{fontSize:10,color:"rgba(255,255,255,.4)"}}>AI answers from this document specifically</div>
+          </div>
+        </div>
+        <div style={{marginBottom:10}}>
+          <div style={{fontSize:10,color:"rgba(255,255,255,.3)",marginBottom:6,fontWeight:600}}>QUICK QUESTIONS</div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+            {["What are the fault codes?","What PPE is required?","Startup steps?","Electrical specs?"].map(qk=><button key={qk} onClick={()=>{setQ(qk);}} style={{background:"#1a1a1a",border:`1px solid ${BORDER}`,borderRadius:20,padding:"5px 10px",cursor:"pointer",fontSize:10,color:"rgba(255,255,255,.7)"}}>{qk}</button>)}
+          </div>
+        </div>
+        <div style={{display:"flex",gap:8}}>
+          <input value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")askDoc();}}
+            placeholder="Ask a question…"
+            style={{flex:1,background:"#1a1a1a",border:`1px solid ${BORDER}`,borderRadius:10,padding:"10px 12px",color:"#fff",fontSize:13,outline:"none"}}/>
+          <button onClick={askDoc} disabled={!q.trim()||busy} style={{background:RED,border:"none",borderRadius:10,padding:"0 16px",cursor:"pointer",color:"#fff",fontWeight:700,fontSize:13,opacity:(!q.trim()||busy)?.4:1}}>{busy?"…":"Ask"}</button>
+        </div>
+        {busy&&<Spin label="Reading…"/>}
+        {ans&&<div style={{background:"rgba(227,6,19,.06)",border:`1px solid rgba(227,6,19,.2)`,borderRadius:10,padding:12,marginTop:10,fontSize:13,color:"#ddd",lineHeight:1.7,whiteSpace:"pre-wrap"}}>{ans}</div>}
+      </>}/>
+    </div>
+  </div>;
+  return <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+    <Hdr title="DOCUMENT LIBRARY" sub="MANUALS · FAULT CODES · SOPs" onHome={()=>_nav.go&&_nav.go("home")}/>
+    <div style={{flex:1,overflowY:"auto",padding:14}}>
+      <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Search…"
+        style={{width:"100%",background:"#1a1a1a",border:`1px solid ${BORDER}`,borderRadius:10,padding:"10px 12px",color:"#fff",fontSize:13,outline:"none",marginBottom:12,fontFamily:"inherit"}}/>
+      {filtered.map(d=><button key={d.id} onClick={()=>{setDoc(d);setView("read");}} style={{
+        width:"100%",background:CARD,border:`1px solid rgba(227,6,19,.12)`,borderRadius:12,
+        padding:12,marginBottom:8,cursor:"pointer",textAlign:"left"}}>
+        <div style={{fontSize:13,fontWeight:700,color:"#fff",marginBottom:5}}>{d.name}</div>
+        <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+          <span style={{background:RED,borderRadius:5,padding:"2px 8px",fontSize:10,color:"#fff",fontWeight:700}}>{d.type}</span>
+          <span style={{fontSize:11,color:"rgba(255,255,255,.4)",fontWeight:600}}>{d.brand}</span>
+          {d.tags.slice(0,3).map(t=><span key={t} style={{fontSize:9,background:"rgba(255,255,255,.06)",color:"rgba(255,255,255,.4)",borderRadius:10,padding:"2px 7px"}}>{t}</span>)}
+        </div>
+      </button>)}
+    </div>
+  </div>;
+}
+
+// ── PT CHART ─────────────────────────────────────────────────────────────
+const PT={
+  "R-410A":[[40,83],[50,102],[60,123],[70,147],[80,174],[90,205],[100,238],[110,275],[120,315]],
+  "R-22":[[20,37],[30,47],[40,59],[50,72],[60,87],[70,103],[80,121],[90,141],[100,163]],
+  "R-32":[[40,90],[50,111],[60,134],[70,160],[80,189],[90,221],[100,256],[110,294],[120,335]],
+  "R-454B":[[40,83],[50,102],[60,124],[70,148],[80,175],[90,205],[100,238],[110,274],[120,314]],
+  "R-407C":[[40,72],[50,89],[60,108],[70,129],[80,152],[90,178],[100,207],[110,238],[120,272]],
+  "R-134a":[[20,26],[30,35],[40,46],[50,59],[60,73],[70,90],[80,110],[90,132],[100,157]],
+};
+function PTChart(){
+  const [ref,setRef]=useState("R-410A");
+  const [temp,setTemp]=useState("");const [press,setPress]=useState("");
+  const [result,setResult]=useState(null);
+  function calc(){
+    const d=PT[ref];
+    if(temp!==""){
+      const t=parseFloat(temp);
+      if(isNaN(t)){setResult({type:"Error",output:"Invalid temperature"});return;}
+      // Clamp to table range
+      if(t<=d[0][0]){setResult({type:"Temp→Press",input:t+"°F",output:d[0][1].toFixed(1)+" psig"});return;}
+      if(t>=d[d.length-1][0]){setResult({type:"Temp→Press",input:t+"°F",output:d[d.length-1][1].toFixed(1)+" psig"});return;}
+      for(let i=0;i<d.length-1;i++){
+        if(t>=d[i][0]&&t<=d[i+1][0]){
+          const r=d[i][1]+(d[i+1][1]-d[i][1])*(t-d[i][0])/(d[i+1][0]-d[i][0]);
+          setResult({type:"Temp→Press",input:t+"°F",output:r.toFixed(1)+" psig"});return;
+        }
+      }
+    }
+    if(press!==""){
+      const p=parseFloat(press);
+      if(isNaN(p)){setResult({type:"Error",output:"Invalid pressure"});return;}
+      if(p<=d[0][1]){setResult({type:"Press→Temp",input:p+" psig",output:d[0][0].toFixed(1)+"°F"});return;}
+      if(p>=d[d.length-1][1]){setResult({type:"Press→Temp",input:p+" psig",output:d[d.length-1][0].toFixed(1)+"°F"});return;}
+      for(let i=0;i<d.length-1;i++){
+        if(p>=d[i][1]&&p<=d[i+1][1]){
+          const r=d[i][0]+(d[i+1][0]-d[i][0])*(p-d[i][1])/(d[i+1][1]-d[i][1]);
+          setResult({type:"Press→Temp",input:p+" psig",output:r.toFixed(1)+"°F"});return;
+        }
+      }
+    }
+    setResult({type:"Error",output:"Out of range"});
+  }
+  return <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+    <Hdr title="PT CHART" sub="PRESSURE-TEMPERATURE" onHome={()=>_nav.go&&_nav.go("home")}/>
+    <div style={{flex:1,overflowY:"auto",padding:14}}>
+      <Sel label="REFRIGERANT" val={ref} set={r=>{setRef(r);setResult(null);}} opts={Object.keys(PT)}/>
+      <Card style={{marginBottom:14}} c={<>
+        <div style={{fontSize:11,color:RED,fontWeight:700,marginBottom:12}}>ENTER ONE VALUE</div>
+        <Inp label="TEMPERATURE (°F)" val={temp} set={v=>{setTemp(v);setPress("");}} ph="e.g. 45" type="number"/>
+        <div style={{textAlign:"center",color:"rgba(255,255,255,.3)",fontSize:12,margin:"4px 0 12px"}}>— or —</div>
+        <Inp label="PRESSURE (psig)" val={press} set={v=>{setPress(v);setTemp("");}} ph="e.g. 130" type="number"/>
+        <Btn red c="Calculate" onClick={calc} disabled={!temp&&!press} style={{width:"100%",marginTop:4}}/>
+      </>}/>
+      {result&&<Card style={{background:result.type==="Error"?"rgba(227,6,19,.12)":"rgba(39,174,96,.12)",border:`1px solid ${result.type==="Error"?"rgba(227,6,19,.4)":"rgba(39,174,96,.4)"}`}} c={<>
+        <div style={{fontSize:12,color:"rgba(255,255,255,.4)",marginBottom:4}}>{ref} · {result.type}</div>
+        {result.input&&<div style={{fontSize:13,color:"rgba(255,255,255,.7)",marginBottom:4}}>Input: <strong style={{color:"#fff"}}>{result.input}</strong></div>}
+        <div style={{fontSize:22,fontWeight:900,color:result.type==="Error"?RED:"#27AE60"}}>{result.output}</div>
+      </>}/>}
+    </div>
+  </div>;
+}
+
+// ── NOTES ────────────────────────────────────────────────────────────────
+function Notes(){
+  const [notes,setNotes]=useState([]);
+  const [text,setText]=useState("");const [title,setTitle]=useState("");
+  useEffect(()=>{S.get("notes").then(r=>setNotes(JSON.parse(r.value))).catch(()=>{});},[]);
+  async function add(){
+    if(!text.trim())return;
+    const n=[{id:gid(),title:title||"Note",body:text,ts:Date.now()},...notes];
+    setNotes(n);setText("");setTitle("");
+    await S.set("notes",JSON.stringify(n));
+  }
+  async function del(id){
+    const n=notes.filter(x=>x.id!==id);setNotes(n);
+    await S.set("notes",JSON.stringify(n));
+  }
+  return <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+    <Hdr title="JOB NOTES" sub="FIELD NOTES" onHome={()=>_nav.go&&_nav.go("home")}/>
+    <div style={{flex:1,overflowY:"auto",padding:14}}>
+      <Card style={{marginBottom:14}} c={<>
+        <Inp label="TITLE" val={title} set={setTitle} ph="Optional"/>
+        <Inp label="NOTE" val={text} set={setText} ph="Write your note…" rows={3}/>
+        <Btn red c="+ Add Note" onClick={add} disabled={!text.trim()} style={{width:"100%"}}/>
+      </>}/>
+      {notes.length===0&&<div style={{textAlign:"center",padding:40,color:"rgba(255,255,255,.3)"}}>No notes yet</div>}
+      {notes.map(n=><Card key={n.id} c={<>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
+          <div style={{fontSize:13,fontWeight:700,color:"#fff"}}>{n.title}</div>
+          <div style={{display:"flex",gap:8,alignItems:"center"}}>
+            <div style={{fontSize:10,color:"rgba(255,255,255,.3)"}}>{ago(n.ts)} ago</div>
+            <button onClick={()=>del(n.id)} style={{background:"none",border:"none",color:"rgba(255,255,255,.25)",cursor:"pointer",fontSize:16}}>×</button>
+          </div>
+        </div>
+        <div style={{fontSize:12,color:"rgba(255,255,255,.65)",lineHeight:1.6}}>{n.body}</div>
+      </>}/>)}
+    </div>
+  </div>;
+}
+
+// ── MODELS ───────────────────────────────────────────────────────────────
+// ── EQUIPMENT LOG ─────────────────────────────────────────────────────────
+function EquipmentLog(){
+  const [sites,setSites]=useState([]);
+  const [view,setView]=useState("sites"); // sites | addSite | siteDetail | addEquip | equipDetail
+  const [activeSite,setActiveSite]=useState(null);
+  const [activeEquip,setActiveEquip]=useState(null);
+
+  // Site form
+  const [siteName,setSiteName]=useState("");
+  const [siteAddr,setSiteAddr]=useState("");
+  const [siteContact,setSiteContact]=useState("");
+
+  // Equipment form
+  const [eqBrand,setEqBrand]=useState("");
+  const [eqModel,setEqModel]=useState("");
+  const [eqSerial,setEqSerial]=useState("");
+  const [eqType,setEqType]=useState("");
+  const [eqLocation,setEqLocation]=useState("");
+  const [eqVoltage,setEqVoltage]=useState("");
+  const [eqRefrig,setEqRefrig]=useState("");
+  const [eqTonnage,setEqTonnage]=useState("");
+  const [eqFilterSize,setEqFilterSize]=useState("");
+  const [eqFilterQty,setEqFilterQty]=useState("");
+  const [eqFilterType,setEqFilterType]=useState("");
+  const [eqBeltSize,setEqBeltSize]=useState("");
+  const [eqBeltQty,setEqBeltQty]=useState("");
+  const [eqNotes,setEqNotes]=useState("");
+
+  useEffect(()=>{S.get("equip-log").then(r=>setSites(JSON.parse(r.value))).catch(()=>{});},[]); 
+
+  async function persist(updated){setSites(updated);await S.set("equip-log",JSON.stringify(updated));}
+
+  function resetEqForm(){setEqBrand("");setEqModel("");setEqSerial("");setEqType("");setEqLocation("");setEqVoltage("");setEqRefrig("");setEqTonnage("");setEqFilterSize("");setEqFilterQty("");setEqFilterType("");setEqBeltSize("");setEqBeltQty("");setEqNotes("");}
+
+  async function addSite(){
+    if(!siteName.trim())return;
+    const s={id:gid(),name:siteName,address:siteAddr,contact:siteContact,equipment:[],ts:Date.now()};
+    const updated=[s,...sites];
+    await persist(updated);
+    setSiteName("");setSiteAddr("");setSiteContact("");
+    setView("sites");
+  }
+
+  async function delSite(id){
+    await persist(sites.filter(s=>s.id!==id));
+  }
+
+  async function addEquip(){
+    if(!eqModel.trim()&&!eqBrand.trim())return;
+    const eq={id:gid(),brand:eqBrand,model:eqModel,serial:eqSerial,type:eqType,
+      location:eqLocation,voltage:eqVoltage,refrigerant:eqRefrig,tonnage:eqTonnage,
+      filterSize:eqFilterSize,filterQty:eqFilterQty,filterType:eqFilterType,
+      beltSize:eqBeltSize,beltQty:eqBeltQty,notes:eqNotes,ts:Date.now()};
+    const updated=sites.map(s=>s.id===activeSite.id?{...s,equipment:[eq,...s.equipment]}:s);
+    await persist(updated);
+    setActiveSite(updated.find(s=>s.id===activeSite.id));
+    resetEqForm();setView("siteDetail");
+  }
+
+  async function delEquip(siteId,eqId){
+    const updated=sites.map(s=>s.id===siteId?{...s,equipment:s.equipment.filter(e=>e.id!==eqId)}:s);
+    await persist(updated);
+    setActiveSite(updated.find(s=>s.id===siteId));
+    setView("siteDetail");
+  }
+
+  const ROW=(label,val)=>val?<div style={{display:"flex",gap:8,padding:"7px 0",borderBottom:`1px solid rgba(255,255,255,.05)`}}>
+    <div style={{fontSize:11,color:"rgba(255,255,255,.4)",fontWeight:700,minWidth:110,flexShrink:0}}>{label}</div>
+    <div style={{fontSize:12,color:"#ddd",flex:1,wordBreak:"break-word"}}>{val}</div>
+  </div>:null;
+
+  const SECTION=(title,color=RED)=><div style={{fontSize:10,color:color,fontWeight:700,letterSpacing:".1em",marginTop:14,marginBottom:6,paddingBottom:4,borderBottom:`1px solid ${color}33`}}>{title}</div>;
+
+  // ── SITE LIST ──
+  if(view==="sites") return <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+    <Hdr title="EQUIPMENT LOG" sub="BY SITE / ADDRESS" onHome={()=>_nav.go&&_nav.go("home")}/>
+    <div style={{flex:1,overflowY:"auto",padding:14}}>
+      <Btn red c="+ Add Site" onClick={()=>setView("addSite")} style={{width:"100%",marginBottom:14}}/>
+      {sites.length===0&&<div style={{textAlign:"center",padding:40,color:"rgba(255,255,255,.3)"}}>
+        <div style={{fontSize:32,marginBottom:8}}>🏢</div>
+        <div>No sites yet. Add a site to start logging equipment.</div>
+      </div>}
+      {sites.map(s=><button key={s.id} onClick={()=>{setActiveSite(s);setView("siteDetail");}} style={{
+        width:"100%",background:CARD,border:`1px solid ${BORDER}`,borderRadius:14,
+        padding:14,marginBottom:10,cursor:"pointer",textAlign:"left",display:"block"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:14,fontWeight:700,color:"#fff",marginBottom:3}}>{s.name}</div>
+            {s.address&&<div style={{fontSize:11,color:"rgba(255,255,255,.45)",marginBottom:2}}>📍 {s.address}</div>}
+            {s.contact&&<div style={{fontSize:11,color:"rgba(255,255,255,.35)"}}>👤 {s.contact}</div>}
+          </div>
+          <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:4,marginLeft:8,flexShrink:0}}>
+            <div style={{background:`rgba(227,6,19,.15)`,border:`1px solid ${BORDER}`,borderRadius:20,padding:"2px 10px",fontSize:11,color:RED,fontWeight:700}}>{s.equipment.length} unit{s.equipment.length!==1?"s":""}</div>
+            <button onClick={e=>{e.stopPropagation();delSite(s.id);}} style={{background:"none",border:"none",color:"rgba(255,255,255,.2)",cursor:"pointer",fontSize:16,padding:"2px 4px"}}>×</button>
+          </div>
+        </div>
+      </button>)}
+    </div>
+  </div>;
+
+  // ── ADD SITE ──
+  if(view==="addSite") return <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+    <Hdr title="ADD SITE" sub="NEW LOCATION" onBack={()=>setView("sites")}/>
+    <div style={{flex:1,overflowY:"auto",padding:14}}>
+      <Inp label="SITE NAME *" val={siteName} set={setSiteName} ph="e.g. Tower One, 123 Main St"/>
+      <Inp label="ADDRESS" val={siteAddr} set={setSiteAddr} ph="Full address"/>
+      <Inp label="CONTACT / MANAGER" val={siteContact} set={setSiteContact} ph="Name and phone"/>
+      <Btn red c="Save Site" onClick={addSite} disabled={!siteName.trim()} style={{width:"100%",marginTop:4}}/>
+    </div>
+  </div>;
+
+  // ── SITE DETAIL ──
+  if(view==="siteDetail"&&activeSite) return <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+    <Hdr title={activeSite.name} sub={activeSite.address||"SITE EQUIPMENT"} onBack={()=>setView("sites")}/>
+    <div style={{flex:1,overflowY:"auto",padding:14}}>
+      {activeSite.contact&&<div style={{fontSize:12,color:"rgba(255,255,255,.4)",marginBottom:12}}>👤 {activeSite.contact}</div>}
+      <Btn red c="+ Add Equipment" onClick={()=>{resetEqForm();setView("addEquip");}} style={{width:"100%",marginBottom:14}}/>
+      {activeSite.equipment.length===0&&<div style={{textAlign:"center",padding:30,color:"rgba(255,255,255,.3)"}}>
+        <div style={{fontSize:28,marginBottom:8}}>🔧</div>
+        <div>No equipment logged yet.</div>
+      </div>}
+      {activeSite.equipment.map(eq=><button key={eq.id} onClick={()=>{setActiveEquip(eq);setView("equipDetail");}} style={{
+        width:"100%",background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,
+        padding:12,marginBottom:8,cursor:"pointer",textAlign:"left",
+        borderLeft:`3px solid ${RED}`}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:13,fontWeight:700,color:"#fff"}}>{eq.brand} {eq.model}</div>
+            <div style={{display:"flex",gap:8,marginTop:3,flexWrap:"wrap"}}>
+              {eq.type&&<span style={{fontSize:10,background:"rgba(227,6,19,.12)",color:RED,borderRadius:4,padding:"1px 7px",fontWeight:700}}>{eq.type}</span>}
+              {eq.location&&<span style={{fontSize:10,color:"rgba(255,255,255,.35)"}}>📍 {eq.location}</span>}
+              {eq.serial&&<span style={{fontSize:10,color:"rgba(255,255,255,.3)"}}>S/N {eq.serial}</span>}
+            </div>
+            <div style={{display:"flex",gap:10,marginTop:4,flexWrap:"wrap"}}>
+              {eq.filterSize&&<span style={{fontSize:10,color:"rgba(255,255,255,.5)"}}>🔲 Filter: {eq.filterSize}{eq.filterQty?" ×"+eq.filterQty:""}</span>}
+              {eq.beltSize&&<span style={{fontSize:10,color:"rgba(255,255,255,.5)"}}>⚙️ Belt: {eq.beltSize}{eq.beltQty?" ×"+eq.beltQty:""}</span>}
+            </div>
+          </div>
+          <span style={{color:"rgba(255,255,255,.3)",fontSize:16,marginLeft:8}}>›</span>
+        </div>
+      </button>)}
+    </div>
+  </div>;
+
+  // ── ADD EQUIPMENT ──
+  if(view==="addEquip") return <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+    <Hdr title="ADD EQUIPMENT" sub={activeSite?.name||""} onBack={()=>setView("siteDetail")}/>
+    <div style={{flex:1,overflowY:"auto",padding:14}}>
+      <Card style={{marginBottom:10}} c={<>
+        <div style={{fontSize:11,color:RED,fontWeight:700,marginBottom:10,letterSpacing:".08em"}}>UNIT INFO</div>
+        <Sel label="EQUIPMENT TYPE" val={eqType} set={setEqType} opts={["RTU","Chiller","Split System","Heat Pump","VRF/VRV","Air Handler","FCU","Furnace","Boiler","Condenser","Mini-Split","DOAS","Cooling Tower","Exhaust Fan"]}/>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+          <Sel label="BRAND" val={eqBrand} set={setEqBrand} opts={BRANDS}/>
+          <Inp label="MODEL #" val={eqModel} set={setEqModel} ph="e.g. 48XC024"/>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+          <Inp label="SERIAL #" val={eqSerial} set={setEqSerial} ph="e.g. 1234A"/>
+          <Inp label="TONNAGE / CAPACITY" val={eqTonnage} set={setEqTonnage} ph="e.g. 5T / 100MBH"/>
+        </div>
+        <Inp label="LOCATION ON SITE" val={eqLocation} set={setEqLocation} ph="e.g. Rooftop NW corner, Rm 202"/>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+          <Sel label="REFRIGERANT" val={eqRefrig} set={setEqRefrig} opts={REFS}/>
+          <Inp label="VOLTAGE" val={eqVoltage} set={setEqVoltage} ph="e.g. 208/230V 3ph"/>
+        </div>
+      </>}/>
+
+      <Card style={{marginBottom:10}} c={<>
+        <div style={{fontSize:11,color:"#F39C12",fontWeight:700,marginBottom:10,letterSpacing:".08em"}}>🔲 FILTERS</div>
+        <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:8}}>
+          <Inp label="FILTER SIZE" val={eqFilterSize} set={setEqFilterSize} ph="e.g. 20×25×2, 16×25×1"/>
+          <Inp label="QTY" val={eqFilterQty} set={setEqFilterQty} ph="e.g. 4" type="number"/>
+        </div>
+        <Sel label="FILTER TYPE" val={eqFilterType} set={setEqFilterType} opts={["MERV 8 Pleated","MERV 11 Pleated","MERV 13 Pleated","MERV 16 Pleated","HEPA","Fiberglass 1\"","Washable","Carbon / Odor","Bag Filter","Mini-Pleat","Electrostatic"]}/>
+      </>}/>
+
+      <Card style={{marginBottom:10}} c={<>
+        <div style={{fontSize:11,color:"#2980B9",fontWeight:700,marginBottom:10,letterSpacing:".08em"}}>⚙️ BELTS</div>
+        <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:8}}>
+          <Inp label="BELT SIZE / PART #" val={eqBeltSize} set={setEqBeltSize} ph="e.g. A38, 4L380, B-section"/>
+          <Inp label="QTY" val={eqBeltQty} set={setEqBeltQty} ph="e.g. 2" type="number"/>
+        </div>
+      </>}/>
+
+      <Card style={{marginBottom:14}} c={<>
+        <div style={{fontSize:11,color:"rgba(255,255,255,.5)",fontWeight:700,marginBottom:8,letterSpacing:".08em"}}>NOTES</div>
+        <Inp label="" val={eqNotes} set={setEqNotes} ph="Special notes, last service date, known issues…" rows={3}/>
+      </>}/>
+
+      <Btn red c="Save Equipment" onClick={addEquip} disabled={!eqModel.trim()&&!eqBrand.trim()} style={{width:"100%",padding:13}}/>
+    </div>
+  </div>;
+
+  // ── EQUIPMENT DETAIL ──
+  if(view==="equipDetail"&&activeEquip) return <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+    <Hdr title={`${activeEquip.brand||""} ${activeEquip.model||"Equipment"}`.trim()} sub={activeSite?.name||""} onBack={()=>setView("siteDetail")}/>
+    <div style={{flex:1,overflowY:"auto",padding:14}}>
+      <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}}>
+        {activeEquip.type&&<span style={{background:`rgba(227,6,19,.15)`,border:`1px solid ${BORDER}`,borderRadius:20,padding:"3px 10px",fontSize:11,color:RED,fontWeight:700}}>{activeEquip.type}</span>}
+        {activeEquip.location&&<span style={{background:"rgba(255,255,255,.06)",borderRadius:20,padding:"3px 10px",fontSize:11,color:"rgba(255,255,255,.5)"}}>📍 {activeEquip.location}</span>}
+      </div>
+
+      <Card c={<>
+        {SECTION("UNIT INFO")}
+        {ROW("Brand",activeEquip.brand)}
+        {ROW("Model",activeEquip.model)}
+        {ROW("Serial #",activeEquip.serial)}
+        {ROW("Tonnage",activeEquip.tonnage)}
+        {ROW("Voltage",activeEquip.voltage)}
+        {ROW("Refrigerant",activeEquip.refrigerant)}
+      </>}/>
+
+      {(activeEquip.filterSize||activeEquip.filterType)&&<Card c={<>
+        {SECTION("FILTERS","#F39C12")}
+        {ROW("Filter size",activeEquip.filterSize)}
+        {ROW("Quantity",activeEquip.filterQty)}
+        {ROW("Filter type",activeEquip.filterType)}
+      </>}/>}
+
+      {activeEquip.beltSize&&<Card c={<>
+        {SECTION("BELTS","#2980B9")}
+        {ROW("Belt size / part #",activeEquip.beltSize)}
+        {ROW("Quantity",activeEquip.beltQty)}
+      </>}/>}
+
+      {activeEquip.notes&&<Card c={<>
+        {SECTION("NOTES","rgba(255,255,255,.4)")}
+        <div style={{fontSize:12,color:"rgba(255,255,255,.65)",lineHeight:1.7,marginTop:6}}>{activeEquip.notes}</div>
+      </>}/>}
+
+      <div style={{marginTop:8}}>
+        <button onClick={()=>delEquip(activeSite.id,activeEquip.id)} style={{
+          width:"100%",background:"rgba(227,6,19,.08)",border:`1px solid rgba(227,6,19,.3)`,
+          borderRadius:12,padding:12,color:RED,fontSize:13,fontWeight:700,cursor:"pointer"}}>
+          Delete Equipment
+        </button>
+      </div>
+    </div>
+  </div>;
+
+  return null;
+}
+
+// ── MAIN APP ─────────────────────────────────────────────────────────────
+function App(){
+  const [profile,setProfile]=useState(null);
+  const [loading,setLoading]=useState(true);
+  const [tab,setTab]=useState("home");
+  const [chatView,setChatView]=useState("list");
+  const [agentView,setAgentView]=useState("hub");
+  const [toolView,setToolView]=useState("hub");
+  const [chats,setChats]=useState([]);
+  const [activeId,setActiveId]=useState(null);
+  const [busy,setBusy]=useState(false);
+  const [wCtx,setWCtx]=useState({});
+
+  useEffect(()=>{init();},[]);
+  useEffect(()=>{_nav.go=nav;}); // keep global nav ref current every render
+  async function init(){
+    try{const p=await S.get("profile");if(p?.value)setProfile(JSON.parse(p.value));}catch{}
+    try{const keys=await S.list("chat:");const loaded=[];
+      for(const k of keys){try{const r=await S.get(k);if(r?.value)loaded.push(JSON.parse(r.value));}catch{}}
+      loaded.sort((a,b)=>b.updatedAt-a.updatedAt);setChats(loaded);
+    }catch{}
+    setLoading(false);
+    setTimeout(()=>{const s=document.getElementById("splash");if(s){s.style.opacity="0";setTimeout(()=>s.remove(),500);}},2200);
+  }
+
+  async function doOnboard(p){setProfile(p);await S.set("profile",JSON.stringify(p));}
+
+  async function startChat(prompt){
+    if(newChatInProgress.current)return;
+    newChatInProgress.current=true;
+    const c={id:gid(),title:"New Job",messages:[],updatedAt:Date.now()};
+    const newChats=[c,...chats];
+    setChats(newChats);
+    setActiveId(c.id);setChatView("chat");setTab("chat");
+    await S.set("chat:"+c.id,JSON.stringify(c));
+    newChatInProgress.current=false;
+    // Small delay to let state settle then send
+    setTimeout(()=>sendMsg(prompt,c.id,newChats),100);
+  }
+  async function newChat(){
+    if(newChatInProgress.current)return;
+    newChatInProgress.current=true;
+    const c={id:gid(),title:"New Job",messages:[],updatedAt:Date.now()};
+    setChats(prev=>[c,...prev]);
+    setActiveId(c.id);setChatView("chat");setTab("chat");
+    await S.set("chat:"+c.id,JSON.stringify(c));
+    newChatInProgress.current=false;
+  }
+  async function delChat(id){
+    const u=chats.filter(c=>c.id!==id);setChats(u);
+    if(activeId===id){setActiveId(null);setChatView("list");}
+    await S.del("chat:"+id);
+  }
+  const activeChat=chats.find(c=>c.id===activeId);
+  async function sendMsg(text,_chatId,_chats){
+    const currentId=_chatId||activeId;
+    const currentChats=_chats||chats;
+    if(!text||busy||!currentId)return;
+    const currentChat=currentChats.find(c=>c.id===currentId);
+    if(!currentChat)return;
+    const msg={role:"user",content:text};
+    const msgs=[...(currentChat.messages||[]),msg];
+    const title=(currentChat.messages||[]).length===0?(text.length>40?text.slice(0,40)+"…":text):currentChat.title;
+    const updated={...currentChat,title,messages:msgs,updatedAt:Date.now()};
+    setChats(prev=>prev.map(c=>c.id===currentId?updated:c));
+    setBusy(true);
+    await S.set("chat:"+currentId,JSON.stringify(updated));
+    const sys=`You are MTS Assistant — an expert AI field assistant for JLL Managed Technology Services HVAC engineers.
+
+Your role: help technicians in the field solve problems fast. Be their expert colleague on the job.
+
+You specialize in:
+- HVAC fault diagnosis (RTUs, chillers, split systems, VRF/VRV, heat pumps, boilers, furnaces, FCUs)
+- Refrigerant systems (R-410A, R-22, R-32, R-454B, R-407C, R-134a) — charging, leak detection, EPA 608
+- Electrical troubleshooting (controls, contactors, capacitors, boards, low-voltage wiring)
+- Preventive maintenance procedures and schedules
+- OEM and compatible part numbers (Carrier, Trane, York, Lennox, Daikin, Mitsubishi, Rheem, Burnham)
+- Safety protocols — PPE, LOTO, NFPA 70E arc flash, OSHA, confined space
+- Service report writing and job documentation
+- Pressure-temperature relationships, superheat and subcooling calculations
+- Belt and filter sizing, equipment specifications
+
+Response style:
+- Be concise and direct — techs are in the field, not at a desk
+- Use numbered steps for procedures
+- Flag ALL safety hazards with ⚠️ at the start of the relevant step
+- Give specific values, part numbers, and torque specs when you know them
+- If you're not certain about a specific model detail, say so clearly
+- Prioritize safety over speed — never skip safety steps to save time
+${profile?`\nTechnician: ${profile.name}${profile.region?`, ${profile.region}`:""}`:""}`
+
+    // Build full conversation history for multi-turn context
+    const history=msgs.slice(0,-1).map(m=>({role:m.role,parts:[{text:m.content}]}));
+    const reply=await ai(sys,text,2,history);
+    const withReply={...updated,messages:[...msgs,{role:"assistant",content:reply}],updatedAt:Date.now()};
+    setChats(prev=>prev.map(c=>c.id===currentId?withReply:c).sort((a,b)=>b.updatedAt-a.updatedAt));
+    await S.set("chat:"+currentId,JSON.stringify(withReply));
+    setBusy(false);
+  }
+
+  function nav(t,sub){
+    setTab(t);
+    if(t==="chat")setChatView("list");
+    if(t==="agents")setAgentView(sub||"hub");
+    if(t==="tools")setToolView(sub||"hub");
+  }
+
+  if(loading)return null;
+  if(!profile)return <Onboarding onDone={doOnboard}/>;
+
+  const TABS=[{id:"home",i:"🏠",l:"Home"},{id:"chat",i:"💬",l:"Chat"},{id:"agents",i:"🤖",l:"Agents"},{id:"docs",i:"📚",l:"Docs"},{id:"tools",i:"🛠️",l:"Tools"}];
+
+  return <div style={{height:"100%",background:BG,display:"flex",flexDirection:"column",maxWidth:480,margin:"0 auto"}}>
+    <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      {tab==="home"&&<Dashboard profile={profile} jobs={chats.length} onNewJob={newChat} onStartChat={startChat} onNav={nav}/>}
+      {tab==="chat"&&chatView==="list"&&<ChatList chats={chats} onOpen={id=>{setActiveId(id);setChatView("chat");}} onCreate={newChat} onDel={delChat}/>}
+      {tab==="chat"&&chatView==="chat"&&<ChatConvo chat={activeChat} onBack={()=>setChatView("list")} onSend={sendMsg} busy={busy}/>}
+      {tab==="agents"&&agentView==="hub"&&<AgentsHub onSel={v=>setAgentView(v)} onHome={()=>nav("home")}/>}
+      {tab==="agents"&&agentView!=="hub"&&<div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+        <div style={{background:DARK,borderBottom:`1px solid ${BORDER}`,display:"flex",alignItems:"center",flexShrink:0}}>
+          <button onClick={()=>nav("home")} aria-label="Home" style={{background:"none",border:"none",borderRight:`1px solid ${BORDER}`,padding:"10px 14px",color:"rgba(255,255,255,.5)",fontSize:18,cursor:"pointer"}}>🏠</button>
+          <button onClick={()=>setAgentView("hub")} style={{background:"none",border:"none",padding:"10px 16px",color:RED,fontWeight:700,fontSize:13,cursor:"pointer",flex:1,textAlign:"left"}}>← All Agents</button>
+        </div>
+        {agentView==="diag"&&<DiagAgent ctx={wCtx} setCtx={c=>setWCtx(p=>({...p,...c}))} onChain={id=>setAgentView(id)}/>}
+        {agentView==="predict"&&<PredAgent/>}
+        {agentView==="parts"&&<PartsAgent ctx={wCtx}/>}
+        {agentView==="refcalc"&&<RefAgent/>}
+        {agentView==="safety"&&<SafetyAgent ctx={wCtx}/>}
+        {agentView==="report"&&<ReportAgent ctx={wCtx} profile={profile}/>}
+      </div>}
+      {tab==="docs"&&<Docs/>}
+      {tab==="tools"&&toolView==="hub"&&<div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+        <div style={{background:DARK,borderBottom:`3px solid ${RED}`,padding:"12px 16px",display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
+          <button onClick={()=>nav("home")} aria-label="Home" style={{background:"rgba(255,255,255,.08)",border:"none",borderRadius:8,padding:"6px 12px",color:"#fff",fontSize:18,cursor:"pointer"}}>🏠</button>
+          <div>
+            <div style={{fontSize:17,fontWeight:800,color:"#fff"}}>TOOLS</div>
+            <div style={{fontSize:11,color:RED,fontWeight:600,marginTop:2}}>FIELD TOOLS</div>
+          </div>
+        </div>
+        <div style={{flex:1,padding:14,display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,alignContent:"start"}}>
+          {[{id:"pt",i:"🌡️",l:"PT Chart",d:"Pressure-temp calculator"},{id:"equip",i:"🏢",l:"Equipment Log",d:"Sites, units, filters, belts"},{id:"notes",i:"📝",l:"Job Notes",d:"Field notes"}]
+            .map(t=><button key={t.id} onClick={()=>setToolView(t.id)} style={{
+              background:CARD,border:`1px solid ${BORDER}`,borderRadius:14,padding:16,
+              cursor:"pointer",textAlign:"left",display:"flex",flexDirection:"column",gap:6}}>
+              <span style={{fontSize:28}}>{t.i}</span>
+              <span style={{fontSize:13,fontWeight:700,color:"#fff"}}>{t.l}</span>
+              <span style={{fontSize:11,color:"rgba(255,255,255,.4)",lineHeight:1.4}}>{t.d}</span>
+            </button>)}
+        </div>
+      </div>}
+      {tab==="tools"&&toolView!=="hub"&&<div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+        <div style={{background:DARK,borderBottom:`1px solid ${BORDER}`,display:"flex",alignItems:"center",flexShrink:0}}>
+          <button onClick={()=>nav("home")} aria-label="Home" style={{background:"none",border:"none",borderRight:`1px solid ${BORDER}`,padding:"10px 14px",color:"rgba(255,255,255,.5)",fontSize:18,cursor:"pointer"}}>🏠</button>
+          <button onClick={()=>setToolView("hub")} style={{background:"none",border:"none",padding:"10px 16px",color:RED,fontWeight:700,fontSize:13,cursor:"pointer",flex:1,textAlign:"left"}}>← All Tools</button>
+        </div>
+        {toolView==="pt"&&<PTChart/>}
+        {toolView==="equip"&&<EquipmentLog/>}
+        {toolView==="notes"&&<Notes/>}
+      </div>}
+    </div>
+    <div style={{background:"#000",borderTop:`2px solid rgba(227,6,19,.3)`,display:"flex",flexShrink:0,boxShadow:"0 -4px 20px rgba(0,0,0,.5)"}}>
+      {TABS.map(t=><button key={t.id} onClick={()=>nav(t.id)} style={{
+        flex:1,background:"transparent",border:"none",padding:"8px 2px 6px",cursor:"pointer",
+        display:"flex",flexDirection:"column",alignItems:"center",gap:1,
+        color:tab===t.id?RED:"rgba(255,255,255,.4)"}}>
+        <span style={{fontSize:20}}>{t.i}</span>
+        <span style={{fontSize:9,fontWeight:700,letterSpacing:".03em"}}>{t.l}</span>
+        {tab===t.id&&<div style={{width:18,height:2,background:RED,borderRadius:1,marginTop:1}}/>}
+      </button>)}
+    </div>
+  </div>;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
+
+</script>
+</body>
+</html>const {useState,useEffect,useRef}=React;
 const RED="#E30613",BG="#0a0a0a",CARD="#161616",DARK="#111",BORDER="rgba(227,6,19,0.2)";
 const PROXY="https://mts-proxy-omega.vercel.app/api/proxy";
 
