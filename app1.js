@@ -113,8 +113,7 @@ function toggleThemeAndSync(evt) {
   }
 }
 
-const OR_KEY = "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";
-const OR_URL = "https://openrouter.ai/api/v1/chat/completions";
+const OR_URL = "https://mts-assistant.lukedorsett.workers.dev";
 
 async function ai(system, prompt, retries = 2, history = []) {
   for (let attempt = 0; attempt <= retries; attempt++) {
@@ -126,12 +125,7 @@ async function ai(system, prompt, retries = 2, history = []) {
       ];
       const r = await fetch(OR_URL, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${OR_KEY}`,
-          "HTTP-Referer": "https://solmasta.github.io/mts-assistant/",
-          "X-Title": "MTS Assistant"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "google/gemini-2.0-flash-001",
           max_tokens: 1024,
