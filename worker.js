@@ -16,15 +16,13 @@ export default {
 
     try {
       const body = await request.json();
-      const apiKey = env['AI-Key'];
       
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-          'HTTP-Referer': 'https://solmasta.github.io/mts-assistant/',
-          'X-Title': 'MTS Assistant'
+          'x-api-key': env['AI-Key'],
+          'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify(body)
       });

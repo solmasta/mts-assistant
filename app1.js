@@ -113,22 +113,22 @@ function toggleThemeAndSync(evt) {
   }
 }
 
-const OR_URL = "https://mts-assistant.lukedorsett.workers.dev";
+const WORKER_URL = "https://mts-assistant.lukedorsett.workers.dev";
 
 async function ai(system, prompt, retries = 2, history = []) {
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       const messages = [
-        { role: "system", content: system },
-        ...history.map(h => ({ role: h.role === "assistant" ? "assistant" : "user", content: h.parts[0].text })),
+        ...history.map(h => ({ role: h.role, content: h.parts[0].text })),
         { role: "user", content: prompt }
       ];
-      const r = await fetch(OR_URL, {
+      const r = await fetch(WORKER_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "google/gemini-2.0-flash-001",
+          model: "claude-sonnet-4-6",
           max_tokens: 1024,
+          system: system,
           messages: messages
         })
       });
@@ -142,7 +142,7 @@ async function ai(system, prompt, retries = 2, history = []) {
       }
       const d = await r.json();
       if (d.error) return "⚠️ " + (d.error.message || "An error occurred.");
-      return d.choices?.[0]?.message?.content || "No response.";
+      return d.content?.[0]?.text || "No response.";
     } catch (e) {
       if (attempt < retries) {
         await new Promise(res => setTimeout(res, 1000 * (attempt + 1)));
