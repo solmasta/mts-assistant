@@ -22,7 +22,7 @@ export default {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${AI_KEY}`,
+          'Authorization': `Bearer ${AI_Key}`,
           'HTTP-Referer': 'https://solmasta.github.io/mts-assistant/',
           'X-Title': 'MTS Assistant'
         },
