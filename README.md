@@ -4,7 +4,7 @@
 
 🔗 **Live app:** https://solmasta.github.io/mts-assistant  
 📁 **GitHub repo:** https://github.com/solmasta/mts-assistant  
-🎥 **Demo video:** *(add your YouTube/Vimeo link here)*
+🎥 **Demo video:** https://drive.google.com/file/d/1FEiaxkGVhYP_aDUN2orLTyT7FTg75VEC/view?usp=drivesdk
 
 ---
 
