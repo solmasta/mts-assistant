@@ -465,7 +465,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:rgba(227,6,19,
 <div id="theme-ripple"></div>
 <div id="root"></div>
 <script>
-// Error handlers - registered before app scripts
 window._lastError = null;
 window.onerror = function(msg, src, line) {
   window._lastError = msg + ' [' + (src||'').split('/').pop() + ':' + line + ']';
@@ -479,7 +478,7 @@ window.addEventListener('load', function() {
     var r = document.getElementById('root');
     if (s) { s.style.opacity='0'; setTimeout(function(){if(s.parentNode)s.parentNode.removeChild(s);},500); }
     if (r && !r.hasChildNodes()) {
-      r.style.cssText='display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:30px;text-align:center;background:#161616;font-family:sans-serif;color:#fff';
+      r.style.cssText='display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:30px;text-align:center;background:#0a0a0a;font-family:sans-serif;color:#fff';
       r.innerHTML='<div style="font-size:32px;margin-bottom:12px">⚠️</div><div style="font-size:15px;font-weight:700;color:#E30613;margin-bottom:8px">App failed to load</div><div style="font-size:11px;color:rgba(255,255,255,0.6);margin-bottom:20px;max-width:300px;word-break:break-word">'+(window._lastError||'Unknown error')+'</div><button onclick="location.reload()" style="background:#E30613;color:#fff;border:none;border-radius:10px;padding:12px 28px;font-size:14px;font-weight:700;cursor:pointer">Reload</button>';
     }
   }, 8000);
