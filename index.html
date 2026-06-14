@@ -635,7 +635,6 @@ const S = {
 async function ai(system, prompt, retries = 2, history = []) {
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      // Build messages array with history
       const messages = [
         ...history.map(h => ({role: h.role, content: h.parts[0].text})),
         {role: "user", content: prompt}
@@ -1002,7 +1001,8 @@ function Dashboard({
   jobs,
   onNewJob,
   onStartChat,
-  onNav
+  onNav,
+  onDemo
 }) {
   const hr = new Date().getHours();
   const greet = hr < 12 ? "Good morning" : hr < 17 ? "Good afternoon" : "Good evening";
@@ -1023,8 +1023,24 @@ function Dashboard({
 
       /* Top row: JLL logo left, theme toggle + MTS badge right */
       /*#__PURE__*/React.createElement("div", {style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}},
-        /*#__PURE__*/React.createElement("img", {src:JLL_FULL,alt:"JLL",style:{height:44,display:"block",imageRendering:"crisp-edges",mixBlendMode:_darkMode?"normal":"multiply"}}),
-        /*#__PURE__*/React.createElement("div", {style:{display:"flex",alignItems:"center",gap:10}},
+        /*#__PURE__*/React.createElement("img", {src:JLL_FULL,alt:"JLL",style:{height:44,display:"block",imageRendering:"crisp-edges",mixBlendMode:_darkMode?"screen":"multiply"}}),
+        /*#__PURE__*/React.createElement("div", {style:{display:"flex",alignItems:"center",gap:8}},
+          /* Demo button */
+          /*#__PURE__*/React.createElement("button", {
+            onClick: onDemo,
+            style:{
+              background:`linear-gradient(135deg,${RED},#b00010)`,
+              border:"none",
+              borderRadius:20, padding:"5px 12px",
+              cursor:"pointer", display:"flex", alignItems:"center", gap:5,
+              fontSize:12, fontWeight:800, color:"#fff",
+              fontFamily:"inherit",
+              boxShadow:"0 2px 8px rgba(227,6,19,.4)"
+            }
+          },
+            /*#__PURE__*/React.createElement("span", {style:{fontSize:11}}, "▶"),
+            /*#__PURE__*/React.createElement("span", null, "DEMO")
+          ),
           /* Theme toggle button */
           /*#__PURE__*/React.createElement("button", {
             onClick: (e) => toggleThemeAndSync(e),
@@ -1041,7 +1057,7 @@ function Dashboard({
             /*#__PURE__*/React.createElement("span", null, _darkMode ? "Light" : "Dark")
           ),
           /* MTS Assistant badge */
-          /*#__PURE__*/React.createElement("img", {src:MTS_BADGE,alt:"MTS Assistant",style:{height:56,display:"block",mixBlendMode:_darkMode?"normal":"multiply"}})
+          /*#__PURE__*/React.createElement("img", {src:MTS_BADGE,alt:"MTS Assistant",style:{height:56,display:"block",mixBlendMode:_darkMode?"screen":"multiply"}})
         )
       ),
 
@@ -4543,6 +4559,442 @@ function Docs() {
   }, t)))))));
 }
 
+// ── DEMO MODE ─────────────────────────────────────────────────────────────
+const DEMO_STEPS = [
+  {
+    id: "intro",
+    title: "Welcome to MTS Assistant",
+    subtitle: "JLL HVAC AI Field Tool",
+    desc: "An AI expert in every engineer's pocket. Let's walk through a real job scenario.",
+    icon: "🔧",
+    duration: 3000,
+  },
+  {
+    id: "problem",
+    title: "The Problem",
+    subtitle: "What techs face every day",
+    desc: "A Carrier RTU showing fault code E79. High pressure lockout. Unit is down. Building is hot. What do you do?",
+    icon: "⚠️",
+    duration: 4000,
+  },
+  {
+    id: "diagnosis",
+    title: "Step 1 — Fault Diagnosis",
+    subtitle: "AI DIAGNOSTIC AGENT",
+    desc: "Enter the fault code, equipment, and symptoms. The AI ranks probable causes by likelihood and gives a step-by-step procedure.",
+    icon: "🔍",
+    duration: 3500,
+    demo: {
+      type: "agent",
+      fields: [
+        { label: "Equipment", value: "RTU — Carrier 48XC060" },
+        { label: "Fault Code", value: "E79" },
+        { label: "Refrigerant", value: "R-410A" },
+        { label: "Symptoms", value: "High pressure lockout. Condenser fan running. Unit off on high pressure." },
+      ],
+      result: `TOP CAUSES — E79 HIGH PRESSURE LOCKOUT
+
+1. 🔴 Dirty/blocked condenser coil (65%) — Check coil for debris, cottonwood, dirt buildup. Measure discharge pressure — target <430 psig at 95°F ambient.
+
+2. 🟡 Condenser fan motor fault (20%) — Verify fan RPM, check amp draw vs nameplate (1.0–2.5A). Check capacitor µF within ±6%.
+
+3. 🟢 Refrigerant overcharge (10%) — Check subcooling. Target 10–15°F. If >18°F, recover excess charge.
+
+IMMEDIATE CHECKS
+⚠️ Verify supply voltage within ±10% before starting
+• Check discharge pressure with manifold gauges
+• Inspect condenser coil — clean if needed
+• Verify all condenser fans running correct direction
+
+SAFETY
+⚠️ Lock out / tag out before opening electrical panel
+⚠️ R-410A at 95°F: discharge ~430 psig — wear safety glasses and gloves`
+    }
+  },
+  {
+    id: "safety",
+    title: "Step 2 — Safety Briefing",
+    subtitle: "PRE-JOB SAFETY AGENT",
+    desc: "One tap pre-fills from the diagnosis. Generates task-specific PPE list, LOTO procedure, and hazard checklist.",
+    icon: "🦺",
+    duration: 3500,
+    demo: {
+      type: "agent",
+      fields: [
+        { label: "Job Type", value: "Fault Diagnosis — RTU" },
+        { label: "Location", value: "Rooftop" },
+        { label: "Refrigerant", value: "R-410A" },
+        { label: "Hazards", value: "Electrical >50V · Refrigerant present · Height >6ft" },
+      ],
+      result: `⚠️ CRITICAL SAFETY WARNINGS
+• Working at height on rooftop — fall arrest required
+• R-410A at operating pressure — cryogenic PPE required
+• Electrical panels >240V — NFPA 70E Category 2 minimum
+
+🦺 REQUIRED PPE
+• Safety glasses ANSI Z87.1 — mandatory
+• Cryogenic gloves for refrigerant handling
+• Hard hat — rooftop work
+• High-vis vest — occupied building
+• Steel-toe boots ASTM F2413
+• Fall harness + lanyard — anchor to rated point
+• Arc flash gear 8 cal/cm² for electrical work
+
+🔐 LOTO PROCEDURE
+1. Notify building manager — unit going offline
+2. Locate main disconnect at unit
+3. Turn to OFF position
+4. Apply personal lock — tag with name and date
+5. Verify de-energised with CAT III meter L1-L2-L3
+6. Test before touch
+
+✅ PRE-JOB CHECKLIST
+☐ PPE donned and inspected
+☐ Fall protection anchored
+☐ LOTO applied and verified
+☐ Manifold gauges connected
+☐ Leak detector calibrated
+☐ Phone charged, supervisor notified`
+    }
+  },
+  {
+    id: "parts",
+    title: "Step 3 — Parts Finder",
+    subtitle: "OEM PARTS + NEARBY SUPPLIERS",
+    desc: "GPS locates nearby Johnstone, Wesco, and Grainger. AI returns OEM part numbers, compatible alternatives, and pricing.",
+    icon: "🔩",
+    duration: 3500,
+    demo: {
+      type: "parts",
+      result: `CONDENSER FAN MOTOR — Carrier 48XC060
+
+OEM PART: HC39GE237 (Carrier/Bryant)
+• 1/4 HP, 208-230V, 1-phase, 1100 RPM
+• 48 frame, 1 speed, CCW rotation
+• Typical price: $185–$220
+
+COMPATIBLE ALTERNATIVES
+1. Fasco D7909 — Direct replacement, same specs — $95–$115
+2. Mars 10587 — 1/4HP 1100RPM 48fr — $89–$105
+3. AO Smith FD6001 — OEM equiv, 5yr warranty — $110–$130
+
+KEY SPECS TO VERIFY
+• Rotation: CCW (viewed from shaft end)
+• Shaft diameter: 1/2"
+• Frame: 48, totally enclosed
+
+📍 STORES NEAR YOU
+🔴 Johnstone Supply — 2.1 miles — open now
+🟠 Grainger — 3.8 miles — open now
+🔵 Wesco — 5.2 miles — open now`
+    }
+  },
+  {
+    id: "closing",
+    title: "Step 4 — Closing Comment",
+    subtitle: "WORK ORDER SUMMARY",
+    desc: "AI writes a professional CMMS-ready closing comment. One tap to copy into any work order system.",
+    icon: "📋",
+    duration: 3500,
+    demo: {
+      type: "closing",
+      result: `Responded to high pressure lockout fault (E79) on rooftop Carrier 48XC RTU. Found condenser coil heavily fouled with cottonwood and debris, causing restricted airflow and elevated head pressure. Cleaned condenser coil with coil cleaner and low-pressure rinse. Verified all three condenser fans operational with correct amp draw. Checked refrigerant charge — subcooling 12°F, within spec. Reset high pressure lockout and tested unit through full cooling cycle. Unit operating normally at time of departure with discharge pressure 415 psig at 92°F ambient. Recommend quarterly coil cleaning to prevent recurrence.`
+    }
+  },
+  {
+    id: "more",
+    title: "And there's more…",
+    subtitle: "FULL FEATURE SET",
+    desc: "11 technical documents with AI Q&A · Belt & PT calculators · Equipment log · Refrigerant charging · Predictive maintenance",
+    icon: "📱",
+    duration: 3500,
+  },
+  {
+    id: "impact",
+    title: "The Impact",
+    subtitle: "WHY THIS MATTERS FOR JLL MTS",
+    desc: "Faster fault resolution · Consistent safety compliance · Accurate work orders · Knowledge in every engineer's hands · Zero paper, zero phone calls",
+    icon: "🚀",
+    duration: 4000,
+  },
+];
+
+function DemoMode({ onExit }) {
+  const [step, setStep] = React.useState(0);
+  const [phase, setPhase] = React.useState("title"); // title | fields | result
+  const [fieldIdx, setFieldIdx] = React.useState(0);
+  const [typedText, setTypedText] = React.useState("");
+  const [showResult, setShowResult] = React.useState(false);
+  const [autoPlay, setAutoPlay] = React.useState(true);
+  const timerRef = React.useRef(null);
+  const typeRef = React.useRef(null);
+
+  const current = DEMO_STEPS[step];
+  const progress = ((step) / (DEMO_STEPS.length - 1)) * 100;
+
+  function clearTimers() {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (typeRef.current) clearInterval(typeRef.current);
+  }
+
+  function typeText(text, onDone) {
+    setTypedText("");
+    let i = 0;
+    const speed = text.length > 200 ? 8 : 18;
+    typeRef.current = setInterval(() => {
+      i++;
+      setTypedText(text.slice(0, i));
+      if (i >= text.length) {
+        clearInterval(typeRef.current);
+        if (onDone) onDone();
+      }
+    }, speed);
+  }
+
+  function goToStep(idx) {
+    clearTimers();
+    setStep(idx);
+    setPhase("title");
+    setFieldIdx(0);
+    setTypedText("");
+    setShowResult(false);
+  }
+
+  function next() { if (step < DEMO_STEPS.length - 1) goToStep(step + 1); }
+  function prev() { if (step > 0) goToStep(step - 1); }
+
+  React.useEffect(() => {
+    if (!autoPlay) return;
+    const s = DEMO_STEPS[step];
+    clearTimers();
+    setPhase("title");
+    setShowResult(false);
+    setTypedText("");
+    setFieldIdx(0);
+
+    if (!s.demo) {
+      // Simple slide — auto advance
+      timerRef.current = setTimeout(() => {
+        if (step < DEMO_STEPS.length - 1) goToStep(step + 1);
+      }, s.duration);
+    } else {
+      // Demo slide — animate fields then result
+      timerRef.current = setTimeout(() => {
+        setPhase("fields");
+        let fi = 0;
+        function nextField() {
+          if (fi < s.demo.fields.length) {
+            setFieldIdx(fi);
+            fi++;
+            timerRef.current = setTimeout(nextField, 600);
+          } else {
+            timerRef.current = setTimeout(() => {
+              setPhase("result");
+              typeText(s.demo.result, () => {
+                setShowResult(true);
+                timerRef.current = setTimeout(() => {
+                  if (step < DEMO_STEPS.length - 1) goToStep(step + 1);
+                }, 2500);
+              });
+            }, 500);
+          }
+        }
+        nextField();
+      }, 1200);
+    }
+    return () => clearTimers();
+  }, [step, autoPlay]);
+
+  const isDark = _darkMode;
+  const bg = isDark ? "#0a0a0a" : "#f4f4f5";
+  const card = isDark ? "#161616" : "#ffffff";
+  const border = isDark ? "#2a2a2a" : "#d4d4d8";
+  const txt = isDark ? "#ffffff" : "#111111";
+  const txt2 = isDark ? "rgba(255,255,255,0.55)" : "rgba(0,0,0,0.5)";
+  const txt3 = isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)";
+
+  return React.createElement("div", {style:{
+    position:"fixed", inset:0, zIndex:10000,
+    background:bg, display:"flex", flexDirection:"column",
+    fontFamily:"system-ui,-apple-system,sans-serif"
+  }},
+
+    /* Top bar */
+    React.createElement("div", {style:{
+      background: isDark?"#000":card,
+      borderBottom:`3px solid ${RED}`,
+      padding:"10px 16px",
+      display:"flex", alignItems:"center", justifyContent:"space-between",
+      flexShrink:0
+    }},
+      React.createElement("div", {style:{display:"flex",alignItems:"center",gap:8}},
+        React.createElement("div", {style:{
+          background:RED, borderRadius:6, padding:"3px 8px",
+          fontSize:10, fontWeight:900, color:"#fff", letterSpacing:".1em"
+        }}, "▶ DEMO"),
+        React.createElement("div", {style:{fontSize:12,fontWeight:700,color:RED}},
+          `${step + 1} / ${DEMO_STEPS.length}`)
+      ),
+      React.createElement("div", {style:{display:"flex",gap:8,alignItems:"center"}},
+        React.createElement("button", {
+          onClick:()=>setAutoPlay(p=>!p),
+          style:{background:autoPlay?"rgba(227,6,19,.15)":"rgba(255,255,255,.08)",
+            border:`1px solid ${autoPlay?RED:border}`,
+            borderRadius:20, padding:"4px 12px",
+            fontSize:11, fontWeight:700,
+            color:autoPlay?RED:txt2, cursor:"pointer", fontFamily:"inherit"}
+        }, autoPlay ? "⏸ Pause" : "▶ Play"),
+        React.createElement("button", {
+          onClick:onExit,
+          style:{background:"none",border:`1px solid ${border}`,
+            borderRadius:20, padding:"4px 12px",
+            fontSize:11, fontWeight:700, color:txt2,
+            cursor:"pointer", fontFamily:"inherit"}
+        }, "✕ Exit")
+      )
+    ),
+
+    /* Progress bar */
+    React.createElement("div", {style:{height:3,background:border,flexShrink:0}},
+      React.createElement("div", {style:{
+        height:"100%", background:RED,
+        width:progress+"%",
+        transition:"width 0.6s ease"
+      }})
+    ),
+
+    /* Main content */
+    React.createElement("div", {style:{
+      flex:1, overflowY:"auto", padding:"20px 16px 16px",
+      display:"flex", flexDirection:"column", gap:14
+    }},
+
+      /* Step icon + title */
+      React.createElement("div", {style:{textAlign:"center",paddingBottom:4}},
+        React.createElement("div", {style:{
+          width:64,height:64,
+          background:isDark?"rgba(227,6,19,.12)":"rgba(227,6,19,.08)",
+          border:`2px solid rgba(227,6,19,.3)`,
+          borderRadius:18,
+          display:"flex",alignItems:"center",justifyContent:"center",
+          fontSize:30,margin:"0 auto 12px"
+        }}, current.icon),
+        React.createElement("div", {style:{
+          fontSize:20,fontWeight:900,color:txt,
+          letterSpacing:".01em",lineHeight:1.2,marginBottom:4
+        }}, current.title),
+        React.createElement("div", {style:{
+          fontSize:11,color:RED,fontWeight:700,letterSpacing:".1em"
+        }}, current.subtitle)
+      ),
+
+      /* Description */
+      React.createElement("div", {style:{
+        background:card, border:`1px solid ${border}`,
+        borderRadius:14,padding:"14px 16px",
+        fontSize:14, color:txt2, lineHeight:1.7, textAlign:"center"
+      }}, current.desc),
+
+      /* Demo fields */
+      current.demo && (phase==="fields"||phase==="result") && React.createElement("div", {style:{
+        background:card, border:`1px solid ${border}`,
+        borderRadius:14, padding:14
+      }},
+        React.createElement("div", {style:{
+          fontSize:10,color:RED,fontWeight:700,
+          letterSpacing:".1em",marginBottom:10
+        }}, "INPUT"),
+        current.demo.fields && current.demo.fields.slice(0, fieldIdx+1).map((f,i)=>
+          React.createElement("div", {key:i,style:{
+            display:"flex",gap:8,padding:"6px 0",
+            borderBottom:i<fieldIdx?`1px solid ${border}`:"none",
+            animation:"fadeIn 0.3s ease"
+          }},
+            React.createElement("div", {style:{
+              fontSize:11,color:txt3,fontWeight:700,
+              minWidth:90,flexShrink:0
+            }}, f.label),
+            React.createElement("div", {style:{
+              fontSize:12,color:txt,fontWeight:600,flex:1
+            }}, f.value)
+          )
+        )
+      ),
+
+      /* Typing result */
+      phase==="result" && current.demo && React.createElement("div", {style:{
+        background:isDark?"#0d0d0d":card,
+        border:`1px solid ${showResult?RED:border}`,
+        borderRadius:14, padding:14,
+        fontSize:12, color:txt, lineHeight:1.8,
+        whiteSpace:"pre-wrap",
+        transition:"border-color 0.4s ease",
+        position:"relative"
+      }},
+        showResult && React.createElement("div", {style:{
+          position:"absolute",top:-10,right:14,
+          background:RED,borderRadius:20,
+          padding:"2px 10px",fontSize:9,fontWeight:700,color:"#fff"
+        }}, "✓ COMPLETE"),
+        typedText,
+        !showResult && React.createElement("span", {style:{
+          display:"inline-block",width:2,height:14,
+          background:RED,marginLeft:2,
+          animation:"bounce 0.7s infinite"
+        }})
+      ),
+
+      /* Nav buttons */
+      React.createElement("div", {style:{display:"flex",gap:10,marginTop:4}},
+        React.createElement("button", {
+          onClick:prev, disabled:step===0,
+          style:{
+            flex:1,background:card,border:`1px solid ${border}`,
+            borderRadius:12,padding:"12px",cursor:step===0?"not-allowed":"pointer",
+            fontSize:14,color:step===0?txt3:txt,fontFamily:"inherit",
+            opacity:step===0?.4:1
+          }
+        }, "← Prev"),
+        step < DEMO_STEPS.length-1
+          ? React.createElement("button", {
+              onClick:()=>{setAutoPlay(false);next();},
+              style:{
+                flex:2,background:RED,border:"none",
+                borderRadius:12,padding:"12px",cursor:"pointer",
+                fontSize:14,fontWeight:700,color:"#fff",fontFamily:"inherit",
+                boxShadow:"0 4px 14px rgba(227,6,19,.4)"
+              }
+            }, "Next →")
+          : React.createElement("button", {
+              onClick:onExit,
+              style:{
+                flex:2,background:RED,border:"none",
+                borderRadius:12,padding:"12px",cursor:"pointer",
+                fontSize:14,fontWeight:700,color:"#fff",fontFamily:"inherit",
+                boxShadow:"0 4px 14px rgba(227,6,19,.4)"
+              }
+            }, "🚀 Try It Live")
+    ),
+
+      /* Step dots */
+      React.createElement("div", {style:{
+        display:"flex",justifyContent:"center",gap:6,paddingBottom:8
+      }},
+        DEMO_STEPS.map((_,i)=>React.createElement("button",{
+          key:i,
+          onClick:()=>{setAutoPlay(false);goToStep(i);},
+          style:{
+            width:i===step?20:6,height:6,
+            borderRadius:3,border:"none",cursor:"pointer",
+            background:i===step?RED:border,
+            transition:"all 0.3s ease",padding:0
+          }
+        }))
+      )
+    )
+  );
+}
+
 // ── PT CHART ─────────────────────────────────────────────────────────────
 const PT = {
   "R-410A": [[40, 83], [50, 102], [60, 123], [70, 147], [80, 174], [90, 205], [100, 238], [110, 275], [120, 315]],
@@ -5758,6 +6210,7 @@ function App() {
   const [activeId, setActiveId] = useState(null);
   const [busy, setBusy] = useState(false);
   const [wCtx, setWCtx] = useState({});
+  const [showDemo, setShowDemo] = useState(false);
   useTheme(); // re-render App on theme change, which re-renders all children
   useEffect(() => {
     init();
@@ -5924,6 +6377,9 @@ ${profile ? `\nTechnician: ${profile.name}${profile.region ? `, ${profile.region
   if (!profile) return /*#__PURE__*/React.createElement(Onboarding, {
     onDone: doOnboard
   });
+  if (showDemo) return /*#__PURE__*/React.createElement(DemoMode, {
+    onExit: () => setShowDemo(false)
+  });
   const TABS = [{
     id: "home",
     i: "🏠",
@@ -5968,7 +6424,8 @@ ${profile ? `\nTechnician: ${profile.name}${profile.region ? `, ${profile.region
     jobs: chats.length,
     onNewJob: newChat,
     onStartChat: startChat,
-    onNav: nav
+    onNav: nav,
+    onDemo: () => setShowDemo(true)
   }), tab === "chat" && chatView === "list" && /*#__PURE__*/React.createElement(ChatList, {
     chats: chats,
     onOpen: id => {
