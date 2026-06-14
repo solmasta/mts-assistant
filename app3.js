@@ -954,195 +954,197 @@ function BeltCalc() {
 
 function PTChart() {
   const [ref, setRef] = useState("R-410A");
+  const [mode, setMode] = useState("pt");
   const [temp, setTemp] = useState("");
   const [press, setPress] = useState("");
   const [result, setResult] = useState(null);
-  function calc() {
+  const [shSuctPress, setShSuctPress] = useState("");
+  const [shSuctLineTemp, setShSuctLineTemp] = useState("");
+  const [shOAT, setShOAT] = useState("");
+  const [shResult, setShResult] = useState(null);
+  const [scLiqPress, setScLiqPress] = useState("");
+  const [scLiqLineTemp, setScLiqLineTemp] = useState("");
+  const [scResult, setScResult] = useState(null);
+
+  function getSatTemp(psig) {
     const d = PT[ref];
-    if (temp !== "") {
-      const t = parseFloat(temp);
-      if (isNaN(t)) {
-        setResult({
-          type: "Error",
-          output: "Invalid temperature"
-        });
-        return;
-      }
-      // Clamp to table range
-      if (t <= d[0][0]) {
-        setResult({
-          type: "Temp→Press",
-          input: t + "°F",
-          output: d[0][1].toFixed(1) + " psig"
-        });
-        return;
-      }
-      if (t >= d[d.length - 1][0]) {
-        setResult({
-          type: "Temp→Press",
-          input: t + "°F",
-          output: d[d.length - 1][1].toFixed(1) + " psig"
-        });
-        return;
-      }
-      for (let i = 0; i < d.length - 1; i++) {
-        if (t >= d[i][0] && t <= d[i + 1][0]) {
-          const r = d[i][1] + (d[i + 1][1] - d[i][1]) * (t - d[i][0]) / (d[i + 1][0] - d[i][0]);
-          setResult({
-            type: "Temp→Press",
-            input: t + "°F",
-            output: r.toFixed(1) + " psig"
-          });
-          return;
-        }
+    if (psig <= d[0][1]) return d[0][0];
+    if (psig >= d[d.length-1][1]) return d[d.length-1][0];
+    for (let i = 0; i < d.length-1; i++) {
+      if (psig >= d[i][1] && psig <= d[i+1][1]) {
+        return d[i][0] + (d[i+1][0]-d[i][0]) * (psig-d[i][1]) / (d[i+1][1]-d[i][1]);
       }
     }
+    return null;
+  }
+  function getSatPress(degF) {
+    const d = PT[ref];
+    if (degF <= d[0][0]) return d[0][1];
+    if (degF >= d[d.length-1][0]) return d[d.length-1][1];
+    for (let i = 0; i < d.length-1; i++) {
+      if (degF >= d[i][0] && degF <= d[i+1][0]) {
+        return d[i][1] + (d[i+1][1]-d[i][1]) * (degF-d[i][0]) / (d[i+1][0]-d[i][0]);
+      }
+    }
+    return null;
+  }
+
+  const SH_TARGETS = {"R-410A":"8-12\u00b0F","R-22":"10-15\u00b0F","R-32":"8-12\u00b0F","R-454B":"8-12\u00b0F","R-407C":"10-15\u00b0F","R-134a":"10-15\u00b0F"};
+  const SC_TARGETS = {"R-410A":"10-15\u00b0F","R-22":"10-15\u00b0F","R-32":"10-15\u00b0F","R-454B":"10-15\u00b0F","R-407C":"10-15\u00b0F","R-134a":"8-12\u00b0F"};
+
+  function calcPT() {
     if (press !== "") {
       const p = parseFloat(press);
-      if (isNaN(p)) {
-        setResult({
-          type: "Error",
-          output: "Invalid pressure"
-        });
-        return;
-      }
-      if (p <= d[0][1]) {
-        setResult({
-          type: "Press→Temp",
-          input: p + " psig",
-          output: d[0][0].toFixed(1) + "°F"
-        });
-        return;
-      }
-      if (p >= d[d.length - 1][1]) {
-        setResult({
-          type: "Press→Temp",
-          input: p + " psig",
-          output: d[d.length - 1][0].toFixed(1) + "°F"
-        });
-        return;
-      }
-      for (let i = 0; i < d.length - 1; i++) {
-        if (p >= d[i][1] && p <= d[i + 1][1]) {
-          const r = d[i][0] + (d[i + 1][0] - d[i][0]) * (p - d[i][1]) / (d[i + 1][1] - d[i][1]);
-          setResult({
-            type: "Press→Temp",
-            input: p + " psig",
-            output: r.toFixed(1) + "°F"
-          });
-          return;
-        }
-      }
+      if (isNaN(p)) { setResult({type:"Error",output:"Invalid pressure"}); return; }
+      const sat = getSatTemp(p);
+      setResult({type:"Press\u2192Sat Temp",output:sat.toFixed(1)+"\u00b0F"});
+    } else if (temp !== "") {
+      const t = parseFloat(temp);
+      if (isNaN(t)) { setResult({type:"Error",output:"Invalid temperature"}); return; }
+      const sat = getSatPress(t);
+      setResult({type:"Sat Temp\u2192Press",output:sat.toFixed(1)+" psig"});
     }
-    setResult({
-      type: "Error",
-      output: "Out of range"
-    });
   }
-  return /*#__PURE__*/React.createElement("div", {
+
+  function calcSuperheat() {
+    const p = parseFloat(shSuctPress);
+    const lt = parseFloat(shSuctLineTemp);
+    const oat = parseFloat(shOAT);
+    if (isNaN(p) || isNaN(lt)) { setShResult({error:"Enter suction pressure and suction line temp"}); return; }
+    const satT = getSatTemp(p);
+    if (satT === null) { setShResult({error:"Pressure out of range"}); return; }
+    const sh = lt - satT;
+    const target = SH_TARGETS[ref];
+    const status = sh < 5 ? "LOW \u2014 Risk of liquid slugging" : sh > 20 ? "HIGH \u2014 Possible low charge or restriction" : "NORMAL \u2014 Good charge";
+    const color = sh < 5 ? RED : sh > 20 ? "#E67E22" : "#27AE60";
+    const oatHint = !isNaN(oat) ? ("At "+oat+"\u00b0F OAT, target suction sat temp \u2248 "+(oat-35).toFixed(0)+"\u00b0F") : "";
+    setShResult({satT:satT.toFixed(1), sh:sh.toFixed(1), status, color, target, oatHint});
+  }
+
+  function calcSubcool() {
+    const p = parseFloat(scLiqPress);
+    const lt = parseFloat(scLiqLineTemp);
+    if (isNaN(p) || isNaN(lt)) { setScResult({error:"Enter liquid pressure and liquid line temp"}); return; }
+    const satT = getSatTemp(p);
+    if (satT === null) { setScResult({error:"Pressure out of range"}); return; }
+    const sc = satT - lt;
+    const target = SC_TARGETS[ref];
+    const status = sc < 5 ? "LOW \u2014 Possible undercharge or restriction" : sc > 20 ? "HIGH \u2014 Possible overcharge" : "NORMAL \u2014 Good charge";
+    const color = sc < 5 ? RED : sc > 20 ? "#E67E22" : "#27AE60";
+    setScResult({satT:satT.toFixed(1), sc:sc.toFixed(1), status, color, target});
+  }
+
+  const modeBtn = (id, label) => React.createElement("button", {
+    onClick: () => { setMode(id); setResult(null); setShResult(null); setScResult(null); },
     style: {
-      flex: 1,
-      display: "flex",
-      flexDirection: "column",
-      overflow: "hidden"
+      flex:1, padding:"8px 4px",
+      background: mode===id ? RED : GREY1,
+      color: mode===id ? "#fff" : TXT,
+      border: "1px solid "+(mode===id ? RED : GREY2),
+      borderRadius:8, fontSize:11, fontWeight:700,
+      cursor:"pointer", fontFamily:"inherit"
     }
-  }, /*#__PURE__*/React.createElement(Hdr, {
-    title: "PT CHART",
-    sub: "PRESSURE-TEMPERATURE",
-    onHome: () => _nav.go && _nav.go("home")
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      overflowY: "auto",
-      overflowX: "hidden",
-      padding: 14
-    }
-  }, /*#__PURE__*/React.createElement(Sel, {
-    label: "REFRIGERANT",
-    val: ref,
-    set: r => {
-      setRef(r);
-      setResult(null);
-    },
-    opts: Object.keys(PT)
-  }), /*#__PURE__*/React.createElement(Card, {
-    style: {
-      marginBottom: 14
-    },
-    c: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        color: RED,
-        fontWeight: 700,
-        marginBottom: 12
-      }
-    }, "ENTER ONE VALUE"), /*#__PURE__*/React.createElement(Inp, {
-      label: "GAUGE PRESSURE (psig)",
-      val: press,
-      set: v => {
-        setPress(v);
-        setTemp("");
-      },
-      ph: "e.g. 130",
-      type: "number"
-    }), /*#__PURE__*/React.createElement("div", {
-      style: {
-        textAlign: "center",
-        color: GTXT2,
-        fontSize: 12,
-        margin: "4px 0 12px"
-      }
-    }, "\u2014 or \u2014"), /*#__PURE__*/React.createElement(Inp, {
-      label: "SATURATION TEMP (\xB0F)",
-      val: temp,
-      set: v => {
-        setTemp(v);
-        setPress("");
-      },
-      ph: "e.g. 40",
-      type: "number"
-    }), /*#__PURE__*/React.createElement(Btn, {
-      red: true,
-      c: "Calculate",
-      onClick: calc,
-      disabled: !temp && !press,
-      style: {
-        width: "100%",
-        marginTop: 4
-      }
-    }))
-  }), result && /*#__PURE__*/React.createElement(Card, {
-    style: {
-      background: result.type === "Error" ? "rgba(227,6,19,.12)" : "rgba(39,174,96,.12)",
-      border: `1px solid ${result.type === "Error" ? "rgba(227,6,19,.4)" : "rgba(39,174,96,.4)"}`
-    },
-    c: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 12,
-        color: GTXT2,
-        marginBottom: 4
-      }
-    }, ref, " \xB7 ", result.type), result.input && /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 13,
-        color: GTXT1,
-        marginBottom: 4
-      }
-    }, "Input: ", /*#__PURE__*/React.createElement("strong", {
-      style: {
-        color: TXT
-      }
-    }, result.input)), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 22,
-        fontWeight: 900,
-        color: result.type === "Error" ? RED : "#27AE60"
-      }
-    }, result.output))
-  })));
+  }, label);
+
+  return React.createElement("div", {style:{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}},
+    React.createElement(Hdr, {title:"PT CHART", sub:"REFRIGERANT CHARGING TOOL", onHome:()=>_nav.go&&_nav.go("home")}),
+    React.createElement("div", {style:{flex:1,overflowY:"auto",overflowX:"hidden",padding:14}},
+      React.createElement(Sel, {label:"REFRIGERANT", val:ref, set:r=>{setRef(r);setResult(null);setShResult(null);setScResult(null);}, opts:Object.keys(PT)}),
+      React.createElement("div", {style:{display:"flex",gap:6,marginBottom:14}},
+        modeBtn("pt","PT Lookup"),
+        modeBtn("superheat","Superheat"),
+        modeBtn("subcool","Subcooling")
+      ),
+      mode==="pt" && React.createElement(Card, {style:{marginBottom:14},
+        c: React.createElement(React.Fragment, null,
+          React.createElement("div", {style:{fontSize:11,color:RED,fontWeight:700,marginBottom:12}}, "ENTER ONE VALUE"),
+          React.createElement(Inp, {label:"GAUGE PRESSURE (psig)", val:press, set:v=>{setPress(v);setTemp("");}, ph:"e.g. 130", type:"number"}),
+          React.createElement("div", {style:{textAlign:"center",color:GTXT2,fontSize:12,margin:"4px 0 12px"}}, "\u2014 or \u2014"),
+          React.createElement(Inp, {label:"SATURATION TEMP (\u00b0F)", val:temp, set:v=>{setTemp(v);setPress("");}, ph:"e.g. 40", type:"number"}),
+          React.createElement(Btn, {red:true, c:"Calculate", onClick:calcPT, disabled:!temp&&!press, style:{width:"100%",marginTop:4}})
+        )
+      }),
+      mode==="pt" && result && React.createElement(Card, {
+        style:{background:result.type==="Error"?"rgba(227,6,19,.12)":"rgba(39,174,96,.12)",border:"1px solid "+(result.type==="Error"?"rgba(227,6,19,.4)":"rgba(39,174,96,.4)")},
+        c: React.createElement(React.Fragment, null,
+          React.createElement("div", {style:{fontSize:12,color:GTXT2,marginBottom:4}}, ref, " \u00b7 ", result.type),
+          React.createElement("div", {style:{fontSize:24,fontWeight:900,color:result.type==="Error"?RED:"#27AE60"}}, result.output)
+        )
+      }),
+      mode==="superheat" && React.createElement(Card, {style:{marginBottom:14},
+        c: React.createElement(React.Fragment, null,
+          React.createElement("div", {style:{fontSize:11,color:RED,fontWeight:700,marginBottom:4}}, "SUPERHEAT CALCULATOR"),
+          React.createElement("div", {style:{fontSize:11,color:GTXT2,marginBottom:12}}, "Read suction gauge + clamp suction line near compressor. Confirms metering device operation."),
+          React.createElement(Inp, {label:"SUCTION PRESSURE (psig)", val:shSuctPress, set:setShSuctPress, ph:"e.g. 130", type:"number"}),
+          React.createElement(Inp, {label:"SUCTION LINE TEMP (\u00b0F)", val:shSuctLineTemp, set:setShSuctLineTemp, ph:"e.g. 55", type:"number"}),
+          React.createElement(Inp, {label:"OUTDOOR AIR TEMP (\u00b0F) \u2014 optional", val:shOAT, set:setShOAT, ph:"e.g. 95", type:"number"}),
+          React.createElement(Btn, {red:true, c:"Calculate Superheat", onClick:calcSuperheat, disabled:!shSuctPress||!shSuctLineTemp, style:{width:"100%",marginTop:4}})
+        )
+      }),
+      mode==="superheat" && shResult && !shResult.error && React.createElement(Card, {
+        style:{background:shResult.color+"22",border:"1px solid "+shResult.color+"66"},
+        c: React.createElement(React.Fragment, null,
+          React.createElement("div", {style:{fontSize:11,color:GTXT2,marginBottom:8}}, ref+" SUPERHEAT RESULT"),
+          React.createElement("div", {style:{display:"flex",gap:12,marginBottom:10}},
+            React.createElement("div", {style:{flex:1,textAlign:"center"}},
+              React.createElement("div", {style:{fontSize:10,color:GTXT2,marginBottom:2}}, "Sat Temp"),
+              React.createElement("div", {style:{fontSize:18,fontWeight:900,color:TXT}}, shResult.satT+"\u00b0F")
+            ),
+            React.createElement("div", {style:{flex:1,textAlign:"center"}},
+              React.createElement("div", {style:{fontSize:10,color:GTXT2,marginBottom:2}}, "Superheat"),
+              React.createElement("div", {style:{fontSize:26,fontWeight:900,color:shResult.color}}, shResult.sh+"\u00b0F")
+            ),
+            React.createElement("div", {style:{flex:1,textAlign:"center"}},
+              React.createElement("div", {style:{fontSize:10,color:GTXT2,marginBottom:2}}, "Target"),
+              React.createElement("div", {style:{fontSize:13,fontWeight:700,color:GTXT1}}, shResult.target)
+            )
+          ),
+          React.createElement("div", {style:{fontSize:13,fontWeight:700,color:shResult.color,marginBottom:4}}, shResult.status),
+          shResult.oatHint && React.createElement("div", {style:{fontSize:11,color:GTXT2}}, shResult.oatHint)
+        )
+      }),
+      mode==="superheat" && shResult && shResult.error && React.createElement(Card, {
+        style:{background:"rgba(227,6,19,.12)",border:"1px solid rgba(227,6,19,.4)"},
+        c: React.createElement("div", {style:{color:RED,fontSize:13}}, shResult.error)
+      }),
+      mode==="subcool" && React.createElement(Card, {style:{marginBottom:14},
+        c: React.createElement(React.Fragment, null,
+          React.createElement("div", {style:{fontSize:11,color:RED,fontWeight:700,marginBottom:4}}, "SUBCOOLING CALCULATOR"),
+          React.createElement("div", {style:{fontSize:11,color:GTXT2,marginBottom:12}}, "Read liquid line gauge + clamp liquid line before TXV. Confirms proper charge on TXV systems."),
+          React.createElement(Inp, {label:"LIQUID LINE PRESSURE (psig)", val:scLiqPress, set:setScLiqPress, ph:"e.g. 400", type:"number"}),
+          React.createElement(Inp, {label:"LIQUID LINE TEMP (\u00b0F)", val:scLiqLineTemp, set:setScLiqLineTemp, ph:"e.g. 100", type:"number"}),
+          React.createElement(Btn, {red:true, c:"Calculate Subcooling", onClick:calcSubcool, disabled:!scLiqPress||!scLiqLineTemp, style:{width:"100%",marginTop:4}})
+        )
+      }),
+      mode==="subcool" && scResult && !scResult.error && React.createElement(Card, {
+        style:{background:scResult.color+"22",border:"1px solid "+scResult.color+"66"},
+        c: React.createElement(React.Fragment, null,
+          React.createElement("div", {style:{fontSize:11,color:GTXT2,marginBottom:8}}, ref+" SUBCOOLING RESULT"),
+          React.createElement("div", {style:{display:"flex",gap:12,marginBottom:10}},
+            React.createElement("div", {style:{flex:1,textAlign:"center"}},
+              React.createElement("div", {style:{fontSize:10,color:GTXT2,marginBottom:2}}, "Sat Temp"),
+              React.createElement("div", {style:{fontSize:18,fontWeight:900,color:TXT}}, scResult.satT+"\u00b0F")
+            ),
+            React.createElement("div", {style:{flex:1,textAlign:"center"}},
+              React.createElement("div", {style:{fontSize:10,color:GTXT2,marginBottom:2}}, "Subcooling"),
+              React.createElement("div", {style:{fontSize:26,fontWeight:900,color:scResult.color}}, scResult.sc+"\u00b0F")
+            ),
+            React.createElement("div", {style:{flex:1,textAlign:"center"}},
+              React.createElement("div", {style:{fontSize:10,color:GTXT2,marginBottom:2}}, "Target"),
+              React.createElement("div", {style:{fontSize:13,fontWeight:700,color:GTXT1}}, scResult.target)
+            )
+          ),
+          React.createElement("div", {style:{fontSize:13,fontWeight:700,color:scResult.color}}, scResult.status)
+        )
+      }),
+      mode==="subcool" && scResult && scResult.error && React.createElement(Card, {
+        style:{background:"rgba(227,6,19,.12)",border:"1px solid rgba(227,6,19,.4)"},
+        c: React.createElement("div", {style:{color:RED,fontSize:13}}, scResult.error)
+      })
+    )
+  );
 }
 
-// ── NOTES ────────────────────────────────────────────────────────────────
 function Notes() {
   const [notes, setNotes] = useState([]);
   const [text, setText] = useState("");
