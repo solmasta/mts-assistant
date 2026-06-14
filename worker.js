@@ -16,12 +16,13 @@ export default {
 
     try {
       const body = await request.json();
+      const apiKey = env['AI-Key'];
       
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${env.AI_Key}`,
+          'Authorization': `Bearer ${apiKey}`,
           'HTTP-Referer': 'https://solmasta.github.io/mts-assistant/',
           'X-Title': 'MTS Assistant'
         },
