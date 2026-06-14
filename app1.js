@@ -113,29 +113,29 @@ function toggleThemeAndSync(evt) {
   }
 }
 
-const GEMINI_KEY = "AQ.Ab8RN6KCPlloiLXjIKcaMKDGaj4yOxygTf14BSMOIFL-z33g4Q";
-const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+const OR_KEY = "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";
+const OR_URL = "https://openrouter.ai/api/v1/chat/completions";
 
 async function ai(system, prompt, retries = 2, history = []) {
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      // Build contents array with history
-      const contents = [];
-      for (const h of history) {
-        contents.push({
-          role: h.role === "assistant" ? "model" : "user",
-          parts: [{ text: h.parts[0].text }]
-        });
-      }
-      contents.push({ role: "user", parts: [{ text: prompt }] });
-
-      const r = await fetch(`${GEMINI_URL}?key=${GEMINI_KEY}`, {
+      const messages = [
+        { role: "system", content: system },
+        ...history.map(h => ({ role: h.role === "assistant" ? "assistant" : "user", content: h.parts[0].text })),
+        { role: "user", content: prompt }
+      ];
+      const r = await fetch(OR_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${OR_KEY}`,
+          "HTTP-Referer": "https://solmasta.github.io/mts-assistant/",
+          "X-Title": "MTS Assistant"
+        },
         body: JSON.stringify({
-          system_instruction: { parts: [{ text: system }] },
-          contents: contents,
-          generationConfig: { maxOutputTokens: 1024, temperature: 0.7 }
+          model: "google/gemini-2.0-flash-001",
+          max_tokens: 1024,
+          messages: messages
         })
       });
       if (!r.ok) {
@@ -148,7 +148,7 @@ async function ai(system, prompt, retries = 2, history = []) {
       }
       const d = await r.json();
       if (d.error) return "⚠️ " + (d.error.message || "An error occurred.");
-      return d.candidates?.[0]?.content?.parts?.[0]?.text || "No response.";
+      return d.choices?.[0]?.message?.content || "No response.";
     } catch (e) {
       if (attempt < retries) {
         await new Promise(res => setTimeout(res, 1000 * (attempt + 1)));
