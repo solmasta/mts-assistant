@@ -1,3 +1,1322 @@
+function AgentsHub({
+  onSel,
+  onHome
+}) {
+  const A = [{
+    id: "diag",
+    i: "🔍",
+    c: RED,
+    t: "Fault Diagnosis",
+    d: "Ranks causes by probability with full procedure"
+  }, {
+    id: "predict",
+    i: "📈",
+    c: "#9B59B6",
+    t: "Predictive Maintenance",
+    d: "Predicts failures before they happen"
+  }, {
+    id: "parts",
+    i: "🔩",
+    c: "#E67E22",
+    t: "Parts Finder",
+    d: "OEM + compatible parts with specs"
+  }, {
+    id: "refcalc",
+    i: "🧊",
+    c: "#2980B9",
+    t: "Refrigerant Calc",
+    d: "Superheat, subcooling, charge"
+  }, {
+    id: "safety",
+    i: "🦺",
+    c: "#F39C12",
+    t: "Safety Briefing",
+    d: "Task-specific PPE + LOTO checklist"
+  }, {
+    id: "report",
+    i: "📋",
+    c: "#27AE60",
+    t: "Closing Comment",
+    d: "Copyable work order closing summary"
+  }];
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      display: "flex",
+      flexDirection: "column",
+      overflow: "hidden"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: DARK,
+      borderBottom: `3px solid ${RED}`,
+      padding: "12px 16px",
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      flexShrink: 0
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: onHome,
+    "aria-label": "Home",
+    style: {
+      background: GREY1,
+      border: "none",
+      borderRadius: 8,
+      padding: "6px 12px",
+      color: TXT,
+      fontSize: 18,
+      cursor: "pointer"
+    }
+  }, "\uD83C\uDFE0"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 17,
+      fontWeight: 800,
+      color: TXT
+    }
+  }, "AI AGENTS"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: RED,
+      fontWeight: 600,
+      marginTop: 2
+    }
+  }, "6 SPECIALIST AGENTS"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      overflowY: "auto",
+      overflowX: "hidden",
+      padding: 14
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: GTXT2,
+      lineHeight: 1.5,
+      marginBottom: 14
+    }
+  }, "Each agent delivers a complete structured result end-to-end."), A.map(a => /*#__PURE__*/React.createElement("button", {
+    key: a.id,
+    onClick: () => onSel(a.id),
+    style: {
+      width: "100%",
+      background: CARD,
+      border: `1px solid ${GREY2}`,
+      borderRadius: 14,
+      padding: 14,
+      marginBottom: 10,
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      gap: 12,
+      textAlign: "left",
+      borderLeft: `4px solid ${a.c}`
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 44,
+      height: 44,
+      borderRadius: 11,
+      background: a.c,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: 22,
+      flexShrink: 0
+    }
+  }, a.i), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 14,
+      fontWeight: 700,
+      color: TXT,
+      marginBottom: 3
+    }
+  }, a.t), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: GTXT2
+    }
+  }, a.d))))));
+}
+
+// ── CHAT ─────────────────────────────────────────────────────────────────
+// ── MARKDOWN RENDERER ────────────────────────────────────────────────────
+function renderMarkdown(text) {
+  // Split into lines, process each
+  const lines = text.split('\n');
+  const elements = [];
+  let key = 0;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    // Render inline markdown within a line
+    function renderInline(str) {
+      const parts = [];
+      let remaining = str;
+      let k = 0;
+      // Bold **text**
+      while (remaining.length > 0) {
+        const boldMatch = remaining.match(/^(.*?)\*\*(.+?)\*\*(.*)/s);
+        if (boldMatch) {
+          if (boldMatch[1]) parts.push(React.createElement('span', {key: k++}, boldMatch[1]));
+          parts.push(React.createElement('strong', {key: k++, style:{color:'#fff',fontWeight:700}}, boldMatch[2]));
+          remaining = boldMatch[3];
+        } else {
+          parts.push(React.createElement('span', {key: k++}, remaining));
+          break;
+        }
+      }
+      return parts;
+    }
+    // Numbered list
+    const numMatch = line.match(/^(\d+)\.\s+(.+)/);
+    if (numMatch) {
+      elements.push(React.createElement('div', {key: key++, style:{display:'flex',gap:6,marginBottom:3}},
+        React.createElement('span', {style:{color:'rgba(255,255,255,.5)',minWidth:16,flexShrink:0,fontWeight:700}}, numMatch[1]+'.'),
+        React.createElement('span', {style:{flex:1}}, renderInline(numMatch[2]))
+      ));
+      continue;
+    }
+    // Bullet ⚠️ warning line
+    if (line.startsWith('⚠️')) {
+      elements.push(React.createElement('div', {key: key++, style:{background:'rgba(255,200,0,.1)',borderLeft:'3px solid #F39C12',padding:'4px 8px',borderRadius:'0 6px 6px 0',marginBottom:4}},
+        renderInline(line)
+      ));
+      continue;
+    }
+    // Section header (all caps line or ends with :)
+    if (line.match(/^[A-Z⚠️🔴🟡🟢✅📞🔐☢️⚡][^a-z]{2,}:?$/) && line.length < 40) {
+      elements.push(React.createElement('div', {key: key++, style:{color:'rgba(255,255,255,.5)',fontSize:10,fontWeight:700,letterSpacing:'.08em',marginTop:8,marginBottom:3}},
+        line
+      ));
+      continue;
+    }
+    // Empty line = spacer
+    if (line.trim() === '') {
+      elements.push(React.createElement('div', {key: key++, style:{height:6}}));
+      continue;
+    }
+    // Normal line
+    elements.push(React.createElement('div', {key: key++, style:{marginBottom:2}}, renderInline(line)));
+  }
+  return elements;
+}
+
+function ChatList({
+  chats,
+  onOpen,
+  onCreate,
+  onStartChat,
+  onDel
+}) {
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      display: "flex",
+      flexDirection: "column",
+      overflow: "hidden"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: DARK,
+      borderBottom: `3px solid ${RED}`,
+      padding: "14px 16px",
+      flexShrink: 0
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", {style:{flex:1,minWidth:0}}, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 18,
+      fontWeight: 800,
+      color: TXT
+    }
+  }, "AI CHAT"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: RED,
+      fontWeight: 600,
+      marginTop: 1
+    }
+  }, "HVAC FIELD ASSISTANT")), /*#__PURE__*/React.createElement(Btn, {
+    red: true,
+    c: "+ New Job",
+    onClick: onCreate,
+    style: {
+      padding: "9px 16px",
+      fontSize: 13,
+      flexShrink: 0
+    }
+  })), /*#__PURE__*/React.createElement("button", {
+    onClick: onCreate,
+    style: {
+      width: "100%",
+      background: _darkMode?GREY1:"#f8f8f8",
+      border: `1px solid ${GREY2}`,
+      borderRadius: 10,
+      padding: "10px 14px",
+      cursor: "pointer",
+      textAlign: "left",
+      display: "flex",
+      alignItems: "center",
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 18
+    }
+  }, "\uD83D\uDCAC"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      color: GTXT1
+    }
+  }, "Ask anything about HVAC\u2026"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      overflowY: "auto",
+      overflowX: "hidden",
+      padding: 14
+    }
+  }, chats.length === 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center",
+      padding: "40px 20px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 40,
+      marginBottom: 12
+    }
+  }, "\uD83D\uDD27"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 15,
+      fontWeight: 700,
+      color: TXT,
+      marginBottom: 6
+    }
+  }, "Your expert is ready"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: GTXT2,
+      lineHeight: 1.6,
+      marginBottom: 20
+    }
+  }, "Fault diagnosis, refrigerant charging, part numbers, safety checklists \u2014 tap New Job to start."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: 8
+    }
+  }, [{
+    i: "🔍",
+    t: "Diagnose a fault",
+    p: "I have a fault on an HVAC unit. Let me describe it and you help diagnose."
+  }, {
+    i: "🧊",
+    t: "Check refrigerant charge",
+    p: "I need help checking the refrigerant charge. Walk me through superheat and subcooling."
+  }, {
+    i: "⚡",
+    t: "Electrical troubleshooting",
+    p: "I'm troubleshooting an electrical problem. Help me work through it step by step."
+  }, {
+    i: "🦺",
+    t: "Safety & PPE guidance",
+    p: "What PPE and safety steps do I need before starting this job?"
+  }].map(q => /*#__PURE__*/React.createElement("button", {
+    key: q.t,
+    onClick: () => onStartChat ? onStartChat(q.p) : onCreate(),
+    style: {
+      background: CARD,
+      border: `1px solid ${GREY2}`,
+      borderRadius: 10,
+      padding: "12px 10px",
+      cursor: "pointer",
+      textAlign: "left",
+      fontSize: 12,
+      color: GTXT1,
+      lineHeight: 1.4
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 18,
+      display: "block",
+      marginBottom: 4
+    }
+  }, q.i), q.t)))), chats.length > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: GTXT1,
+      fontWeight: 700,
+      letterSpacing: ".08em",
+      marginBottom: 10
+    }
+  }, "RECENT JOBS"), chats.map(c => {
+    const last = c.messages?.[c.messages.length - 1];
+    return /*#__PURE__*/React.createElement("div", {
+      key: c.id,
+      onClick: () => onOpen(c.id),
+      style: {
+        background: CARD,
+        border: `1px solid ${BORDER}`,
+        borderRadius: 12,
+        padding: "12px 14px",
+        marginBottom: 8,
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        gap: 12
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: 40,
+        height: 40,
+        background: `rgba(227,6,19,.15)`,
+        border: `1px solid rgba(227,6,19,.3)`,
+        borderRadius: 10,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: 20,
+        flexShrink: 0
+      }
+    }, last?.role === "assistant" ? "🔧" : "💬"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1,
+        minWidth: 0
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
+        fontWeight: 700,
+        color: TXT,
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        marginBottom: 3
+      }
+    }, c.title), last && /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: GTXT1,
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        textOverflow: "ellipsis"
+      }
+    }, last.role === "assistant" ? "🔧 " : "You: ", last.content.slice(0, 60), last.content.length > 60 ? "…" : ""), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 10,
+        color: GTXT3,
+        marginTop: 2
+      }
+    }, ago(c.updatedAt), " ago \xB7 ", c.messages?.length || 0, " messages")), /*#__PURE__*/React.createElement("button", {
+      onClick: e => {
+        e.stopPropagation();
+        onDel(c.id);
+      },
+      style: {
+        background: "none",
+        border: "none",
+        color: GTXT3,
+        cursor: "pointer",
+        fontSize: 18,
+        padding: "4px 8px",
+        flexShrink: 0
+      }
+    }, "\xD7"));
+  })));
+}function ChatConvo({
+  chat,
+  onBack,
+  onSend,
+  busy
+}) {
+  const [text, setText] = useState("");
+  const [copied, setCopied] = useState(null);
+  const endRef = useRef(null);
+  const inputRef = useRef(null);
+  useEffect(() => {
+    endRef.current?.scrollIntoView({
+      behavior: "smooth"
+    });
+  }, [chat?.messages, busy]);
+  const isComposing = useRef(false);
+  const send = () => {
+    if (text.trim() && !busy) {
+      onSend(text.trim());
+      setText("");
+    }
+  };
+  const handleKey = e => {
+    if (e.key === "Enter" && !e.shiftKey && !isComposing.current) {
+      e.preventDefault();
+      send();
+    }
+  };
+  function copyMsg(content, idx) {
+    navigator.clipboard?.writeText(content).then(() => {
+      setCopied(idx);
+      setTimeout(() => setCopied(null), 1500);
+    });
+  }
+  const QUICK = [{
+    i: "🔍",
+    t: "Diagnose fault",
+    p: "I have a fault on an HVAC unit. Let me describe it and you help diagnose."
+  }, {
+    i: "🧊",
+    t: "Refrigerant charge",
+    p: "I need help checking the refrigerant charge. Walk me through superheat and subcooling."
+  }, {
+    i: "⚡",
+    t: "Electrical issue",
+    p: "I'm troubleshooting an electrical problem. Help me work through it step by step."
+  }, {
+    i: "🦺",
+    t: "Safety checklist",
+    p: "What PPE and safety steps do I need before starting this job?"
+  }, {
+    i: "🔩",
+    t: "Find a part",
+    p: "I need to find a replacement part. What information do you need?"
+  }, {
+    i: "📄",
+    t: "Write report",
+    p: "Help me write a service report for the job I just completed."
+  }];
+  const hasMessages = chat?.messages?.length > 0;
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      display: "flex",
+      flexDirection: "column",
+      overflow: "hidden"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: DARK,
+      borderBottom: `3px solid ${RED}`,
+      padding: "10px 14px",
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      flexShrink: 0
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: onBack,
+    style: {
+      background: GREY1,
+      border: "none",
+      borderRadius: 8,
+      padding: "6px 12px",
+      color: TXT,
+      fontSize: 18,
+      cursor: "pointer"
+    }
+  }, "\u2190"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      minWidth: 0
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 14,
+      fontWeight: 700,
+      color: TXT,
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis"
+    }
+  }, chat?.title || "New Job"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: RED,
+      fontWeight: 600,
+      marginTop: 1
+    }
+  }, "JLL MTS AI ASSISTANT")), hasMessages && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: GTXT2
+    }
+  }, chat.messages.length, " msg", chat.messages.length !== 1 ? "s" : "")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      overflowY: "auto",
+      overflowX: "hidden",
+      padding: 14,
+      background: BG
+    }
+  }, !hasMessages && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center",
+      padding: "20px 0 16px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 52,
+      height: 52,
+      background: _darkMode?"rgba(227,6,19,.15)":GREY1,
+      border: `1px solid ${GREY2}`,
+      borderRadius: 14,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: 26,
+      margin: "0 auto 10px"
+    }
+  }, "\uD83D\uDD27"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 14,
+      fontWeight: 700,
+      color: TXT,
+      marginBottom: 4
+    }
+  }, "MTS Field Assistant"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: GTXT2,
+      lineHeight: 1.6
+    }
+  }, "Expert HVAC help in the field.", /*#__PURE__*/React.createElement("br", null), "Diagnosis, parts, safety, reports.")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: GTXT2,
+      fontWeight: 700,
+      letterSpacing: ".08em",
+      marginBottom: 8,
+      textAlign: "center"
+    }
+  }, "QUICK START"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: 8,
+      marginBottom: 4
+    }
+  }, QUICK.map(q => /*#__PURE__*/React.createElement("button", {
+    key: q.t,
+    onClick: () => onSend(q.p),
+    style: {
+      background: CARD,
+      border: `1px solid ${GREY2}`,
+      borderRadius: 10,
+      padding: "11px 10px",
+      cursor: "pointer",
+      textAlign: "left",
+      lineHeight: 1.4
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 18,
+      display: "block",
+      marginBottom: 5
+    }
+  }, q.i), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      fontWeight: 600,
+      color: TXT,
+      display: "block",
+      marginBottom: 2
+    }
+  }, q.t), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 10,
+      color: GTXT2,
+      lineHeight: 1.4
+    }
+  }, q.p.slice(0, 45), "\u2026"))))), chat?.messages?.map((m, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      display: "flex",
+      justifyContent: m.role === "user" ? "flex-end" : "flex-start",
+      marginBottom: 12,
+      alignItems: "flex-end",
+      gap: 8
+    }
+  }, m.role === "assistant" && /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 30,
+      height: 30,
+      background: _darkMode?"rgba(227,6,19,.2)":GREY1,
+      border: `1px solid ${GREY2}`,
+      borderRadius: 8,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: 15,
+      flexShrink: 0,
+      marginBottom: 2
+    }
+  }, "\uD83D\uDD27"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      maxWidth: "82%",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: m.role === "user" ? "flex-end" : "flex-start"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: m.role === "user" ? RED : GREY1,
+      borderRadius: m.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
+      padding: "10px 14px",
+      fontSize: 13,
+      color: m.role === "user" ? "#fff" : TXT,
+      lineHeight: 1.65,
+      whiteSpace: m.role === "user" ? "pre-wrap" : "normal",
+      wordBreak: "break-word",
+      boxShadow: m.role === "user" ? "0 2px 8px rgba(227,6,19,.25)" : "none"
+    }
+  }, m.role === "assistant" ? renderMarkdown(m.content) : m.content), m.role === "assistant" && /*#__PURE__*/React.createElement("button", {
+    onClick: () => copyMsg(m.content, i),
+    style: {
+      background: "none",
+      border: "none",
+      color: copied === i ? "#27AE60" : GTXT2,
+      cursor: "pointer",
+      fontSize: 10,
+      padding: "4px 2px",
+      marginTop: 2,
+      fontFamily: "inherit"
+    }
+  }, copied === i ? "✓ Copied" : "Copy")))), busy && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "flex-end",
+      gap: 8,
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 30,
+      height: 30,
+      background: _darkMode?"rgba(227,6,19,.2)":GREY1,
+      border: `1px solid ${GREY2}`,
+      borderRadius: 8,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: 15,
+      flexShrink: 0
+    }
+  }, "\uD83D\uDD27"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: CARD,
+      borderRadius: "14px 14px 14px 4px",
+      padding: "12px 16px",
+      display: "flex",
+      gap: 5,
+      alignItems: "center"
+    }
+  }, [0, 1, 2].map(i => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      width: 7,
+      height: 7,
+      borderRadius: "50%",
+      background: RED,
+      animation: "bounce 1.2s infinite",
+      animationDelay: i * .2 + "s"
+    }
+  })))), /*#__PURE__*/React.createElement("div", {
+    ref: endRef
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: DARK,
+      borderTop: `2px solid rgba(227,6,19,.2)`,
+      padding: "10px 12px",
+      flexShrink: 0
+    }
+  }, hasMessages && !busy && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6,
+      overflowX: "auto",
+      marginBottom: 8,
+      paddingBottom: 2
+    }
+  }, ["More detail", "Step by step", "Parts needed", "Safety check", "Summarise"].map(s => /*#__PURE__*/React.createElement("button", {
+    key: s,
+    onClick: () => onSend(s),
+    style: {
+      background: GREY1,
+      border: `1px solid ${GREY2}`,
+      borderRadius: 20,
+      padding: "4px 12px",
+      cursor: "pointer",
+      fontSize: 11,
+      color: GTXT1,
+      whiteSpace: "nowrap",
+      fontFamily: "inherit"
+    }
+  }, s))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      alignItems: "flex-end"
+    }
+  }, /*#__PURE__*/React.createElement("textarea", {
+    value: text,
+    onChange: e => setText(e.target.value),
+    onKeyDown: handleKey,
+    onCompositionStart: () => {
+      isComposing.current = true;
+    },
+    onCompositionEnd: () => {
+      isComposing.current = false;
+    },
+    placeholder: "Ask anything about HVAC\u2026",
+    ref: inputRef,
+    "aria-label": "Chat message input",
+    rows: text.split("\n").length > 1 ? Math.min(text.split("\n").length, 4) : 1,
+    style: {
+      flex: 1,
+      background: GREY1,
+      border: `1px solid ${GREY2}`,
+      borderRadius: 12,
+      padding: "10px 14px",
+      color: TXT,
+      fontSize: 14,
+      outline: "none",
+      fontFamily: "inherit",
+      resize: "none",
+      lineHeight: 1.5,
+      maxHeight: 100,
+      overflowY: "auto"
+    }
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: send,
+    disabled: !text.trim() || busy,
+    style: {
+      background: !text.trim() || busy ? "#222" : RED,
+      border: "none",
+      borderRadius: 12,
+      width: 44,
+      height: 44,
+      cursor: "pointer",
+      color: TXT,
+      fontSize: 20,
+      opacity: !text.trim() || busy ? .5 : 1,
+      flexShrink: 0,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      transition: "all .15s",
+      boxShadow: !text.trim() || busy ? "none" : "0 2px 10px rgba(227,6,19,.4)"
+    }
+  }, "\u25B6"))));
+}
+
+// ── DOCS ─────────────────────────────────────────────────────────────────
+const DOCS = [{
+  id: "d1",
+  name: "Carrier 48/50XC RTU — Full Service Reference",
+  brand: "Carrier",
+  type: "Service Manual",
+  tags: ["RTU", "fault codes", "R-410A", "serial decode", "48XC", "50XC"],
+  content: `CARRIER 48/50XC PACKAGED RTU — FIELD SERVICE REFERENCE
+
+SERIAL NUMBER DECODE (Carrier format: 4 digits + letter + 7 digits)
+Position 1-4: Factory code. Position 5: Year of manufacture (A=2011, B=2012, C=2013, D=2014, E=2015, F=2016, G=2017, H=2018, J=2019, K=2020, L=2021, M=2022, N=2023, P=2024, R=2025). Position 6-7: Week of manufacture (01–52). Remaining digits: sequence number.
+Example: 0920G223456 = manufactured Week 22, 2017.
+Model number decode: 48XC = gas heat/electric cool packaged unit. 50XC = electric heat/electric cool. Digits following: tonnage (024=2T, 030=2.5T, 036=3T, 042=3.5T, 048=4T, 060=5T, 070=6T). Voltage code: A=208/230V 1ph, B=208/230V 3ph, C=460V 3ph, D=575V 3ph.
+
+FAULT CODES (ComfortLink II / WeatherExpert control board)
+E1 – Indoor blower overload: Check blower motor amps vs nameplate. Check for blocked filters, dirty coil, dampers closed. Motor FLA typically 3.2–8.5A depending on size.
+E2 – Indoor blower VFD fault (if equipped): Check VFD display for sub-fault. Common: DC bus overvoltage, current limit.
+E3 – Outdoor fan overload: Check condenser fan motor. Typical FLA 1.0–2.5A. Check for debris, seized bearing.
+E4 – Compressor #1 high discharge temp: Discharge temp >260°F. Check: low charge, high ambient, non-condensables, compressor valve failure.
+E5 – Compressor #2 high discharge temp (dual compressor models only).
+E6 – Low ambient lockout: Unit locked out below configured ambient (default 45°F). Adjust low ambient control if needed.
+E7 – High ambient lockout: Ambient >125°F. Check condenser airflow, verify discharge temp.
+E8 – Compressor #1 over-temperature protection: Internal thermostat tripped. Let cool 30 min before reset. If recurring: check charge, head pressure, crankcase heater.
+E9 – Compressor #2 over-temperature.
+E10 – Compressor #1 overcurrent: Check amp draw vs RLA. Typical compressor RLA: 13–28A depending on tonnage. Check for single-phasing, low voltage, tight scroll.
+E11 – Compressor #2 overcurrent.
+E12 – Phase loss or phase reversal: Check all three phases at compressor contactor. Phase reversal will cause immediate lockout on 3ph models.
+E13 – Ignition failure (48XC only): Gas valve opens but no flame. Check: gas pressure (3.5" WC min), igniter continuity (typically 45–90 ohms), flame sensor, pressure switches.
+E14 – Rollout switch open (48XC only): Check for cracked heat exchanger, blocked flue, oversized burner orifice.
+E15 – High limit switch open (48XC only): Check: dirty filter, blocked return air, low gas pressure, limit switch contacts.
+E16 – Pressure switch — inducer circuit: Check inducer motor, blocked condensate trap, blocked flue, pressure switch tubing for cracks.
+E17 – Igniter failure: Check igniter resistance. Replace if >200 ohms or open.
+E18 – Flame rollout: Immediate lockout. Do not reset without inspecting heat exchanger.
+E31 – Low pressure switch open (cooling): Suction pressure <46 psig R-410A. Check: refrigerant charge, filter/coil restriction, TXV, low ambient.
+E79 – High pressure switch open: Discharge pressure >640 psig R-410A. Check: condenser coil blockage, fan motor, overcharge, high ambient, non-condensables.
+LED flash codes (older boards without LCD): 1 flash=high pressure, 2 flashes=low pressure, 3 flashes=loss of charge, 4 flashes=compressor overtemp, 5 flashes=locked out.
+
+REFRIGERANT CHARGING — R-410A
+Target subcooling (liquid line): 10–15°F at ARI conditions (95°F ambient, 80°F/67°F indoor).
+Target superheat (suction line at unit): 10–20°F. Higher superheat = undercharged. Lower = overcharged or TXV issue.
+Suction pressure target at 95°F ambient: 118–135 psig (40–45°F saturated suction).
+Discharge pressure target: 380–430 psig (115–125°F saturated discharge).
+Add charge in liquid phase. Never add in vapor phase — fractionation.
+Weigh in charge on initial setup. Use subcooling method for TXV systems.
+
+ELECTRICAL
+Control voltage: 24VAC from 40VA transformer. Fuse: 3A.
+Compressor contactor coil: 24V. Check coil resistance 8–15 ohms.
+Low voltage wiring: R=24V, C=common, Y1=compressor stage 1, Y2=stage 2, G=fan, W1=heat stage 1, W2=stage 2, B/O=reversing valve (not used on straight-cool).
+Supply voltage limits: 208/230V — acceptable range 187–253V. 460V — acceptable range 414–506V. Check all phases.
+Crankcase heater: 40–75W, 240VAC. Must be energised minimum 4 hours before startup after off season. Verify with clamp meter.
+
+STARTUP CHECKLIST
+1. Verify supply voltage ±10% of nameplate, all phases balanced within 2%.
+2. Energise crankcase heater — check with clamp meter (0.2–0.4A draw).
+3. Check and record: return air temp, supply air temp, outdoor ambient.
+4. Verify all filters clean, coil free of debris.
+5. Start unit, let stabilise 15 minutes before taking refrigerant readings.
+6. Record: suction pressure, discharge pressure, liquid line temp, suction line temp, subcooling, superheat.
+7. Verify temperature split: should be 16–22°F across evaporator at design conditions.`
+}, {
+  id: "d2",
+  name: "Trane Fault Codes — RTU/AHU/Chiller Reference",
+  brand: "Trane",
+  type: "Fault Code Library",
+  tags: ["RTU", "fault codes", "Trane", "YCD", "YCH", "CGAM", "serial decode"],
+  content: `TRANE FAULT CODE REFERENCE — RTU, AHU, CHILLER
+
+SERIAL NUMBER DECODE (Trane format)
+Trane serial: First two digits = year, next two = week, remaining = sequence.
+Example: 2304xxxxx = manufactured Week 04, 2023.
+Model nomenclature (YCD/YCH example): Y=Packaged, C=Commercial cooling, D=Gas heat, H=Electric heat. Tonnage: 024=2T to 150=12.5T. Voltage: A=208/230-1ph, B=208/230-3ph, C=460-3ph, D=575-3ph.
+CGAM (air-cooled chiller): C=Chiller, G=Air-cooled, A=Standard, M=Medium temp. Tonnage in model: 020=20T to 150=150T.
+
+TRANE YCD/YCH PACKAGED RTU FAULT CODES (Voyager/Precedent)
+Code 1 – High pressure cutout: Trip >610 psig (R-410A) / >406 psig (R-22). Manual reset required. Check: condenser coil fouling, fan motor, charge, non-condensables.
+Code 2 – Low pressure cutout: Trip <54 psig (R-410A at 32°F sat.) / <30 psig (R-22). Check: charge, evaporator airflow, TXV, filter drier.
+Code 3 – Freeze stat: Evaporator coil temp <26°F. Check: airflow, filter, fan motor, low charge.
+Code 4 – Compressor over-temperature: Internal thermostat. Allow 30 min cooldown. Check charge, head pressure, oil.
+Code 5 – Compressor overload: Current draw exceeded trip point. Check: voltage, RLA, tight scroll valve, single-phasing.
+Code 6 – High discharge temperature: >270°F. Check: low suction pressure, low charge, damaged valves.
+Code 7 – Loss of charge (low pressure stat—manual reset): <20 psig. System is critically low. Find and repair leak before recharging.
+Code 8 – Outdoor fan motor fault: Check motor winding resistance. Phase-to-phase should be equal within 5%.
+Code 9 – Damper actuator fault (economizer models): Check actuator travel, wiring, 24V signal.
+Code 10 – Ignition lockout (gas heat): 3 failed ignition attempts. Check gas pressure (3.5" WC natural gas), igniter, flame sensor.
+Code 11 – High limit rollout (gas heat): Rollout switch open. Do NOT reset without full heat exchanger inspection.
+Code 12 – Inducer failure: Check motor, pressure switch, condensate trap, flue restriction.
+Code 13 – Condensate overflow: Float switch activated. Check drain pan, trap, drain line.
+Code 14 – Communication failure (BACnet/DDC): Check wiring, address settings, termination resistors.
+Code 15 – VAV fan VFD fault: Check VFD display. Common faults: ground fault, overcurrent, high temperature, undervoltage.
+Code 16 – Filter status (if equipped with differential pressure switch): Change filters.
+Code 17 – Phase reversal: Check phase sequence. A-B-C rotation required.
+Code 18 – Unit power cycling detected: Checks for 5+ power cycles in 24 hours. Investigate power quality.
+Code 19 – Compressor start failure: Compressor fails to reach run speed. Check: start capacitor, start assist, low voltage.
+Code 20 – Economizer high limit: Mixed air temp too high. Check damper, outdoor air conditions.
+
+TRANE INTELLIPAK / LARGE RTU DIAGNOSTIC CODES
+AL001 – Compressor A high pressure: Same as Code 1 above.
+AL002 – Compressor B high pressure.
+AL010 – Supply air high limit: >90°F supply temp. Check heating stages, damper, sensors.
+AL020 – Return air sensor failure: Check 10K thermistor, wiring.
+AL021 – Supply air sensor failure.
+AL030 – Compressor A fails to start: Check contactor, voltage, crankcase heater, compressor winding resistance.
+AL040 – Low ambient lockout: Default 40°F. Adjust for winter operation.
+AL050 – Refrigerant leak detected (if equipped): Check electronic leak detector concentration.
+AL060 – High static pressure (VAV): Check duct static, VFD, dampers.
+AL070 – Low static pressure (VAV): Check belt, fan, filters, VFD.
+
+TRANE CHILLER — CGAM AIR-COOLED SCREW
+CH01 – High pressure trip: >450 psig R-134a / >380 psig HFO-1234ze. Check condenser fans, coil, charge.
+CH02 – Low pressure trip: <20 psig. Check charge, evaporator fouling, water flow.
+CH03 – Motor over-temperature: Check compressor motor winding temps. Max continuous 250°F winding.
+CH04 – Oil pressure differential fault: Low oil pressure or high differential. Check oil separator, oil heater.
+CH05 – Chilled water flow fault: Check flow switch, pump, strainer, GPM vs design.
+CH06 – High chilled water temp: Return water >65°F. Check load, setpoint, staging.
+CH07 – Low chilled water temp: Supply water <35°F. Check setpoint, low ambient, antifreeze concentration.
+CH08 – Economizer fault (if equipped): Check economizer valve, refrigerant side flow.
+CH09 – Compressor discharge overtemp: >225°F. Check oil cooling, superheat, capacity control.
+CH10 – Phase loss: Check all three phases at compressor terminal block.
+
+REFRIGERANT TARGETS — TRANE RTU R-410A
+Suction pressure at 75°F ambient: 130–150 psig.
+Discharge pressure at 75°F ambient: 280–320 psig.
+Subcooling target: 10–15°F (fixed orifice) or 10–12°F (TXV).
+Superheat at suction service valve: 12–18°F (fixed orifice) or 8–12°F (TXV).`
+}, {
+  id: "d3",
+  name: "Daikin VRV/VRF Systems — Commissioning & Fault Codes",
+  brand: "Daikin",
+  type: "Service Manual",
+  tags: ["VRF", "VRV", "Daikin", "fault codes", "commissioning", "serial decode"],
+  content: `DAIKIN VRV/VRF SYSTEMS — FIELD COMMISSIONING & FAULT CODES
+
+SERIAL NUMBER DECODE (Daikin)
+Format: [Factory][Year][Month][Sequence]. Year code: G=2016, H=2017, J=2018, K=2019, L=2020, M=2021, N=2022, P=2023, Q=2024. Month: 1–9=Jan–Sep, X=Oct, Y=Nov, Z=Dec.
+Example: T-K-5-xxxxx = Tochigi factory, 2019, May.
+Model: RXYQ = VRV IV outdoor unit (Q=heat pump). Capacity in MBH follows (072=72,000 BTU=6T, 096=8T, 120=10T, 144=12T, 168=14T, 192=16T). REYQ = VRV IV-s Heat Recovery.
+
+PRE-STARTUP REQUIREMENTS
+1. Crankcase heaters: Energise outdoor units minimum 12 hours before first startup. 24 hours preferred in ambient <40°F. Verify heater operation with clamp meter (typical 1.5–3A draw per unit).
+2. Refrigerant charge: VRV IV ships with factory charge for 164 feet (50m) equivalent pipe. Additional charge required per spec: R-410A at 0.6 oz/ft (18g/m) for pipe diameter ≥5/8".
+3. Pipe pressure test: Nitrogen pressure test to 551 psig (38 kg/cm²) for 24 hours. Maximum allowable drop: 1 psig (0.07 kg/cm²) over 24 hours after temperature stabilisation.
+4. Leak check: Electronic detector at all joints plus brazing points after pressure test.
+5. Evacuation: Pull to <500 microns (<0.67 mbar). Hold 30 minutes. Rise >1000 microns indicates moisture or leak.
+6. Pipe length input: Program total equivalent pipe length and height difference via BRC1H52 or PC configurator. Affects charging algorithm.
+
+COMMISSIONING PROCEDURE
+Step 1: Complete wiring check — power wiring, F1/F2 communication bus (polarity matters), addressing.
+Step 2: Addressing — each indoor unit must have unique address. Set via DIP switches on indoor PCB or via BRC remote.
+Step 3: Indoor unit count: Outdoor unit auto-detects connected indoor units during test run.
+Step 4: Test run initiation: Press MODE + FAN simultaneously on BRC1H52 for 3 seconds. Enter test run code. Unit runs 30–60 minutes for auto-commissioning.
+Step 5: During test run: Record suction pressure (100–180 psig), discharge pressure (350–450 psig), discharge superheat (target 18–25°F), subcooling (8–15°F at outdoor unit service port).
+Step 6: Parameters to document at 30, 60, 90 minutes: suction/discharge pressures, outdoor ambient, indoor entering/leaving temps, all indoor unit temperatures.
+Step 7: Refrigerant quantity check: VRV calculates charge automatically. If auto-charge mode available, system will display charge required.
+
+DAIKIN VRV IV FAULT CODES
+A0 – Protection device activation (check all safety devices: HP/LP switches, float switches).
+A1 – PCB (main control board) fault: Replace PCB if fault persists after power cycle.
+A3 – Drain level control fault (indoor): Check float switch, condensate pump, drain line.
+A5 – Freeze protection (indoor coil <32°F): Check airflow, filter, low charge.
+A6 – Fan motor overload (indoor): Check fan motor, capacitor, blower wheel.
+A7 – Flap motor fault (indoor): Check swing flap motor wiring and mechanical binding.
+A9 – EEV (electronic expansion valve) fault: Check EEV coil resistance (typically 46 ohms), mechanical operation.
+AA – Humidifier fault (if equipped).
+AF – Drain pump fault: Check pump operation, float switch, wiring.
+AH – Dirty filter indicator (if equipped with differential pressure sensor).
+C4 – Heat exchanger thermistor fault (indoor): Check thermistor resistance. Liquid pipe sensor: 10K at 77°F. Gas pipe sensor: 10K at 77°F.
+C5 – Gas pipe thermistor fault (indoor).
+C9 – Remote controller thermistor fault.
+CA – Return air thermistor fault.
+E1 – PCB fault (outdoor): Replace outdoor main PCB.
+E3 – Discharge pressure too high: >609 psig (42 kg/cm²). Check: condenser coil, fans, charge, ambient temp.
+E4 – Discharge temperature too high: >230°F (110°C). Check: low suction pressure, low charge, compressor valve.
+E5 – Compressor motor overcurrent: Check compressor winding resistance phase to phase (should be equal, typically 0.5–2 ohms). Check inverter output voltage.
+E6 – Compressor startup failure: Check power supply voltage, inverter, refrigerant charge, crankcase heater.
+E7 – Outdoor fan motor fault: Check fan motor winding, capacitor (single-phase fans), inverter (VFD fans).
+E8 – Input current protection: Check supply voltage, power factor, all phases present and balanced.
+E9 – Transmission (communication) fault between inverter board and main PCB.
+EA – Reversing valve fault (heat pump): Check 4-way valve coil, stuck valve, system pressures.
+F3 – Discharge pipe thermistor fault (outdoor): Check thermistor resistance.
+F6 – Refrigerant overcharge or liquid back: Suction superheat <5°F. Check: EEV, charge, hot gas bypass.
+H0 – Sensor fault (general): Run self-diagnostics via remote.
+H6 – Compressor position sensor fault (inverter compressor): Check position sensor PCB.
+H7 – Fan motor position sensor: Check fan motor encoder signal.
+H8 – Input current transformer fault: Check CT sensor.
+H9 – Outdoor air thermistor fault: Check thermistor resistance (10K at 77°F).
+HJ – Capacity control fault.
+J1 – Pressure sensor fault (high or low side): Check wiring, replace transducer if shorted.
+J3 – Discharge thermistor fault.
+J6 – Suction thermistor fault.
+L0 – Inverter protection activation (outdoor): Check inverter temperature, airflow through inverter section.
+L1 – Inverter PCB fault: Check DC bus voltage (should be 1.41 × AC input).
+L4 – Inverter heat sink overtemperature: Check cooling fan, fin fouling, ambient temp.
+L5 – Inverter DC overcurrent: Check compressor windings, refrigerant charge.
+L8 – Compressor overcurrent (detected at inverter): Same checks as E5.
+L9 – Compressor startup failure (inverter): Check position sensor, refrigerant charge.
+LC – Communication fault (outdoor inverter to main PCB).
+P1 – Voltage imbalance: Check all three phases. Maximum allowable imbalance: 2%.
+P4 – Heat sink thermistor fault.
+U0 – Refrigerant shortage: Add refrigerant, find and repair leak.
+U2 – Low voltage or instantaneous power failure: Check supply voltage, check for sags.
+U4 – Communication fault between outdoor and indoor units: Check F1/F2 wiring, polarity, termination.
+UA – Trial operation incomplete: Complete commissioning sequence.
+UF – System mismatch: Indoor/outdoor combination not in compatibility matrix. Check model combination.
+
+REFRIGERANT — R-410A VRV IV
+Suction pressure: 100–140 psig (25–35°F sat.) in cooling mode.
+Discharge pressure: 350–420 psig (110–120°F sat.) in cooling mode at 95°F ambient.
+Discharge superheat: 18–25°F.
+Subcooling at outdoor unit liquid service port: 8–15°F.`
+}, {
+  id: "d4",
+  name: "Refrigerant Safety & Handling — R-410A, R-22, R-454B",
+  brand: "General",
+  type: "JLL SOP",
+  tags: ["R-410A", "R-22", "R-454B", "safety", "EPA 608", "PPE", "recovery", "GWP"],
+  content: `REFRIGERANT SAFETY & HANDLING SOP — JLL MTS
+
+SCOPE: All JLL MTS technicians handling refrigerants. Compliance with EPA Section 608, ASHRAE 15, OSHA 29 CFR 1910.1000, and local codes required.
+
+REFRIGERANT IDENTIFICATION & PROPERTIES
+
+R-410A (Most common in use):
+Type: HFC blend (R-32/R-125 50/50). GWP: 2088. ODP: 0.
+Cylinder: Pink/rose. Pressure at 77°F: 201 psig. Critical temp: 160.7°F.
+Boiling point: -61.9°F. Mildly flammable (A1 — non-flammable per ASHRAE 34).
+Being phased out per AIM Act. New equipment after 2025 must use lower-GWP alternatives.
+
+R-22 (Legacy systems only):
+Type: HCFC. GWP: 1810. ODP: 0.034.
+Cylinder: Green. Pressure at 77°F: 123 psig. Critical temp: 204.9°F.
+Production ended 2020. Reclaimed R-22 only. Document purchase/use. Cost: $50–120/lb.
+Never mix with R-410A or other refrigerants.
+
+R-454B (Puron Advance — new equipment replacement for R-410A):
+Type: HFO/HFC blend (R-32/R-1234yf). GWP: 467. ODP: 0.
+Cylinder: Light green. Pressure at 77°F: 186 psig. Mildly flammable (A2L classification).
+ASHRAE 34 Class A2L: Low burning velocity (<10 cm/s). Requires spark-free tools in confined spaces.
+Charge limit per ASHRAE 15: 35 lbs in occupied spaces without additional ventilation.
+
+R-32 (Pure refrigerant, increasingly common):
+Type: HFC. GWP: 675. ODP: 0.
+Cylinder: Red. Pressure at 77°F: 174 psig. A2L flammable classification.
+Higher pressure and lower charge weight than R-410A.
+
+R-407C (Drop-in for R-22 in some applications):
+Type: HFC blend. GWP: 1774. ODP: 0.
+Cylinder: Brown/tan. Pressure at 77°F: 130 psig. Temperature glide: ~9°F.
+Must charge as liquid (bottom of cylinder) due to glide.
+
+R-134a (Chillers, some RTUs):
+Type: HFC. GWP: 1430. ODP: 0.
+Cylinder: Light blue. Pressure at 77°F: 71 psig. Non-flammable (A1).
+
+PPE REQUIREMENTS
+Minimum for all refrigerant work:
+- Safety glasses (ANSI Z87.1) — mandatory always
+- Nitrile or neoprene gloves (cryogenic rated for liquid refrigerant contact)
+- Long sleeves — frostbite protection from liquid refrigerant
+- No open flames — arc flash risk, and A2L refrigerant flammability
+
+Additional for A2L refrigerants (R-454B, R-32, R-1234yf):
+- Non-sparking tools in confined spaces
+- Refrigerant detector set to alert at 25% LFL
+- Natural ventilation or forced ventilation in enclosed machine rooms
+
+High-concentration exposure:
+- Full face shield if servicing open systems
+- Air-supplied respirator if concentration >1000 ppm in confined space
+- Never enter a space with oxygen <19.5% without SCBA
+
+RECOVERY REQUIREMENTS (EPA 608)
+Required before opening any system — no exceptions.
+Certified recovery equipment required. Technician EPA 608 certification required.
+Recovery efficiency required:
+- Systems >200 lbs: 90% if compressor works, 80% if not.
+- Systems 50–200 lbs: 90% / 80%.
+- Systems <50 lbs: 90% / 80%.
+- MVAC: 90%.
+Recovery cylinder fill: Maximum 80% of capacity by weight. Never overfill.
+Never vent refrigerant — federal violation, fines up to $44,539 per day per violation.
+
+LEAK DETECTION
+Electronic leak detector: Required for systems >50 lbs. Calibrate before use.
+Maximum leak rate allowed:
+- Comfort cooling >50 lbs: 15% per year.
+- Process refrigeration: 35% per year.
+- Commercial refrigeration: 20% per year.
+Leak found: Repair within 30 days (comfort cooling) or 120 days with refrigerant retrofit plan.
+Document all leaks, repairs, and refrigerant added.
+
+CYLINDER HANDLING
+- Always store upright, capped, and chained.
+- Never heat cylinders above 125°F.
+- Never refill disposable cylinders — federal violation.
+- Recover cylinders: Yellow top, grey body — clearly label contents.
+- Transport: Cylinder valve caps installed, secured from rolling or falling, not in passenger compartment.
+
+REFRIGERANT LOG (Required)
+Record for each service call: Date, equipment ID, type/amount recovered, type/amount added, leak test results, technician name and 608 cert number. Retain records 3 years.`
+}, {
+  id: "d5",
+  name: "HVAC Electrical — Controls, Wiring & Troubleshooting",
+  brand: "General",
+  type: "Wiring Reference",
+  tags: ["controls", "24V", "thermostat", "VFD", "electrical", "NFPA 70E", "low voltage", "three phase"],
+  content: `HVAC ELECTRICAL REFERENCE — CONTROLS, WIRING & TROUBLESHOOTING
+
+LOW VOLTAGE CONTROL WIRING (24VAC Standard)
+Transformer: Primary 120V or 208/240V. Secondary 24VAC. Typical VA ratings: 20VA (residential), 40VA (light commercial), 75VA (commercial RTU).
+Fusing: 3A fuse on secondary — always check before assuming transformer failed.
+
+Standard terminal designations:
+R  = 24V hot from transformer secondary (split system: Rh=heat, Rc=cool)
+C  = Common (return to transformer). Missing C = floating common = intermittent operation
+Y  = Cooling stage 1 / compressor contactor
+Y2 = Cooling stage 2 (second compressor or unloading)
+G  = Indoor fan (continuous fan)
+W  = Heat stage 1 (gas valve, electric heat, HP auxiliary)
+W2 = Heat stage 2
+E  = Emergency heat (heat pump)
+O  = Reversing valve — energised in COOLING (Carrier, Trane, Lennox, most brands)
+B  = Reversing valve — energised in HEATING (Rheem, Ruud, some older units)
+L  = Indicator / fault signal
+X  = Auxiliary / accessory
+DH = Dehumidify signal
+V  = Ventilation damper
+S  = Sensor / occupancy input
+
+VOLTAGE CHECKS — 24V SYSTEM
+Good: 24–28VAC measured R-to-C at air handler/furnace with no load.
+Under load (contactor pulled in): Should not drop below 22V. If <22V: check transformer VA rating vs load, check for shorts on secondary.
+Check transformer: 24VAC R-to-C at air handler, NOT at stat. Voltage at stat drops over long wire runs.
+Thermostat wire resistance: Max 2 ohms for reliable signal. Test with ohmmeter wire-to-wire.
+
+COMMON LOW VOLTAGE FAULTS
+1. No C wire: Modern smart stats need C. Symptoms: stat display dims, random restarts, Wi-Fi drops. Solution: Run C wire or use adapter kit.
+2. Shorted Y to ground: Compressor runs continuously or contactor buzzes. Check outdoor unit wiring, TXV coil grounding.
+3. Open W circuit: No heat. Check: gas valve coil (24VAC across terminals), furnace limit switches, high limit switch (manual reset on some models).
+4. R-to-C blown fuse: Unit completely dead. Replace 3A fuse. If blows again: isolate each circuit (Y, W, G) to find short.
+5. Intermittent C: Common with wire nuts or spade connectors. Vibration causes arcing. Replace with proper wire nut or terminal block connection.
+6. G terminal energised without call: Check stat subbase contacts, board, or wiring short.
+
+THREE-PHASE POWER — COMMERCIAL HVAC
+Voltage standards: 208V (three-phase four-wire wye), 230V, 460V, 480V, 575V.
+Acceptable voltage tolerance: ±10% of nameplate.
+Phase imbalance: Maximum 2% voltage imbalance. Calculate: (Max deviation from average / Average) × 100.
+Example: 457V, 461V, 454V. Average=457.3V. Max deviation=461-457.3=3.7V. Imbalance=3.7/457.3×100=0.8%. Acceptable.
+Effect of imbalance on motor: 1% voltage imbalance causes ~6–7% current imbalance. Can overheat windings.
+Phase reversal: Compressors and fans will run backwards. Install phase loss/reversal relay. Motor will not start or trips immediately.
+Phase loss: Never allow single-phase operation of three-phase equipment. Compressor will draw locked rotor amperage and fail quickly.
+
+COMPRESSOR ELECTRICAL CHECKS
+Winding resistance (ohmmeter, power off, terminals disconnected):
+- T1-T2, T2-T3, T1-T3 should be approximately equal.
+- Common-to-run, Common-to-start, Run-to-start relationship.
+- Winding-to-ground: Must be >100,000 ohms (∞ on standard meter). Less = failed winding.
+Typical resistance values: Scroll compressor 2-5T: T1-T2 0.5–2.0 ohms. Larger compressors lower resistance.
+Megohm test: 500V DC megohmmeter. Good: >100 Megohms. Suspect: 1–100 Megohms. Failed: <1 Megohm. Do not megohm inverter-driven compressors — damages inverter.
+
+CAPACITORS
+Run capacitor: Microfarad (µF) rating on nameplate. Acceptable range: ±6% of rating.
+Test with capacitor tester (multimeter capacitance mode). Never short a charged capacitor.
+Dual run capacitor: Two capacitors in one can — C (common), FAN, HERM (hermetic/compressor) terminals.
+Start capacitor: Much higher µF, only in circuit during start (< 3 seconds). Discharged by bleed resistor. If resistor failed: cap stays charged — shock hazard.
+Typical values: Condenser fan motor: 5–10µF/370V. Compressor: 35–80µF/370V. Some: 440V rated (better life in high ambient).
+
+VFD / VARIABLE FREQUENCY DRIVE
+Pre-check: Confirm input voltage (L1-L2-L3) and output voltage (T1-T2-T3) within spec.
+Common fault codes across brands:
+OC = Overcurrent (check motor winding, output short, too-fast acceleration ramp)
+OV = DC bus overvoltage (check input voltage, deceleration ramp, braking resistor)
+UV = Undervoltage (check input voltage, connections)
+OH = Overheat (check cooling fan, fin fouling, ambient temp, VFD sizing)
+GF = Ground fault (check motor leads, motor winding to ground)
+OL = Motor overload (check motor amps vs FLA, ambient, ramp times)
+Do not megohm motors controlled by VFDs with VFD connected.
+Minimum motor insulation for VFD: Use inverter-duty motor (NEMA MG1 Part 31) for best life.
+
+NFPA 70E — ARC FLASH SAFETY
+Incident energy analysis required for work on energised equipment >50V.
+Minimum PPE without arc flash study: Category 1 = 4 cal/cm² rated clothing. Arc flash face shield, leather gloves over rubber insulating gloves.
+For panels >240V commercial: Assume Category 2 minimum (8 cal/cm²) without study.
+LOTO procedure: Lockout at disconnect, verify absence of voltage on all phases with CAT III/IV meter before touching any conductors.
+Never work inside energised panel unless justified by NFPA 70E exception and PPE requirements met.
+
+MOTOR MEGOHM TESTING GUIDE
+Test voltage by motor nameplate voltage:
+<250V nameplate: Use 500V DC megohmmeter.
+250–600V: Use 500V or 1000V DC.
+>600V: Use 1000V DC.
+Minimum acceptable: For motors in service: 1 Megohm per kV of nameplate voltage + 1 Megohm minimum.
+New motor before first start: Minimum 100 Megohms.
+Record date, temperature, humidity, and result. Temperature correct if needed: Resistance halves for every 10°C rise.`
+}, {
+  id: "d6",
+  name: "Split Systems — Fault Codes, Charging & Troubleshooting",
+  brand: "General",
+  type: "Service Manual",
+  tags: ["split system", "fault codes", "heat pump", "mini-split", "Carrier", "Trane", "Lennox", "serial decode"],
+  content: `SPLIT SYSTEM & HEAT PUMP — FIELD SERVICE REFERENCE
+
+SERIAL NUMBER DECODE BY BRAND
+
+Carrier/Bryant/Payne:
+Format: 4-digit factory + year letter + 2-digit week + sequence.
+Year codes: A=2011, B=2012, C=2013, D=2014, E=2015, F=2016, G=2017, H=2018, J=2019, K=2020, L=2021, M=2022, N=2023, P=2024, R=2025.
+Model: 24ACC = split condensing unit. 24ANA = Infinity single-stage. First digits = product line. Tonnage: 018=1.5T, 024=2T, 030=2.5T, 036=3T, 042=3.5T, 048=4T, 060=5T.
+Voltage: A=208/230-1ph, B=208/230-3ph.
+
+Trane/American Standard:
+Format: First 2 digits = year, next 2 = week.
+Model: 4TTR = R-410A split heat pump. 4TTB = straight cool condenser. 4TEE = air handler.
+Tonnage: 3 digits after product code × 1000 BTU (018=18,000=1.5T, 036=36,000=3T, 060=60,000=5T).
+
+Lennox:
+Serial: First digit = year (A=2011, B=2012 etc). Next 2 digits = week. Remaining = sequence.
+Model: XC21 = high-efficiency condenser. XP21 = heat pump. EL296V = furnace.
+
+Goodman/Amana:
+Serial: First digit = year (9=2009, 0=2010, 1=2011, 2=2012 continuing). Second digit = month (A=Jan, B=Feb, C=Mar... M=Dec skipping I).
+Model: GSX = split condenser. GSXC = high-efficiency. DSZC = heat pump.
+
+Rheem/Ruud:
+Serial: First 4 digits = week + year (e.g., 0922 = Week 09, 2022).
+Model: RA = condenser. RP = heat pump. RHSL = air handler.
+
+York/Johnson Controls:
+Serial: Starts with 4-letter factory code, then year digit, week, sequence.
+Year digit: A=2010, B=2011... continuing.
+
+SPLIT SYSTEM FAULT CODES — CARRIER INFINITY SERIES
+Flash code from diagnostic LED on control board (count flashes, pause, repeat):
+1 flash – Normal operation / no fault stored.
+2 flashes – Low pressure switch lockout: <22 psig (R-410A). Check charge, filter drier, TXV, airflow.
+3 flashes – High pressure switch lockout: >600 psig. Check condenser coil, fan motor, overcharge.
+4 flashes – Open start circuit: Check start capacitor (µF within ±6%), start relay/potential relay.
+5 flashes – Open run circuit: Check run capacitor, compressor winding resistance.
+6 flashes – Compressor over-temperature: Let cool 30 min. Check charge, head pressure.
+7 flashes – Outdoor ambient below minimum operating temp (typically 55°F cooling, -20°F heating).
+8 flashes – High compressor discharge temperature: >260°F. Check charge, outdoor airflow, head pressure.
+9 flashes – Low voltage: <18VAC from indoor air handler. Check 24V transformer, wiring.
+11 flashes – Check stat signal: Stat calling but no valid signal or missing C wire.
+24 flashes – Loss of charge: <7 psig. Refrigerant critically low. Find and fix leak before charging.
+33 flashes – Limit circuit open (indoor): Check filter, blower motor, coil freeze, duct restrictions.
+45 flashes – Control board fault: Replace board.
+13 flashes – Communication fault (Infinity systems): Check comm wire between indoor/outdoor units.
+
+CARRIER/BRYANT WEATHERMAKER — INDOOR ERROR CODES
+E0 – EEPROM fault: Replace control board.
+E1 – Indoor unit communication fault (to outdoor).
+E2 – Low indoor coil temperature: Coil <28°F, airflow issue or low charge.
+E3 – Indoor fan motor overload: Check blower motor amp draw vs FLA.
+E4 – Condensate drain overflow: Float switch tripped. Check drain pan, line, trap.
+E5 – High indoor coil temperature (cooling): >65°F coil temp, check charge, airflow.
+E6 – Reversing valve fault (heat pump): 4-way valve stuck. Check coil, 24V signal, stuck spool.
+
+TRANE SPLIT SYSTEM FAULT CODES (XR/XL series)
+LED codes on defrost control board:
+Continuous ON – Normal cooling/heating.
+1 flash – Normal defrost completed.
+2 flashes – Outdoor coil sensor fault: Check thermistor resistance (10K at 77°F). Replace if open/shorted.
+3 flashes – Defrost thermostat stuck open: Check at <30°F outdoor coil temp.
+4 flashes – Outdoor fan motor fault: Check winding resistance, capacitor, bearing.
+5 flashes – High pressure cutout: >590 psig (R-410A). Check condenser coil, charge.
+6 flashes – Low pressure cutout: <54 psig. Check charge, indoor airflow, TXV.
+7 flashes – Compressor protection: High discharge temp or overcurrent. Check winding, capacitor, charge.
+
+HEAT PUMP OPERATION — CRITICAL DIFFERENCES
+Reversing valve (4-way valve):
+- Most brands: O terminal energised = COOLING (valve shifts to cool mode).
+- Rheem, Ruud, some GE: B terminal energised = HEATING (valve shifts to heat mode).
+- Defrost cycle: Outdoor unit goes to heating mode briefly to melt ice — normal.
+- Stuck reversing valve: System heats when should cool (or vice versa). Check 24V at O/B terminal. Listen for valve shift click. Can sometimes free by cycling 10 times rapidly.
+
+Defrost cycle: Normal for outdoor coil to ice in heating mode. Defrost initiates on time+temp or demand. Board checks outdoor coil temp (typically trips at <26°F). Defrost runs 2–10 minutes, terminates at coil temp >57°F or max 10 minutes. During defrost: indoor unit may blow slightly cool air — inform building occupants.
+
+Balance point: Temperature at which heat pump capacity equals building heat loss. Below balance point, supplemental/emergency heat activates. Typically 25–35°F depending on unit efficiency and building load.
+
+REFRIGERANT CHARGING — SPLIT SYSTEMS
+R-410A superheat method (fixed orifice systems):
+1. Connect manifold gauges at outdoor unit service valves.
+2. Measure outdoor ambient temp (dry bulb) and indoor wet bulb (evaporator inlet).
+3. Use manufacturer superheat chart — target typically 10–20°F at suction line service valve.
+4. High superheat = undercharged. Low superheat = overcharged or liquid slugging TXV.
+Subcooling method (TXV systems):
+Target: 10–15°F liquid line subcooling. Measure liquid line temp and compare to condensing temp from discharge pressure on PT chart.
+Add charge in liquid phase at liquid line service valve. Charge slowly.
+
+SPLIT SYSTEM STARTUP CHECKLIST
+1. Verify supply voltage ±10% nameplate. Check phasing (3-phase).
+2. Verify indoor filter clean, all supply/return registers open.
+3. Check refrigerant line insulation intact. Suction line should feel cold and sweat in humid weather.
+4. Verify thermostat wiring correct — check all terminals with meter.
+5. Start in cooling. Let stabilise 15 minutes.
+6. Record: suction pressure, discharge pressure, liquid line temp, suction line temp, indoor DB/WB, outdoor DB, calculated superheat or subcooling.
+7. Measure temperature split: Return air minus supply air. Target 16–22°F for cooling.
+8. Verify amp draw on compressor and outdoor fan within nameplate range.`
+}, {
+  id: "d7",
+  name: "Gas Furnaces — Fault Codes, Diagnostics & Serial Decode",
+  brand: "General",
+  type: "Service Manual",
+  tags: ["furnace", "fault codes", "gas heat", "Carrier", "Trane", "Lennox", "Goodman", "serial decode", "ignition"],
+  content: `GAS FURNACE — FIELD SERVICE REFERENCE
 SERIAL NUMBER DECODE
 Carrier/Bryant furnaces: Same format as split systems — year letter in position 5.
 Lennox: Year letter first, week second. G61MP = multi-position 1-stage. EL296V = 96% 2-stage variable.
@@ -652,2458 +1971,4 @@ Power factor: VFDs draw leading or lagging current depending on loading. Input p
 EMI/RFI: VFDs generate high-frequency noise. Install EMC/EMI filter on input for sensitive environments. Use shielded motor cable for long runs (>50ft). Ground shield at drive end only for output cables.`
 }];
 
-
-
-function Docs() {
-  const [view, setView] = useState("list");
-  const [doc, setDoc] = useState(null);
-  const [q, setQ] = useState("");
-  const [ans, setAns] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [search, setSearch] = useState("");
-  const filtered = DOCS.filter(d => !search || [d.name, d.brand, d.type, ...d.tags].join(" ").toLowerCase().includes(search.toLowerCase()));
-  async function askDoc() {
-    if (!q.trim()) return;
-    setBusy(true);
-    setAns("");
-    const r = await ai("You are an HVAC technical documentation expert. Answer precisely from the document provided.", `Document: "${doc.name}"\nContent: ${doc.content}\n\nQuestion: ${q}`);
-    setAns(r);
-    setBusy(false);
-  }
-  if (view === "read" && doc) return /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      display: "flex",
-      flexDirection: "column",
-      overflow: "hidden"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: DARK,
-      borderBottom: `3px solid ${RED}`,
-      padding: "10px 14px",
-      display: "flex",
-      alignItems: "center",
-      gap: 10,
-      flexShrink: 0
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      setView("list");
-      setAns("");
-      setQ("");
-    },
-    style: {
-      background: GREY1,
-      border: "none",
-      borderRadius: 8,
-      padding: "6px 12px",
-      color: TXT,
-      fontSize: 18,
-      cursor: "pointer"
-    }
-  }, "\u2190"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      minWidth: 0
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      fontWeight: 700,
-      color: TXT,
-      whiteSpace: "nowrap",
-      overflow: "hidden",
-      textOverflow: "ellipsis"
-    }
-  }, doc.name), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: RED,
-      fontWeight: 600
-    }
-  }, doc.brand, " \xB7 ", doc.type)), /*#__PURE__*/React.createElement("button", {
-    onClick: () => _nav.go && _nav.go("home"),
-    style: {
-      background: GREY1,
-      border: "none",
-      borderRadius: 8,
-      padding: "6px 12px",
-      color: TXT,
-      fontSize: 18,
-      cursor: "pointer"
-    }
-  }, "\uD83C\uDFE0")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      overflowY: "auto",
-      overflowX: "hidden",
-      padding: 14
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      flexWrap: "wrap",
-      gap: 6,
-      marginBottom: 12
-    }
-  }, doc.tags.map(t => /*#__PURE__*/React.createElement("span", {
-    key: t,
-    style: {
-      background: "rgba(227,6,19,.12)",
-      border: `1px solid rgba(227,6,19,.25)`,
-      borderRadius: 20,
-      padding: "3px 10px",
-      fontSize: 10,
-      color: RED,
-      fontWeight: 600
-    }
-  }, t))), /*#__PURE__*/React.createElement(Card, {
-    style: {
-      marginBottom: 14
-    },
-    c: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 10,
-        color: GTXT2,
-        fontWeight: 700,
-        marginBottom: 8
-      }
-    }, "CONTENT"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 13,
-        color: GTXT1,
-        lineHeight: 1.7
-      }
-    }, doc.content))
-  }), /*#__PURE__*/React.createElement(Card, {
-    style: {
-      border: `1px solid rgba(227,6,19,.3)`
-    },
-    c: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        marginBottom: 12
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        width: 32,
-        height: 32,
-        background: RED,
-        borderRadius: 8,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontSize: 16
-      }
-    }, "\uD83E\uDD16"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 13,
-        fontWeight: 700,
-        color: TXT
-      }
-    }, "Ask AI About This Document"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 10,
-        color: GTXT2
-      }
-    }, "AI answers from this document specifically"))), /*#__PURE__*/React.createElement("div", {
-      style: {
-        marginBottom: 10
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 10,
-        color: GTXT2,
-        marginBottom: 6,
-        fontWeight: 600
-      }
-    }, "QUICK QUESTIONS"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        flexWrap: "wrap",
-        gap: 6
-      }
-    }, ["What are the fault codes?", "What PPE is required?", "Startup steps?", "Electrical specs?"].map(qk => /*#__PURE__*/React.createElement("button", {
-      key: qk,
-      onClick: () => {
-        setQ(qk);
-      },
-      style: {
-        background: GREY1,
-        border: `1px solid ${GREY2}`,
-        borderRadius: 20,
-        padding: "5px 10px",
-        cursor: "pointer",
-        fontSize: 10,
-        color: GTXT1
-      }
-    }, qk)))), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        gap: 8
-      }
-    }, /*#__PURE__*/React.createElement("input", {
-      value: q,
-      onChange: e => setQ(e.target.value),
-      onKeyDown: e => {
-        if (e.key === "Enter") askDoc();
-      },
-      placeholder: "Ask a question\u2026",
-      style: {
-        flex: 1,
-        background: GREY1,
-        border: `1px solid ${GREY2}`,
-        borderRadius: 10,
-        padding: "10px 12px",
-        color: TXT,
-        fontSize: 13,
-        outline: "none"
-      }
-    }), /*#__PURE__*/React.createElement("button", {
-      onClick: askDoc,
-      disabled: !q.trim() || busy,
-      style: {
-        background: RED,
-        border: "none",
-        borderRadius: 10,
-        padding: "0 16px",
-        cursor: "pointer",
-        color: TXT,
-        fontWeight: 700,
-        fontSize: 13,
-        opacity: !q.trim() || busy ? .4 : 1
-      }
-    }, busy ? "…" : "Ask")), busy && /*#__PURE__*/React.createElement(Spin, {
-      label: "Reading\u2026"
-    }), ans && /*#__PURE__*/React.createElement("div", {
-      style: {
-        background: "rgba(227,6,19,.06)",
-        border: `1px solid rgba(227,6,19,.2)`,
-        borderRadius: 10,
-        padding: 12,
-        marginTop: 10,
-        fontSize: 13,
-        color: TXT,
-        lineHeight: 1.7,
-        whiteSpace: "pre-wrap"
-      }
-    }, ans))
-  })));
-  return /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      display: "flex",
-      flexDirection: "column",
-      overflow: "hidden"
-    }
-  }, /*#__PURE__*/React.createElement(Hdr, {
-    title: "DOCUMENT LIBRARY",
-    sub: "MANUALS \xB7 FAULT CODES \xB7 SOPs",
-    onHome: () => _nav.go && _nav.go("home")
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      overflowY: "auto",
-      overflowX: "hidden",
-      padding: 14
-    }
-  }, /*#__PURE__*/React.createElement("input", {
-    value: search,
-    onChange: e => setSearch(e.target.value),
-    placeholder: "\uD83D\uDD0D Search\u2026",
-    style: {
-      width: "100%",
-      background: GREY1,
-      border: `1px solid ${GREY2}`,
-      borderRadius: 10,
-      padding: "10px 12px",
-      color: TXT,
-      fontSize: 13,
-      outline: "none",
-      marginBottom: 12,
-      fontFamily: "inherit"
-    }
-  }), filtered.map(d => /*#__PURE__*/React.createElement("button", {
-    key: d.id,
-    onClick: () => {
-      setDoc(d);
-      setView("read");
-    },
-    style: {
-      width: "100%",
-      background: CARD,
-      border: `1px solid ${GREY2}`,
-      borderRadius: 12,
-      padding: 12,
-      marginBottom: 8,
-      cursor: "pointer",
-      textAlign: "left"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      fontWeight: 700,
-      color: TXT,
-      marginBottom: 5
-    }
-  }, d.name), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      alignItems: "center",
-      flexWrap: "wrap"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      background: RED,
-      borderRadius: 5,
-      padding: "2px 8px",
-      fontSize: 10,
-      color: TXT,
-      fontWeight: 700
-    }
-  }, d.type), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 11,
-      color: GTXT2,
-      fontWeight: 600
-    }
-  }, d.brand), d.tags.slice(0, 3).map(t => /*#__PURE__*/React.createElement("span", {
-    key: t,
-    style: {
-      fontSize: 9,
-      background: GREY1,
-      color: GTXT2,
-      borderRadius: 10,
-      padding: "2px 7px"
-    }
-  }, t)))))));
-}
-
-// ── DEMO MODE ─────────────────────────────────────────────────────────────
-const DEMO_STEPS = [
-  {
-    id: "intro",
-    title: "Welcome to MTS Assistant",
-    subtitle: "JLL HVAC AI Field Tool",
-    desc: "An AI expert in every engineer's pocket. Let's walk through a real job scenario.",
-    icon: "🔧",
-    duration: 3000,
-  },
-  {
-    id: "problem",
-    title: "The Problem",
-    subtitle: "What techs face every day",
-    desc: "A Carrier RTU showing fault code E79. High pressure lockout. Unit is down. Building is hot. What do you do?",
-    icon: "⚠️",
-    duration: 4000,
-  },
-  {
-    id: "diagnosis",
-    title: "Step 1 — Fault Diagnosis",
-    subtitle: "AI DIAGNOSTIC AGENT",
-    desc: "Enter the fault code, equipment, and symptoms. The AI ranks probable causes by likelihood and gives a step-by-step procedure.",
-    icon: "🔍",
-    duration: 3500,
-    demo: {
-      type: "agent",
-      fields: [
-        { label: "Equipment", value: "RTU — Carrier 48XC060" },
-        { label: "Fault Code", value: "E79" },
-        { label: "Refrigerant", value: "R-410A" },
-        { label: "Symptoms", value: "High pressure lockout. Condenser fan running. Unit off on high pressure." },
-      ],
-      result: `TOP CAUSES — E79 HIGH PRESSURE LOCKOUT
-
-1. 🔴 Dirty/blocked condenser coil (65%) — Check coil for debris, cottonwood, dirt buildup. Measure discharge pressure — target <430 psig at 95°F ambient.
-
-2. 🟡 Condenser fan motor fault (20%) — Verify fan RPM, check amp draw vs nameplate (1.0–2.5A). Check capacitor µF within ±6%.
-
-3. 🟢 Refrigerant overcharge (10%) — Check subcooling. Target 10–15°F. If >18°F, recover excess charge.
-
-IMMEDIATE CHECKS
-⚠️ Verify supply voltage within ±10% before starting
-• Check discharge pressure with manifold gauges
-• Inspect condenser coil — clean if needed
-• Verify all condenser fans running correct direction
-
-SAFETY
-⚠️ Lock out / tag out before opening electrical panel
-⚠️ R-410A at 95°F: discharge ~430 psig — wear safety glasses and gloves`
-    }
-  },
-  {
-    id: "safety",
-    title: "Step 2 — Safety Briefing",
-    subtitle: "PRE-JOB SAFETY AGENT",
-    desc: "One tap pre-fills from the diagnosis. Generates task-specific PPE list, LOTO procedure, and hazard checklist.",
-    icon: "🦺",
-    duration: 3500,
-    demo: {
-      type: "agent",
-      fields: [
-        { label: "Job Type", value: "Fault Diagnosis — RTU" },
-        { label: "Location", value: "Rooftop" },
-        { label: "Refrigerant", value: "R-410A" },
-        { label: "Hazards", value: "Electrical >50V · Refrigerant present · Height >6ft" },
-      ],
-      result: `⚠️ CRITICAL SAFETY WARNINGS
-• Working at height on rooftop — fall arrest required
-• R-410A at operating pressure — cryogenic PPE required
-• Electrical panels >240V — NFPA 70E Category 2 minimum
-
-🦺 REQUIRED PPE
-• Safety glasses ANSI Z87.1 — mandatory
-• Cryogenic gloves for refrigerant handling
-• Hard hat — rooftop work
-• High-vis vest — occupied building
-• Steel-toe boots ASTM F2413
-• Fall harness + lanyard — anchor to rated point
-• Arc flash gear 8 cal/cm² for electrical work
-
-🔐 LOTO PROCEDURE
-1. Notify building manager — unit going offline
-2. Locate main disconnect at unit
-3. Turn to OFF position
-4. Apply personal lock — tag with name and date
-5. Verify de-energised with CAT III meter L1-L2-L3
-6. Test before touch
-
-✅ PRE-JOB CHECKLIST
-☐ PPE donned and inspected
-☐ Fall protection anchored
-☐ LOTO applied and verified
-☐ Manifold gauges connected
-☐ Leak detector calibrated
-☐ Phone charged, supervisor notified`
-    }
-  },
-  {
-    id: "parts",
-    title: "Step 3 — Parts Finder",
-    subtitle: "OEM PARTS + NEARBY SUPPLIERS",
-    desc: "GPS locates nearby Johnstone, Wesco, and Grainger. AI returns OEM part numbers, compatible alternatives, and pricing.",
-    icon: "🔩",
-    duration: 3500,
-    demo: {
-      type: "parts",
-      result: `CONDENSER FAN MOTOR — Carrier 48XC060
-
-OEM PART: HC39GE237 (Carrier/Bryant)
-• 1/4 HP, 208-230V, 1-phase, 1100 RPM
-• 48 frame, 1 speed, CCW rotation
-• Typical price: $185–$220
-
-COMPATIBLE ALTERNATIVES
-1. Fasco D7909 — Direct replacement, same specs — $95–$115
-2. Mars 10587 — 1/4HP 1100RPM 48fr — $89–$105
-3. AO Smith FD6001 — OEM equiv, 5yr warranty — $110–$130
-
-KEY SPECS TO VERIFY
-• Rotation: CCW (viewed from shaft end)
-• Shaft diameter: 1/2"
-• Frame: 48, totally enclosed
-
-📍 STORES NEAR YOU
-🔴 Johnstone Supply — 2.1 miles — open now
-🟠 Grainger — 3.8 miles — open now
-🔵 Wesco — 5.2 miles — open now`
-    }
-  },
-  {
-    id: "closing",
-    title: "Step 4 — Closing Comment",
-    subtitle: "WORK ORDER SUMMARY",
-    desc: "AI writes a professional CMMS-ready closing comment. One tap to copy into any work order system.",
-    icon: "📋",
-    duration: 3500,
-    demo: {
-      type: "closing",
-      result: `Responded to high pressure lockout fault (E79) on rooftop Carrier 48XC RTU. Found condenser coil heavily fouled with cottonwood and debris, causing restricted airflow and elevated head pressure. Cleaned condenser coil with coil cleaner and low-pressure rinse. Verified all three condenser fans operational with correct amp draw. Checked refrigerant charge — subcooling 12°F, within spec. Reset high pressure lockout and tested unit through full cooling cycle. Unit operating normally at time of departure with discharge pressure 415 psig at 92°F ambient. Recommend quarterly coil cleaning to prevent recurrence.`
-    }
-  },
-  {
-    id: "more",
-    title: "And there's more…",
-    subtitle: "FULL FEATURE SET",
-    desc: "11 technical documents with AI Q&A · Belt & PT calculators · Equipment log · Refrigerant charging · Predictive maintenance",
-    icon: "📱",
-    duration: 3500,
-  },
-  {
-    id: "impact",
-    title: "The Impact",
-    subtitle: "WHY THIS MATTERS FOR JLL MTS",
-    desc: "Faster fault resolution · Consistent safety compliance · Accurate work orders · Knowledge in every engineer's hands · Zero paper, zero phone calls",
-    icon: "🚀",
-    duration: 4000,
-  },
-];
-
-function DemoMode({ onExit }) {
-  const [step, setStep] = React.useState(0);
-  const [phase, setPhase] = React.useState("title"); // title | fields | result
-  const [fieldIdx, setFieldIdx] = React.useState(0);
-  const [typedText, setTypedText] = React.useState("");
-  const [showResult, setShowResult] = React.useState(false);
-  const [autoPlay, setAutoPlay] = React.useState(true);
-  const timerRef = React.useRef(null);
-  const typeRef = React.useRef(null);
-
-  const current = DEMO_STEPS[step];
-  const progress = ((step) / (DEMO_STEPS.length - 1)) * 100;
-
-  function clearTimers() {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    if (typeRef.current) clearInterval(typeRef.current);
-  }
-
-  function typeText(text, onDone) {
-    setTypedText("");
-    let i = 0;
-    const speed = text.length > 200 ? 8 : 18;
-    typeRef.current = setInterval(() => {
-      i++;
-      setTypedText(text.slice(0, i));
-      if (i >= text.length) {
-        clearInterval(typeRef.current);
-        if (onDone) onDone();
-      }
-    }, speed);
-  }
-
-  function goToStep(idx) {
-    clearTimers();
-    setStep(idx);
-    setPhase("title");
-    setFieldIdx(0);
-    setTypedText("");
-    setShowResult(false);
-  }
-
-  function next() { if (step < DEMO_STEPS.length - 1) goToStep(step + 1); }
-  function prev() { if (step > 0) goToStep(step - 1); }
-
-  React.useEffect(() => {
-    if (!autoPlay) return;
-    const s = DEMO_STEPS[step];
-    clearTimers();
-    setPhase("title");
-    setShowResult(false);
-    setTypedText("");
-    setFieldIdx(0);
-
-    if (!s.demo) {
-      // Simple slide — auto advance
-      timerRef.current = setTimeout(() => {
-        if (step < DEMO_STEPS.length - 1) goToStep(step + 1);
-      }, s.duration);
-    } else {
-      // Demo slide — animate fields then result
-      timerRef.current = setTimeout(() => {
-        setPhase("fields");
-        let fi = 0;
-        function nextField() {
-          if (fi < s.demo.fields.length) {
-            setFieldIdx(fi);
-            fi++;
-            timerRef.current = setTimeout(nextField, 600);
-          } else {
-            timerRef.current = setTimeout(() => {
-              setPhase("result");
-              typeText(s.demo.result, () => {
-                setShowResult(true);
-                timerRef.current = setTimeout(() => {
-                  if (step < DEMO_STEPS.length - 1) goToStep(step + 1);
-                }, 2500);
-              });
-            }, 500);
-          }
-        }
-        nextField();
-      }, 1200);
-    }
-    return () => clearTimers();
-  }, [step, autoPlay]);
-
-  const isDark = _darkMode;
-  const bg = isDark ? "#0a0a0a" : "#f4f4f5";
-  const card = isDark ? "#161616" : "#ffffff";
-  const border = isDark ? "#2a2a2a" : "#d4d4d8";
-  const txt = isDark ? "#ffffff" : "#111111";
-  const txt2 = isDark ? "rgba(255,255,255,0.55)" : "rgba(0,0,0,0.5)";
-  const txt3 = isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)";
-
-  return React.createElement("div", {style:{
-    position:"fixed", inset:0, zIndex:10000,
-    background:bg, display:"flex", flexDirection:"column",
-    fontFamily:"system-ui,-apple-system,sans-serif"
-  }},
-
-    /* Top bar */
-    React.createElement("div", {style:{
-      background: isDark?"#000":card,
-      borderBottom:`3px solid ${RED}`,
-      padding:"10px 16px",
-      display:"flex", alignItems:"center", justifyContent:"space-between",
-      flexShrink:0
-    }},
-      React.createElement("div", {style:{display:"flex",alignItems:"center",gap:8}},
-        React.createElement("div", {style:{
-          background:RED, borderRadius:6, padding:"3px 8px",
-          fontSize:10, fontWeight:900, color:"#fff", letterSpacing:".1em"
-        }}, "▶ DEMO"),
-        React.createElement("div", {style:{fontSize:12,fontWeight:700,color:RED}},
-          `${step + 1} / ${DEMO_STEPS.length}`)
-      ),
-      React.createElement("div", {style:{display:"flex",gap:8,alignItems:"center"}},
-        React.createElement("button", {
-          onClick:()=>setAutoPlay(p=>!p),
-          style:{background:autoPlay?"rgba(227,6,19,.15)":"rgba(255,255,255,.08)",
-            border:`1px solid ${autoPlay?RED:border}`,
-            borderRadius:20, padding:"4px 12px",
-            fontSize:11, fontWeight:700,
-            color:autoPlay?RED:txt2, cursor:"pointer", fontFamily:"inherit"}
-        }, autoPlay ? "⏸ Pause" : "▶ Play"),
-        React.createElement("button", {
-          onClick:onExit,
-          style:{background:"none",border:`1px solid ${border}`,
-            borderRadius:20, padding:"4px 12px",
-            fontSize:11, fontWeight:700, color:txt2,
-            cursor:"pointer", fontFamily:"inherit"}
-        }, "✕ Exit")
-      )
-    ),
-
-    /* Progress bar */
-    React.createElement("div", {style:{height:3,background:border,flexShrink:0}},
-      React.createElement("div", {style:{
-        height:"100%", background:RED,
-        width:progress+"%",
-        transition:"width 0.6s ease"
-      }})
-    ),
-
-    /* Main content */
-    React.createElement("div", {style:{
-      flex:1, overflowY:"auto", padding:"20px 16px 16px",
-      display:"flex", flexDirection:"column", gap:14
-    }},
-
-      /* Step icon + title */
-      React.createElement("div", {style:{textAlign:"center",paddingBottom:4}},
-        React.createElement("div", {style:{
-          width:64,height:64,
-          background:isDark?"rgba(227,6,19,.12)":"rgba(227,6,19,.08)",
-          border:`2px solid rgba(227,6,19,.3)`,
-          borderRadius:18,
-          display:"flex",alignItems:"center",justifyContent:"center",
-          fontSize:30,margin:"0 auto 12px"
-        }}, current.icon),
-        React.createElement("div", {style:{
-          fontSize:20,fontWeight:900,color:txt,
-          letterSpacing:".01em",lineHeight:1.2,marginBottom:4
-        }}, current.title),
-        React.createElement("div", {style:{
-          fontSize:11,color:RED,fontWeight:700,letterSpacing:".1em"
-        }}, current.subtitle)
-      ),
-
-      /* Description */
-      React.createElement("div", {style:{
-        background:card, border:`1px solid ${border}`,
-        borderRadius:14,padding:"14px 16px",
-        fontSize:14, color:txt2, lineHeight:1.7, textAlign:"center"
-      }}, current.desc),
-
-      /* Demo fields */
-      current.demo && (phase==="fields"||phase==="result") && React.createElement("div", {style:{
-        background:card, border:`1px solid ${border}`,
-        borderRadius:14, padding:14
-      }},
-        React.createElement("div", {style:{
-          fontSize:10,color:RED,fontWeight:700,
-          letterSpacing:".1em",marginBottom:10
-        }}, "INPUT"),
-        current.demo.fields && current.demo.fields.slice(0, fieldIdx+1).map((f,i)=>
-          React.createElement("div", {key:i,style:{
-            display:"flex",gap:8,padding:"6px 0",
-            borderBottom:i<fieldIdx?`1px solid ${border}`:"none",
-            animation:"fadeIn 0.3s ease"
-          }},
-            React.createElement("div", {style:{
-              fontSize:11,color:txt3,fontWeight:700,
-              minWidth:90,flexShrink:0
-            }}, f.label),
-            React.createElement("div", {style:{
-              fontSize:12,color:txt,fontWeight:600,flex:1
-            }}, f.value)
-          )
-        )
-      ),
-
-      /* Typing result */
-      phase==="result" && current.demo && React.createElement("div", {style:{
-        background:isDark?"#0d0d0d":card,
-        border:`1px solid ${showResult?RED:border}`,
-        borderRadius:14, padding:14,
-        fontSize:12, color:txt, lineHeight:1.8,
-        whiteSpace:"pre-wrap",
-        transition:"border-color 0.4s ease",
-        position:"relative"
-      }},
-        showResult && React.createElement("div", {style:{
-          position:"absolute",top:-10,right:14,
-          background:RED,borderRadius:20,
-          padding:"2px 10px",fontSize:9,fontWeight:700,color:"#fff"
-        }}, "✓ COMPLETE"),
-        typedText,
-        !showResult && React.createElement("span", {style:{
-          display:"inline-block",width:2,height:14,
-          background:RED,marginLeft:2,
-          animation:"bounce 0.7s infinite"
-        }})
-      ),
-
-      /* Nav buttons */
-      React.createElement("div", {style:{display:"flex",gap:10,marginTop:4}},
-        React.createElement("button", {
-          onClick:prev, disabled:step===0,
-          style:{
-            flex:1,background:card,border:`1px solid ${border}`,
-            borderRadius:12,padding:"12px",cursor:step===0?"not-allowed":"pointer",
-            fontSize:14,color:step===0?txt3:txt,fontFamily:"inherit",
-            opacity:step===0?.4:1
-          }
-        }, "← Prev"),
-        step < DEMO_STEPS.length-1
-          ? React.createElement("button", {
-              onClick:()=>{setAutoPlay(false);next();},
-              style:{
-                flex:2,background:RED,border:"none",
-                borderRadius:12,padding:"12px",cursor:"pointer",
-                fontSize:14,fontWeight:700,color:"#fff",fontFamily:"inherit",
-                boxShadow:"0 4px 14px rgba(227,6,19,.4)"
-              }
-            }, "Next →")
-          : React.createElement("button", {
-              onClick:onExit,
-              style:{
-                flex:2,background:RED,border:"none",
-                borderRadius:12,padding:"12px",cursor:"pointer",
-                fontSize:14,fontWeight:700,color:"#fff",fontFamily:"inherit",
-                boxShadow:"0 4px 14px rgba(227,6,19,.4)"
-              }
-            }, "🚀 Try It Live")
-    ),
-
-      /* Step dots */
-      React.createElement("div", {style:{
-        display:"flex",justifyContent:"center",gap:6,paddingBottom:8
-      }},
-        DEMO_STEPS.map((_,i)=>React.createElement("button",{
-          key:i,
-          onClick:()=>{setAutoPlay(false);goToStep(i);},
-          style:{
-            width:i===step?20:6,height:6,
-            borderRadius:3,border:"none",cursor:"pointer",
-            background:i===step?RED:border,
-            transition:"all 0.3s ease",padding:0
-          }
-        }))
-      )
-    )
-  );
-}
-
-// ── PT CHART ─────────────────────────────────────────────────────────────
-const PT = {
-  "R-410A": [[40, 83], [50, 102], [60, 123], [70, 147], [80, 174], [90, 205], [100, 238], [110, 275], [120, 315]],
-  "R-22": [[20, 37], [30, 47], [40, 59], [50, 72], [60, 87], [70, 103], [80, 121], [90, 141], [100, 163]],
-  "R-32": [[40, 90], [50, 111], [60, 134], [70, 160], [80, 189], [90, 221], [100, 256], [110, 294], [120, 335]],
-  "R-454B": [[40, 83], [50, 102], [60, 124], [70, 148], [80, 175], [90, 205], [100, 238], [110, 274], [120, 314]],
-  "R-407C": [[40, 72], [50, 89], [60, 108], [70, 129], [80, 152], [90, 178], [100, 207], [110, 238], [120, 272]],
-  "R-134a": [[20, 26], [30, 35], [40, 46], [50, 59], [60, 73], [70, 90], [80, 110], [90, 132], [100, 157]]
-};
-
-// ── BELT CALCULATOR ─────────────────────────────────────────────────────
-function BeltCalc() {
-  const [dDriver, setDDriver] = React.useState("");
-  const [dDriven, setDDriven] = React.useState("");
-  const [cDist,   setCDist]   = React.useState("");
-  const [unit,    setUnit]    = React.useState("in");
-  const [result,  setResult]  = React.useState(null);
-
-  const STD = {
-    "A":  [26,28,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,50,52,54,56,58,60,62,64,66,68,72,75,78,80,84,90,96],
-    "B":  [35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,74,75,76,78,80,81,82,83,84,85,86,87,88,90,92,95,96,100,103,105,108,110,112,120,128,144],
-    "C":  [51,52,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,92,95,96,100,105,108,110,112,115,120,122,124,128,132,136,138,140,144,150,158,162,168,180,195,210,240,270],
-    "D":  [90,96,102,105,108,110,112,115,120,122,124,128,133,136,138,140,144,150,158,162,168,180,195,210,240,270,300,330,360,390],
-    "4L": [25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,60,62,64,66,68,70,72,75,78,80,84,90,96],
-    "5L": [33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,54,56,58,60,62,64,66,68,70,72,74,75,76,78,80,82,84,86,88,90,92,95,96,100,105,110,115,120,130,140],
-  };
-  const MIN_PULLEY = {A:3,B:5,C:7,D:12,"4L":3,"5L":4.5};
-
-  function toIn(v) { const n=parseFloat(v); return unit==="mm"?n/25.4:n; }
-
-  function calc() {
-    const D=toIn(dDriver), d=toIn(dDriven), C=toIn(cDist);
-    if ([D,d,C].some(x=>isNaN(x)||x<=0)) { setResult({err:"Enter valid positive values for all fields."}); return; }
-    if (C < (D+d)/2) { setResult({err:"Center distance too small — pulleys would overlap. Check measurements."}); return; }
-    const Lc = 2*C + (Math.PI/2)*(D+d) + Math.pow(D-d,2)/(4*C);
-    const ratio = D/d;
-    const wrap  = 180 - 60*(D-d)/C;
-    const sects = Object.keys(MIN_PULLEY).filter(s=>D>=MIN_PULLEY[s]);
-    let matches=[];
-    sects.forEach(s=>{
-      const sorted=[...STD[s]].sort((a,b)=>Math.abs(a-Lc)-Math.abs(b-Lc)).slice(0,3);
-      sorted.forEach(sl=>{
-        const bv=4*sl-2*Math.PI*(D+d);
-        const disc=bv*bv-32*Math.pow(D-d,2);
-        if(disc>=0){ const Ca=(bv+Math.sqrt(disc))/16; matches.push({s,sl,pn:s+sl,diff:sl-Lc,Ca,Cadj:Ca-C}); }
-      });
-    });
-    matches.sort((a,b)=>Math.abs(a.diff)-Math.abs(b.diff));
-    const seen=new Set(), top=matches.filter(m=>{if(seen.has(m.pn))return false;seen.add(m.pn);return true;}).slice(0,5);
-    setResult({Lc:Lc.toFixed(2),ratio:ratio.toFixed(2),wrap:wrap.toFixed(1),top});
-  }
-
-  const u = unit==="in" ? '"' : "mm";
-
-  return React.createElement("div",{style:{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}},
-    React.createElement(Hdr,{title:"BELT CALCULATOR",sub:"V-BELT SIZE FROM MEASUREMENTS"}),
-    React.createElement("div",{style:{flex:1,overflowY:"auto",padding:14}},
-
-      /* Unit toggle */
-      React.createElement("div",{style:{display:"flex",gap:8,marginBottom:14}},
-        ["in","mm"].map(u2=>React.createElement("button",{key:u2,
-          onClick:()=>{setUnit(u2);setResult(null);},
-          style:{flex:1,padding:"8px 0",borderRadius:10,border:"none",cursor:"pointer",
-            fontWeight:700,fontSize:13,fontFamily:"inherit",
-            background:unit===u2?RED:GREY1,color:unit===u2?"#fff":TXT}
-        }, u2==="in"?"Inches":"Millimetres"))
-      ),
-
-      /* SVG diagram */
-      React.createElement("div",{style:{background:GREY1,border:"1px solid "+GREY2,borderRadius:14,padding:14,marginBottom:14,textAlign:"center"}},
-        React.createElement("svg",{viewBox:"0 0 300 120",width:"100%",style:{maxWidth:300,display:"block",margin:"0 auto"}},
-          React.createElement("circle",{cx:62,cy:60,r:46,fill:"none",stroke:RED,strokeWidth:3}),
-          React.createElement("circle",{cx:62,cy:60,r:3,fill:RED}),
-          React.createElement("text",{x:62,y:118,textAnchor:"middle",fill:GTXT1,fontSize:10},"Driver (motor)"),
-          React.createElement("text",{x:62,y:12,textAnchor:"middle",fill:RED,fontSize:11,fontWeight:"bold"},dDriver?dDriver+u:"D"),
-          React.createElement("circle",{cx:228,cy:60,r:28,fill:"none",stroke:GTXT1,strokeWidth:3}),
-          React.createElement("circle",{cx:228,cy:60,r:3,fill:GTXT1}),
-          React.createElement("text",{x:228,y:104,textAnchor:"middle",fill:GTXT1,fontSize:10},"Driven (blower)"),
-          React.createElement("text",{x:228,y:12,textAnchor:"middle",fill:GTXT1,fontSize:11,fontWeight:"bold"},dDriven?dDriven+u:"d"),
-          React.createElement("line",{x1:62,y1:14,x2:228,y2:32,stroke:_darkMode?"rgba(255,200,0,.5)":"rgba(200,100,0,.5)",strokeWidth:2,strokeDasharray:"5,3"}),
-          React.createElement("line",{x1:62,y1:106,x2:228,y2:88,stroke:_darkMode?"rgba(255,200,0,.5)":"rgba(200,100,0,.5)",strokeWidth:2,strokeDasharray:"5,3"}),
-          React.createElement("line",{x1:62,y1:60,x2:228,y2:60,stroke:GREY2,strokeWidth:1,strokeDasharray:"4,3"}),
-          React.createElement("text",{x:145,y:52,textAnchor:"middle",fill:GTXT2,fontSize:10},cDist?cDist+u+" C-C":"C = center-to-center")
-        ),
-        React.createElement("div",{style:{fontSize:10,color:GTXT2,marginTop:6}},"Measure pulley OD and shaft-to-shaft center distance")
-      ),
-
-      /* Inputs */
-      React.createElement("div",{style:{background:GREY1,border:"1px solid "+GREY2,borderTop:"1px solid rgba(255,255,255,.09)",borderRadius:14,padding:14,marginBottom:10,boxShadow:"0 2px 12px rgba(0,0,0,.4)"}},
-        React.createElement("div",{style:{fontSize:11,color:RED,fontWeight:700,marginBottom:12,letterSpacing:".08em"}},"MEASUREMENTS"),
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}},
-          React.createElement("div",null,
-            React.createElement("div",{style:{fontSize:11,color:GTXT2,fontWeight:700,marginBottom:4}},"DRIVER OD ("+u+")"),
-            React.createElement("input",{type:"number",step:"0.125",min:"0",value:dDriver,
-              onChange:e=>{setDDriver(e.target.value);setResult(null);},
-              placeholder:unit==="in"?"e.g. 6.5":"e.g. 165",
-              style:{width:"100%",background:_darkMode?DARK:GREY1,border:"1px solid "+GREY2,borderRadius:8,padding:"10px 12px",color:TXT,fontSize:15,outline:"none",fontFamily:"inherit"}}),
-            React.createElement("div",{style:{fontSize:10,color:GTXT2,marginTop:3}},"Motor / fan shaft side")
-          ),
-          React.createElement("div",null,
-            React.createElement("div",{style:{fontSize:11,color:GTXT2,fontWeight:700,marginBottom:4}},"DRIVEN OD ("+u+")"),
-            React.createElement("input",{type:"number",step:"0.125",min:"0",value:dDriven,
-              onChange:e=>{setDDriven(e.target.value);setResult(null);},
-              placeholder:unit==="in"?"e.g. 10":"e.g. 254",
-              style:{width:"100%",background:_darkMode?DARK:GREY1,border:"1px solid "+GREY2,borderRadius:8,padding:"10px 12px",color:TXT,fontSize:15,outline:"none",fontFamily:"inherit"}}),
-            React.createElement("div",{style:{fontSize:10,color:GTXT2,marginTop:3}},"Blower / equipment side")
-          )
-        ),
-        React.createElement("div",null,
-          React.createElement("div",{style:{fontSize:11,color:GTXT2,fontWeight:700,marginBottom:4}},"CENTER-TO-CENTER DISTANCE ("+u+")"),
-          React.createElement("input",{type:"number",step:"0.25",min:"0",value:cDist,
-            onChange:e=>{setCDist(e.target.value);setResult(null);},
-            placeholder:unit==="in"?"e.g. 22.5":"e.g. 572",
-            style:{width:"100%",background:_darkMode?DARK:GREY1,border:"1px solid "+GREY2,borderRadius:8,padding:"10px 12px",color:TXT,fontSize:15,outline:"none",fontFamily:"inherit"}}),
-          React.createElement("div",{style:{fontSize:10,color:GTXT2,marginTop:3}},"Shaft center to shaft center")
-        )
-      ),
-
-      React.createElement(Btn,{red:true,c:"⚙️  Calculate Belt Size",disabled:!dDriver||!dDriven||!cDist,
-        style:{width:"100%",padding:13,marginBottom:14},onClick:calc}),
-
-      /* Error */
-      result&&result.err&&React.createElement("div",{style:{background:"rgba(227,6,19,.12)",border:"1px solid rgba(227,6,19,.4)",borderRadius:12,padding:14,fontSize:13,color:"#ff6b6b"}},result.err),
-
-      /* Results */
-      result&&!result.err&&React.createElement(React.Fragment,null,
-
-        /* Stats row */
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}},
-          [{l:"CALC LENGTH",v:result.Lc+'"',s:"outside circumference"},
-           {l:"SPEED RATIO",v:result.ratio+":1",s:"driver : driven"},
-           {l:"WRAP ANGLE",v:result.wrap+"°",s:"on smaller pulley"}
-          ].map(x=>React.createElement("div",{key:x.l,style:{background:GREY1,border:"1px solid "+GREY2,borderTop:"1px solid rgba(255,255,255,.09)",borderRadius:10,padding:"10px 6px",textAlign:"center"}},
-            React.createElement("div",{style:{fontSize:15,fontWeight:900,color: TXT,lineHeight:1,marginBottom:3}},x.v),
-            React.createElement("div",{style:{fontSize:9,color:GTXT2,letterSpacing:".04em"}},x.s)
-          ))
-        ),
-
-        /* Match list */
-        React.createElement("div",{style:{fontSize:11,color:RED,fontWeight:700,letterSpacing:".08em",marginBottom:8}},"RECOMMENDED BELT SIZES"),
-        result.top.map((m,i)=>React.createElement("div",{key:m.pn,style:{
-          background:i===0?"rgba(227,6,19,.1)":GREY1,
-          border:"1px solid "+(i===0?RED:GREY2),
-          borderLeft:"4px solid "+(i===0?RED:GREY3),
-          borderRadius:12,padding:"12px 14px",marginBottom:8,
-          display:"flex",justifyContent:"space-between",alignItems:"center"
-        }},
-          React.createElement("div",null,
-            React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:4}},
-              React.createElement("div",{style:{fontSize:20,fontWeight:900,color:i===0?RED:TXT}},m.pn),
-              i===0&&React.createElement("div",{style:{background:RED,borderRadius:20,padding:"2px 8px",fontSize:9,fontWeight:700,color: TXT}},"BEST MATCH")
-            ),
-            React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap"}},
-              React.createElement("div",{style:{fontSize:11,color:GTXT2}},"Length: ",React.createElement("span",{style:{color: TXT,fontWeight:600}},m.sl+'"')),
-              React.createElement("div",{style:{fontSize:11,color:GTXT2}},"Section: ",React.createElement("span",{style:{color: TXT,fontWeight:600}},m.s)),
-              React.createElement("div",{style:{fontSize:11,color:m.diff>0?"#F39C12":m.diff<0?"#2980B9":GTXT2}},
-                m.diff>0?"+"+m.diff.toFixed(2)+'" longer':m.diff<0?m.diff.toFixed(2)+'" shorter':"Exact match")
-            )
-          ),
-          React.createElement("div",{style:{textAlign:"right",flexShrink:0,marginLeft:8}},
-            React.createElement("div",{style:{fontSize:10,color:GTXT3,marginBottom:2}},"adj C-C"),
-            React.createElement("div",{style:{fontSize:13,fontWeight:700,color: TXT}},m.Ca.toFixed(2)+'"'),
-            React.createElement("div",{style:{fontSize:10,color:m.Cadj>0?"#F39C12":"#2980B9"}},
-              m.Cadj>0?"+"+m.Cadj.toFixed(2)+'" out':m.Cadj.toFixed(2)+'" in')
-          )
-        )),
-
-        /* Tips */
-        React.createElement("div",{style:{background:"rgba(39,174,96,.07)",border:"1px solid rgba(39,174,96,.25)",borderRadius:12,padding:12,marginTop:4}},
-          React.createElement("div",{style:{fontSize:11,color:"#27AE60",fontWeight:700,marginBottom:6}},"⚙️  FIELD TIPS"),
-          ["Wrap a tape or string around both pulleys to double-check the calculated length.",
-           "Adjust motor base or tensioner to set the adjusted center distance for your chosen belt.",
-           "Wrap angle below 120° — consider adding a belt idler to improve grip.",
-           "Always replace matched sets together — never mix old and new on multi-belt drives.",
-           "Correct tension: belt deflects ½\" per foot of span under moderate thumb pressure."
-          ].map((t,i)=>React.createElement("div",{key:i,style:{fontSize:11,color: GTXT1,marginBottom:i<4?4:0,lineHeight:1.5,paddingLeft:12,position:"relative"}},
-            React.createElement("span",{style:{position:"absolute",left:0,color:"#27AE60"}},"·"),t
-          ))
-        ),
-
-        React.createElement("button",{onClick:()=>{setDDriver("");setDDriven("");setCDist("");setResult(null);},
-          style:{width:"100%",background:GREY1,border:"1px solid "+GREY2,borderRadius:10,
-            padding:11,cursor:"pointer",fontSize:13,color:GTXT1,fontFamily:"inherit",marginTop:12}
-        },"↩  New Calculation")
-      )
-    )
-  );
-}
-
-function PTChart() {
-  const [ref, setRef] = useState("R-410A");
-  const [temp, setTemp] = useState("");
-  const [press, setPress] = useState("");
-  const [result, setResult] = useState(null);
-  function calc() {
-    const d = PT[ref];
-    if (temp !== "") {
-      const t = parseFloat(temp);
-      if (isNaN(t)) {
-        setResult({
-          type: "Error",
-          output: "Invalid temperature"
-        });
-        return;
-      }
-      // Clamp to table range
-      if (t <= d[0][0]) {
-        setResult({
-          type: "Temp→Press",
-          input: t + "°F",
-          output: d[0][1].toFixed(1) + " psig"
-        });
-        return;
-      }
-      if (t >= d[d.length - 1][0]) {
-        setResult({
-          type: "Temp→Press",
-          input: t + "°F",
-          output: d[d.length - 1][1].toFixed(1) + " psig"
-        });
-        return;
-      }
-      for (let i = 0; i < d.length - 1; i++) {
-        if (t >= d[i][0] && t <= d[i + 1][0]) {
-          const r = d[i][1] + (d[i + 1][1] - d[i][1]) * (t - d[i][0]) / (d[i + 1][0] - d[i][0]);
-          setResult({
-            type: "Temp→Press",
-            input: t + "°F",
-            output: r.toFixed(1) + " psig"
-          });
-          return;
-        }
-      }
-    }
-    if (press !== "") {
-      const p = parseFloat(press);
-      if (isNaN(p)) {
-        setResult({
-          type: "Error",
-          output: "Invalid pressure"
-        });
-        return;
-      }
-      if (p <= d[0][1]) {
-        setResult({
-          type: "Press→Temp",
-          input: p + " psig",
-          output: d[0][0].toFixed(1) + "°F"
-        });
-        return;
-      }
-      if (p >= d[d.length - 1][1]) {
-        setResult({
-          type: "Press→Temp",
-          input: p + " psig",
-          output: d[d.length - 1][0].toFixed(1) + "°F"
-        });
-        return;
-      }
-      for (let i = 0; i < d.length - 1; i++) {
-        if (p >= d[i][1] && p <= d[i + 1][1]) {
-          const r = d[i][0] + (d[i + 1][0] - d[i][0]) * (p - d[i][1]) / (d[i + 1][1] - d[i][1]);
-          setResult({
-            type: "Press→Temp",
-            input: p + " psig",
-            output: r.toFixed(1) + "°F"
-          });
-          return;
-        }
-      }
-    }
-    setResult({
-      type: "Error",
-      output: "Out of range"
-    });
-  }
-  return /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      display: "flex",
-      flexDirection: "column",
-      overflow: "hidden"
-    }
-  }, /*#__PURE__*/React.createElement(Hdr, {
-    title: "PT CHART",
-    sub: "PRESSURE-TEMPERATURE",
-    onHome: () => _nav.go && _nav.go("home")
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      overflowY: "auto",
-      overflowX: "hidden",
-      padding: 14
-    }
-  }, /*#__PURE__*/React.createElement(Sel, {
-    label: "REFRIGERANT",
-    val: ref,
-    set: r => {
-      setRef(r);
-      setResult(null);
-    },
-    opts: Object.keys(PT)
-  }), /*#__PURE__*/React.createElement(Card, {
-    style: {
-      marginBottom: 14
-    },
-    c: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        color: RED,
-        fontWeight: 700,
-        marginBottom: 12
-      }
-    }, "ENTER ONE VALUE"), /*#__PURE__*/React.createElement(Inp, {
-      label: "TEMPERATURE (\xB0F)",
-      val: temp,
-      set: v => {
-        setTemp(v);
-        setPress("");
-      },
-      ph: "e.g. 45",
-      type: "number"
-    }), /*#__PURE__*/React.createElement("div", {
-      style: {
-        textAlign: "center",
-        color: GTXT2,
-        fontSize: 12,
-        margin: "4px 0 12px"
-      }
-    }, "\u2014 or \u2014"), /*#__PURE__*/React.createElement(Inp, {
-      label: "PRESSURE (psig)",
-      val: press,
-      set: v => {
-        setPress(v);
-        setTemp("");
-      },
-      ph: "e.g. 130",
-      type: "number"
-    }), /*#__PURE__*/React.createElement(Btn, {
-      red: true,
-      c: "Calculate",
-      onClick: calc,
-      disabled: !temp && !press,
-      style: {
-        width: "100%",
-        marginTop: 4
-      }
-    }))
-  }), result && /*#__PURE__*/React.createElement(Card, {
-    style: {
-      background: result.type === "Error" ? "rgba(227,6,19,.12)" : "rgba(39,174,96,.12)",
-      border: `1px solid ${result.type === "Error" ? "rgba(227,6,19,.4)" : "rgba(39,174,96,.4)"}`
-    },
-    c: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 12,
-        color: GTXT2,
-        marginBottom: 4
-      }
-    }, ref, " \xB7 ", result.type), result.input && /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 13,
-        color: GTXT1,
-        marginBottom: 4
-      }
-    }, "Input: ", /*#__PURE__*/React.createElement("strong", {
-      style: {
-        color: TXT
-      }
-    }, result.input)), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 22,
-        fontWeight: 900,
-        color: result.type === "Error" ? RED : "#27AE60"
-      }
-    }, result.output))
-  })));
-}
-
-// ── NOTES ────────────────────────────────────────────────────────────────
-function Notes() {
-  const [notes, setNotes] = useState([]);
-  const [text, setText] = useState("");
-  const [title, setTitle] = useState("");
-  useEffect(() => {
-    S.get("notes").then(r => setNotes(JSON.parse(r.value))).catch(() => {});
-  }, []);
-  async function add() {
-    if (!text.trim()) return;
-    const n = [{
-      id: gid(),
-      title: title || "Note",
-      body: text,
-      ts: Date.now()
-    }, ...notes];
-    setNotes(n);
-    setText("");
-    setTitle("");
-    await S.set("notes", JSON.stringify(n));
-  }
-  async function del(id) {
-    const n = notes.filter(x => x.id !== id);
-    setNotes(n);
-    await S.set("notes", JSON.stringify(n));
-  }
-  return /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      display: "flex",
-      flexDirection: "column",
-      overflow: "hidden"
-    }
-  }, /*#__PURE__*/React.createElement(Hdr, {
-    title: "JOB NOTES",
-    sub: "FIELD NOTES",
-    onHome: () => _nav.go && _nav.go("home")
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      overflowY: "auto",
-      overflowX: "hidden",
-      padding: 14
-    }
-  }, /*#__PURE__*/React.createElement(Card, {
-    style: {
-      marginBottom: 14
-    },
-    c: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Inp, {
-      label: "TITLE",
-      val: title,
-      set: setTitle,
-      ph: "Optional"
-    }), /*#__PURE__*/React.createElement(Inp, {
-      label: "NOTE",
-      val: text,
-      set: setText,
-      ph: "Write your note\u2026",
-      rows: 3
-    }), /*#__PURE__*/React.createElement(Btn, {
-      red: true,
-      c: "+ Add Note",
-      onClick: add,
-      disabled: !text.trim(),
-      style: {
-        width: "100%"
-      }
-    }))
-  }), notes.length === 0 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      textAlign: "center",
-      padding: 40,
-      color: GTXT2
-    }
-  }, "No notes yet"), notes.map(n => /*#__PURE__*/React.createElement(Card, {
-    key: n.id,
-    c: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "flex-start",
-        marginBottom: 6
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 13,
-        fontWeight: 700,
-        color: TXT
-      }
-    }, n.title), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        gap: 8,
-        alignItems: "center"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 10,
-        color: GTXT2
-      }
-    }, ago(n.ts), " ago"), /*#__PURE__*/React.createElement("button", {
-      onClick: () => del(n.id),
-      style: {
-        background: "none",
-        border: "none",
-        color: GTXT3,
-        cursor: "pointer",
-        fontSize: 16
-      }
-    }, "\xD7"))), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 12,
-        color: GTXT1,
-        lineHeight: 1.6
-      }
-    }, n.body))
-  }))));
-}
-
-// ── MODELS ───────────────────────────────────────────────────────────────
-// ── EQUIPMENT LOG ─────────────────────────────────────────────────────────
-function EquipmentLog() {
-  const [sites, setSites] = useState([]);
-  const [view, setView] = useState("sites"); // sites | addSite | siteDetail | addEquip | equipDetail
-  const [activeSite, setActiveSite] = useState(null);
-  const [activeEquip, setActiveEquip] = useState(null);
-
-  // Site form
-  const [siteName, setSiteName] = useState("");
-  const [siteAddr, setSiteAddr] = useState("");
-  const [siteContact, setSiteContact] = useState("");
-
-  // Equipment form
-  const [eqBrand, setEqBrand] = useState("");
-  const [eqModel, setEqModel] = useState("");
-  const [eqSerial, setEqSerial] = useState("");
-  const [eqType, setEqType] = useState("");
-  const [eqLocation, setEqLocation] = useState("");
-  const [eqVoltage, setEqVoltage] = useState("");
-  const [eqRefrig, setEqRefrig] = useState("");
-  const [eqTonnage, setEqTonnage] = useState("");
-  const [eqFilterSize, setEqFilterSize] = useState("");
-  const [eqFilterQty, setEqFilterQty] = useState("");
-  const [eqFilterType, setEqFilterType] = useState("");
-  const [eqBeltSize, setEqBeltSize] = useState("");
-  const [eqBeltQty, setEqBeltQty] = useState("");
-  const [eqNotes, setEqNotes] = useState("");
-  useEffect(() => {
-    S.get("equip-log").then(r => setSites(JSON.parse(r.value))).catch(() => {});
-  }, []);
-  async function persist(updated) {
-    setSites(updated);
-    await S.set("equip-log", JSON.stringify(updated));
-  }
-  function resetEqForm() {
-    setEqBrand("");
-    setEqModel("");
-    setEqSerial("");
-    setEqType("");
-    setEqLocation("");
-    setEqVoltage("");
-    setEqRefrig("");
-    setEqTonnage("");
-    setEqFilterSize("");
-    setEqFilterQty("");
-    setEqFilterType("");
-    setEqBeltSize("");
-    setEqBeltQty("");
-    setEqNotes("");
-  }
-  async function addSite() {
-    if (!siteName.trim()) return;
-    const s = {
-      id: gid(),
-      name: siteName,
-      address: siteAddr,
-      contact: siteContact,
-      equipment: [],
-      ts: Date.now()
-    };
-    const updated = [s, ...sites];
-    await persist(updated);
-    setSiteName("");
-    setSiteAddr("");
-    setSiteContact("");
-    setView("sites");
-  }
-  async function delSite(id) {
-    await persist(sites.filter(s => s.id !== id));
-  }
-  async function addEquip() {
-    if (!eqModel.trim() && !eqBrand.trim()) return;
-    const eq = {
-      id: gid(),
-      brand: eqBrand,
-      model: eqModel,
-      serial: eqSerial,
-      type: eqType,
-      location: eqLocation,
-      voltage: eqVoltage,
-      refrigerant: eqRefrig,
-      tonnage: eqTonnage,
-      filterSize: eqFilterSize,
-      filterQty: eqFilterQty,
-      filterType: eqFilterType,
-      beltSize: eqBeltSize,
-      beltQty: eqBeltQty,
-      notes: eqNotes,
-      ts: Date.now()
-    };
-    const updated = sites.map(s => s.id === activeSite.id ? {
-      ...s,
-      equipment: [eq, ...s.equipment]
-    } : s);
-    await persist(updated);
-    setActiveSite(updated.find(s => s.id === activeSite.id));
-    resetEqForm();
-    setView("siteDetail");
-  }
-  async function delEquip(siteId, eqId) {
-    const updated = sites.map(s => s.id === siteId ? {
-      ...s,
-      equipment: s.equipment.filter(e => e.id !== eqId)
-    } : s);
-    await persist(updated);
-    setActiveSite(updated.find(s => s.id === siteId));
-    setView("siteDetail");
-  }
-  const ROW = (label, val) => val ? /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      padding: "7px 0",
-      borderBottom: `1px solid ${GREY2}`
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: GTXT2,
-      fontWeight: 700,
-      minWidth: 110,
-      flexShrink: 0
-    }
-  }, label), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: TXT,
-      flex: 1,
-      wordBreak: "break-word"
-    }
-  }, val)) : null;
-  const SECTION = (title, color = RED) => /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: color,
-      fontWeight: 700,
-      letterSpacing: ".1em",
-      marginTop: 14,
-      marginBottom: 6,
-      paddingBottom: 4,
-      borderBottom: `1px solid ${color}33`
-    }
-  }, title);
-
-  // ── SITE LIST ──
-  if (view === "sites") return /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      display: "flex",
-      flexDirection: "column",
-      overflow: "hidden"
-    }
-  }, /*#__PURE__*/React.createElement(Hdr, {
-    title: "EQUIPMENT LOG",
-    sub: "BY SITE / ADDRESS",
-    onHome: () => _nav.go && _nav.go("home")
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      overflowY: "auto",
-      overflowX: "hidden",
-      padding: 14
-    }
-  }, /*#__PURE__*/React.createElement(Btn, {
-    red: true,
-    c: "+ Add Site",
-    onClick: () => setView("addSite"),
-    style: {
-      width: "100%",
-      marginBottom: 14
-    }
-  }), sites.length === 0 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      textAlign: "center",
-      padding: 40,
-      color: GTXT2
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 32,
-      marginBottom: 8
-    }
-  }, "\uD83C\uDFE2"), /*#__PURE__*/React.createElement("div", null, "No sites yet. Add a site to start logging equipment.")), sites.map(s => /*#__PURE__*/React.createElement("button", {
-    key: s.id,
-    onClick: () => {
-      setActiveSite(s);
-      setView("siteDetail");
-    },
-    style: {
-      width: "100%",
-      background: CARD,
-      border: `1px solid ${GREY2}`,
-      borderRadius: 14,
-      padding: 14,
-      marginBottom: 10,
-      cursor: "pointer",
-      textAlign: "left",
-      display: "block"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "flex-start"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      minWidth: 0
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 14,
-      fontWeight: 700,
-      color: TXT,
-      marginBottom: 3
-    }
-  }, s.name), s.address && /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: GTXT1,
-      marginBottom: 2
-    }
-  }, "\uD83D\uDCCD ", s.address), s.contact && /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: GTXT2
-    }
-  }, "\uD83D\uDC64 ", s.contact)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "flex-end",
-      gap: 4,
-      marginLeft: 8,
-      flexShrink: 0
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: `rgba(227,6,19,.15)`,
-      border: `1px solid ${BORDER}`,
-      borderRadius: 20,
-      padding: "2px 10px",
-      fontSize: 11,
-      color: RED,
-      fontWeight: 700
-    }
-  }, s.equipment.length, " unit", s.equipment.length !== 1 ? "s" : ""), /*#__PURE__*/React.createElement("button", {
-    onClick: e => {
-      e.stopPropagation();
-      delSite(s.id);
-    },
-    style: {
-      background: "none",
-      border: "none",
-      color: GTXT3,
-      cursor: "pointer",
-      fontSize: 16,
-      padding: "2px 4px"
-    }
-  }, "\xD7")))))));
-
-  // ── ADD SITE ──
-  if (view === "addSite") return /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      display: "flex",
-      flexDirection: "column",
-      overflow: "hidden"
-    }
-  }, /*#__PURE__*/React.createElement(Hdr, {
-    title: "ADD SITE",
-    sub: "NEW LOCATION",
-    onBack: () => setView("sites")
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      overflowY: "auto",
-      overflowX: "hidden",
-      padding: 14
-    }
-  }, /*#__PURE__*/React.createElement(Inp, {
-    label: "SITE NAME *",
-    val: siteName,
-    set: setSiteName,
-    ph: "e.g. Tower One, 123 Main St"
-  }), /*#__PURE__*/React.createElement(Inp, {
-    label: "ADDRESS",
-    val: siteAddr,
-    set: setSiteAddr,
-    ph: "Full address"
-  }), /*#__PURE__*/React.createElement(Inp, {
-    label: "CONTACT / MANAGER",
-    val: siteContact,
-    set: setSiteContact,
-    ph: "Name and phone"
-  }), /*#__PURE__*/React.createElement(Btn, {
-    red: true,
-    c: "Save Site",
-    onClick: addSite,
-    disabled: !siteName.trim(),
-    style: {
-      width: "100%",
-      marginTop: 4
-    }
-  })));
-
-  // ── SITE DETAIL ──
-  if (view === "siteDetail" && activeSite) return /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      display: "flex",
-      flexDirection: "column",
-      overflow: "hidden"
-    }
-  }, /*#__PURE__*/React.createElement(Hdr, {
-    title: activeSite.name,
-    sub: activeSite.address || "SITE EQUIPMENT",
-    onBack: () => setView("sites")
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      overflowY: "auto",
-      overflowX: "hidden",
-      padding: 14
-    }
-  }, activeSite.contact && /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: GTXT2,
-      marginBottom: 12
-    }
-  }, "\uD83D\uDC64 ", activeSite.contact), /*#__PURE__*/React.createElement(Btn, {
-    red: true,
-    c: "+ Add Equipment",
-    onClick: () => {
-      resetEqForm();
-      setView("addEquip");
-    },
-    style: {
-      width: "100%",
-      marginBottom: 14
-    }
-  }), activeSite.equipment.length === 0 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      textAlign: "center",
-      padding: 30,
-      color: GTXT2
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 28,
-      marginBottom: 8
-    }
-  }, "\uD83D\uDD27"), /*#__PURE__*/React.createElement("div", null, "No equipment logged yet.")), activeSite.equipment.map(eq => /*#__PURE__*/React.createElement("button", {
-    key: eq.id,
-    onClick: () => {
-      setActiveEquip(eq);
-      setView("equipDetail");
-    },
-    style: {
-      width: "100%",
-      background: CARD,
-      border: `1px solid ${GREY2}`,
-      borderRadius: 12,
-      padding: 12,
-      marginBottom: 8,
-      cursor: "pointer",
-      textAlign: "left",
-      borderLeft: `3px solid ${RED}`
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "flex-start"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      minWidth: 0
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      fontWeight: 700,
-      color: TXT
-    }
-  }, eq.brand, " ", eq.model), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      marginTop: 3,
-      flexWrap: "wrap"
-    }
-  }, eq.type && /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 10,
-      background: "rgba(227,6,19,.12)",
-      color: RED,
-      borderRadius: 4,
-      padding: "1px 7px",
-      fontWeight: 700
-    }
-  }, eq.type), eq.location && /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 10,
-      color: GTXT2
-    }
-  }, "\uD83D\uDCCD ", eq.location), eq.serial && /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 10,
-      color: GTXT2
-    }
-  }, "S/N ", eq.serial)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 10,
-      marginTop: 4,
-      flexWrap: "wrap"
-    }
-  }, eq.filterSize && /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 10,
-      color: GTXT1
-    }
-  }, "\uD83D\uDD32 Filter: ", eq.filterSize, eq.filterQty ? " ×" + eq.filterQty : ""), eq.beltSize && /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 10,
-      color: GTXT1
-    }
-  }, "\u2699\uFE0F Belt: ", eq.beltSize, eq.beltQty ? " ×" + eq.beltQty : ""))), /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: GTXT2,
-      fontSize: 16,
-      marginLeft: 8
-    }
-  }, "\u203A"))))));
-
-  // ── ADD EQUIPMENT ──
-  if (view === "addEquip") return /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      display: "flex",
-      flexDirection: "column",
-      overflow: "hidden"
-    }
-  }, /*#__PURE__*/React.createElement(Hdr, {
-    title: "ADD EQUIPMENT",
-    sub: activeSite?.name || "",
-    onBack: () => setView("siteDetail")
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      overflowY: "auto",
-      overflowX: "hidden",
-      padding: 14
-    }
-  }, /*#__PURE__*/React.createElement(Card, {
-    style: {
-      marginBottom: 10
-    },
-    c: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        color: RED,
-        fontWeight: 700,
-        marginBottom: 10,
-        letterSpacing: ".08em"
-      }
-    }, "UNIT INFO"), /*#__PURE__*/React.createElement(Sel, {
-      label: "EQUIPMENT TYPE",
-      val: eqType,
-      set: setEqType,
-      opts: ["RTU", "Chiller", "Split System", "Heat Pump", "VRF/VRV", "Air Handler", "FCU", "Furnace", "Boiler", "Condenser", "Mini-Split", "DOAS", "Cooling Tower", "Exhaust Fan"]
-    }), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: 8
-      }
-    }, /*#__PURE__*/React.createElement(Sel, {
-      label: "BRAND",
-      val: eqBrand,
-      set: setEqBrand,
-      opts: BRANDS
-    }), /*#__PURE__*/React.createElement(Inp, {
-      label: "MODEL #",
-      val: eqModel,
-      set: setEqModel,
-      ph: "e.g. 48XC024"
-    })), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: 8
-      }
-    }, /*#__PURE__*/React.createElement(Inp, {
-      label: "SERIAL #",
-      val: eqSerial,
-      set: setEqSerial,
-      ph: "e.g. 1234A"
-    }), /*#__PURE__*/React.createElement(Inp, {
-      label: "TONNAGE / CAPACITY",
-      val: eqTonnage,
-      set: setEqTonnage,
-      ph: "e.g. 5T / 100MBH"
-    })), /*#__PURE__*/React.createElement(Inp, {
-      label: "LOCATION ON SITE",
-      val: eqLocation,
-      set: setEqLocation,
-      ph: "e.g. Rooftop NW corner, Rm 202"
-    }), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: 8
-      }
-    }, /*#__PURE__*/React.createElement(Sel, {
-      label: "REFRIGERANT",
-      val: eqRefrig,
-      set: setEqRefrig,
-      opts: REFS
-    }), /*#__PURE__*/React.createElement(Inp, {
-      label: "VOLTAGE",
-      val: eqVoltage,
-      set: setEqVoltage,
-      ph: "e.g. 208/230V 3ph"
-    })))
-  }), /*#__PURE__*/React.createElement(Card, {
-    style: {
-      marginBottom: 10
-    },
-    c: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        color: "#F39C12",
-        fontWeight: 700,
-        marginBottom: 10,
-        letterSpacing: ".08em"
-      }
-    }, "\uD83D\uDD32 FILTERS"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "grid",
-        gridTemplateColumns: "2fr 1fr",
-        gap: 8
-      }
-    }, /*#__PURE__*/React.createElement(Inp, {
-      label: "FILTER SIZE",
-      val: eqFilterSize,
-      set: setEqFilterSize,
-      ph: "e.g. 20\xD725\xD72, 16\xD725\xD71"
-    }), /*#__PURE__*/React.createElement(Inp, {
-      label: "QTY",
-      val: eqFilterQty,
-      set: setEqFilterQty,
-      ph: "e.g. 4",
-      type: "number"
-    })), /*#__PURE__*/React.createElement(Sel, {
-      label: "FILTER TYPE",
-      val: eqFilterType,
-      set: setEqFilterType,
-      opts: ["MERV 8 Pleated", "MERV 11 Pleated", "MERV 13 Pleated", "MERV 16 Pleated", "HEPA", "Fiberglass 1\"", "Washable", "Carbon / Odor", "Bag Filter", "Mini-Pleat", "Electrostatic"]
-    }))
-  }), /*#__PURE__*/React.createElement(Card, {
-    style: {
-      marginBottom: 10
-    },
-    c: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        color: "#2980B9",
-        fontWeight: 700,
-        marginBottom: 10,
-        letterSpacing: ".08em"
-      }
-    }, "\u2699\uFE0F BELTS"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "grid",
-        gridTemplateColumns: "2fr 1fr",
-        gap: 8
-      }
-    }, /*#__PURE__*/React.createElement(Inp, {
-      label: "BELT SIZE / PART #",
-      val: eqBeltSize,
-      set: setEqBeltSize,
-      ph: "e.g. A38, 4L380, B-section"
-    }), /*#__PURE__*/React.createElement(Inp, {
-      label: "QTY",
-      val: eqBeltQty,
-      set: setEqBeltQty,
-      ph: "e.g. 2",
-      type: "number"
-    })))
-  }), /*#__PURE__*/React.createElement(Card, {
-    style: {
-      marginBottom: 14
-    },
-    c: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        color: GTXT1,
-        fontWeight: 700,
-        marginBottom: 8,
-        letterSpacing: ".08em"
-      }
-    }, "NOTES"), /*#__PURE__*/React.createElement(Inp, {
-      label: "",
-      val: eqNotes,
-      set: setEqNotes,
-      ph: "Special notes, last service date, known issues\u2026",
-      rows: 3
-    }))
-  }), /*#__PURE__*/React.createElement(Btn, {
-    red: true,
-    c: "Save Equipment",
-    onClick: addEquip,
-    disabled: !eqModel.trim() && !eqBrand.trim(),
-    style: {
-      width: "100%",
-      padding: 13
-    }
-  })));
-
-  // ── EQUIPMENT DETAIL ──
-  if (view === "equipDetail" && activeEquip) return /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      display: "flex",
-      flexDirection: "column",
-      overflow: "hidden"
-    }
-  }, /*#__PURE__*/React.createElement(Hdr, {
-    title: `${activeEquip.brand || ""} ${activeEquip.model || "Equipment"}`.trim(),
-    sub: activeSite?.name || "",
-    onBack: () => setView("siteDetail")
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      overflowY: "auto",
-      overflowX: "hidden",
-      padding: 14
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      flexWrap: "wrap",
-      marginBottom: 12
-    }
-  }, activeEquip.type && /*#__PURE__*/React.createElement("span", {
-    style: {
-      background: `rgba(227,6,19,.15)`,
-      border: `1px solid ${BORDER}`,
-      borderRadius: 20,
-      padding: "3px 10px",
-      fontSize: 11,
-      color: RED,
-      fontWeight: 700
-    }
-  }, activeEquip.type), activeEquip.location && /*#__PURE__*/React.createElement("span", {
-    style: {
-      background: GREY1,
-      borderRadius: 20,
-      padding: "3px 10px",
-      fontSize: 11,
-      color: GTXT1
-    }
-  }, "\uD83D\uDCCD ", activeEquip.location)), /*#__PURE__*/React.createElement(Card, {
-    c: /*#__PURE__*/React.createElement(React.Fragment, null, SECTION("UNIT INFO"), ROW("Brand", activeEquip.brand), ROW("Model", activeEquip.model), ROW("Serial #", activeEquip.serial), ROW("Tonnage", activeEquip.tonnage), ROW("Voltage", activeEquip.voltage), ROW("Refrigerant", activeEquip.refrigerant))
-  }), (activeEquip.filterSize || activeEquip.filterType) && /*#__PURE__*/React.createElement(Card, {
-    c: /*#__PURE__*/React.createElement(React.Fragment, null, SECTION("FILTERS", "#F39C12"), ROW("Filter size", activeEquip.filterSize), ROW("Quantity", activeEquip.filterQty), ROW("Filter type", activeEquip.filterType))
-  }), activeEquip.beltSize && /*#__PURE__*/React.createElement(Card, {
-    c: /*#__PURE__*/React.createElement(React.Fragment, null, SECTION("BELTS", "#2980B9"), ROW("Belt size / part #", activeEquip.beltSize), ROW("Quantity", activeEquip.beltQty))
-  }), activeEquip.notes && /*#__PURE__*/React.createElement(Card, {
-    c: /*#__PURE__*/React.createElement(React.Fragment, null, SECTION("NOTES", "rgba(255,255,255,.4)"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 12,
-        color: GTXT1,
-        lineHeight: 1.7,
-        marginTop: 6
-      }
-    }, activeEquip.notes))
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 8
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: () => delEquip(activeSite.id, activeEquip.id),
-    style: {
-      width: "100%",
-      background: "rgba(227,6,19,.08)",
-      border: `1px solid rgba(227,6,19,.3)`,
-      borderRadius: 12,
-      padding: 12,
-      color: RED,
-      fontSize: 13,
-      fontWeight: 700,
-      cursor: "pointer"
-    }
-  }, "Delete Equipment"))));
-  return null;
-}
-
-// ── MAIN APP ─────────────────────────────────────────────────────────────
-function App() {
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState("home");
-  const [chatView, setChatView] = useState("list");
-  const [agentView, setAgentView] = useState("hub");
-  const [toolView, setToolView] = useState("hub");
-  const [chats, setChats] = useState([]);
-  const [activeId, setActiveId] = useState(null);
-  const [busy, setBusy] = useState(false);
-  const [wCtx, setWCtx] = useState({});
-  const [showDemo, setShowDemo] = useState(false);
-  useTheme(); // re-render App on theme change, which re-renders all children
-  useEffect(() => {
-    init();
-  }, []);
-  const busyRef = useRef(false);
-  const newChatInProgress = useRef(false);
-  useEffect(() => {
-    _nav.go = nav;
-  }); // keep global nav ref current every render
-  async function init() {
-    try {
-      const p = await S.get("profile");
-      if (p?.value) setProfile(JSON.parse(p.value));
-    } catch {}
-    try {
-      const keys = await S.list("chat:");
-      const loaded = [];
-      for (const k of keys) {
-        try {
-          const r = await S.get(k);
-          if (r?.value) loaded.push(JSON.parse(r.value));
-        } catch {}
-      }
-      loaded.sort((a, b) => b.updatedAt - a.updatedAt);
-      setChats(loaded);
-    } catch {}
-    setLoading(false);
-    setTimeout(() => {
-      const s = document.getElementById("splash");
-      if (s) {
-        s.style.opacity = "0";
-        setTimeout(() => s.remove(), 500);
-      }
-    }, 2200);
-  }
-  async function doOnboard(p) {
-    setProfile(p);
-    await S.set("profile", JSON.stringify(p));
-  }
-  async function startChat(prompt) {
-    if (busyRef.current || newChatInProgress.current) return;
-    newChatInProgress.current = true;
-    const c = {id: gid(), title: prompt.length > 40 ? prompt.slice(0,40)+"…" : prompt, messages: [], updatedAt: Date.now()};
-    const snapshot = [c, ...chats];
-    setChats(snapshot);
-    setActiveId(c.id);
-    setChatView("chat");
-    setTab("chat");
-    newChatInProgress.current = false;
-    try { await S.set("chat:" + c.id, JSON.stringify(c)); } catch(e) {}
-    await sendMsg(prompt, c.id, snapshot);
-  }
-  async function newChat() {
-    if (newChatInProgress.current) return;
-    newChatInProgress.current = true;
-    try {
-      const c = {
-        id: gid(),
-        title: "New Job",
-      messages: [],
-      updatedAt: Date.now()
-    };
-    setChats(prev => [c, ...prev]);
-    setActiveId(c.id);
-    setChatView("chat");
-    setTab("chat");
-      try { await S.set("chat:" + c.id, JSON.stringify(c)); } catch(e) {}
-    } finally {
-      newChatInProgress.current = false;
-    }
-  }
-  async function delChat(id) {
-    const u = chats.filter(c => c.id !== id);
-    setChats(u);
-    if (activeId === id) {
-      setActiveId(null);
-      setChatView("list");
-    }
-    await S.del("chat:" + id);
-  }
-  const activeChat = chats.find(c => c.id === activeId);
-  async function sendMsg(text, _chatId, _chats) {
-    const currentId = _chatId || activeId;
-    const currentChats = _chats || chats;
-    if (!text || !currentId) return;
-    if (busyRef.current) return; // prevent double-send
-    busyRef.current = true;
-    setBusy(true);
-    const currentChat = currentChats.find(c => c.id === currentId);
-    if (!currentChat) {
-      busyRef.current = false;
-      setBusy(false);
-      return;
-    }
-    try {
-    const msg = {
-      role: "user",
-      content: text
-    };
-    const msgs = [...(currentChat.messages || []), msg];
-    const title = (currentChat.messages || []).length === 0 ? text.length > 40 ? text.slice(0, 40) + "…" : text : currentChat.title;
-    const updated = {
-      ...currentChat,
-      title,
-      messages: msgs,
-      updatedAt: Date.now()
-    };
-    setChats(prev => prev.map(c => c.id === currentId ? updated : c));
-    try { await S.set("chat:" + currentId, JSON.stringify(updated)); } catch(e) {}
-    const sys = `You are MTS Assistant — an expert AI field assistant for JLL Managed Technology Services HVAC engineers.
-
-Your role: help technicians in the field solve problems fast. Be their expert colleague on the job.
-
-You specialize in:
-- HVAC fault diagnosis (RTUs, chillers, split systems, VRF/VRV, heat pumps, boilers, furnaces, FCUs)
-- Refrigerant systems (R-410A, R-22, R-32, R-454B, R-407C, R-134a) — charging, leak detection, EPA 608
-- Electrical troubleshooting (controls, contactors, capacitors, boards, low-voltage wiring)
-- Preventive maintenance procedures and schedules
-- OEM and compatible part numbers (Carrier, Trane, York, Lennox, Daikin, Mitsubishi, Rheem, Burnham)
-- Safety protocols — PPE, LOTO, NFPA 70E arc flash, OSHA, confined space
-- Service report writing and job documentation
-- Pressure-temperature relationships, superheat and subcooling calculations
-- Belt and filter sizing, equipment specifications
-
-Response style:
-- Be concise and direct — techs are in the field, not at a desk
-- Use numbered steps for procedures
-- Flag ALL safety hazards with ⚠️ at the start of the relevant step
-- Give specific values, part numbers, and torque specs when you know them
-- If you're not certain about a specific model detail, say so clearly
-- Prioritize safety over speed — never skip safety steps to save time
-${profile ? `\nTechnician: ${profile.name}${profile.region ? `, ${profile.region}` : ""}` : ""}`;
-
-    // Build full conversation history for multi-turn context
-    const history = msgs.slice(0, -1).map(m => ({
-      role: m.role,
-      parts: [{
-        text: m.content
-      }]
-    }));
-    const reply = await ai(sys, text, 2, history);
-    const withReply = {
-      ...updated,
-      messages: [...msgs, {
-        role: "assistant",
-        content: reply
-      }],
-      updatedAt: Date.now()
-    };
-    setChats(prev => prev.map(c => c.id === currentId ? withReply : c).sort((a, b) => b.updatedAt - a.updatedAt));
-    try { await S.set("chat:" + currentId, JSON.stringify(withReply)); } catch(e) {}
-    } finally {
-      busyRef.current = false;
-      setBusy(false);
-    }
-  }
-  function nav(t, sub) {
-    setTab(t);
-    if (t === "chat") setChatView("list");
-    if (t === "agents") setAgentView(sub || "hub");
-    if (t === "tools") setToolView(sub || "hub");
-  }
-  if (loading) return null;
-  if (!profile) return /*#__PURE__*/React.createElement(Onboarding, {
-    onDone: doOnboard
-  });
-  if (showDemo) return /*#__PURE__*/React.createElement(DemoMode, {
-    onExit: () => setShowDemo(false)
-  });
-  const TABS = [{
-    id: "home",
-    i: "🏠",
-    l: "Home"
-  }, {
-    id: "chat",
-    i: "💬",
-    l: "Chat"
-  }, {
-    id: "agents",
-    i: "🤖",
-    l: "Agents"
-  }, {
-    id: "docs",
-    i: "📚",
-    l: "Docs"
-  }, {
-    id: "tools",
-    i: "🛠️",
-    l: "Tools"
-  }];
-  return /*#__PURE__*/React.createElement("div", {
-    style: {
-      height: "100%",
-      background: BG,
-      display: "flex",
-      flexDirection: "column",
-      maxWidth: 480,
-      width: "100%",
-      overflow: "hidden",
-      margin: "0 auto"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      display: "flex",
-      flexDirection: "column",
-      overflow: "hidden"
-    }
-  }, tab === "home" && /*#__PURE__*/React.createElement(Dashboard, {
-    profile: profile,
-    jobs: chats.length,
-    onNewJob: newChat,
-    onStartChat: startChat,
-    onNav: nav,
-    onDemo: () => setShowDemo(true)
-  }), tab === "chat" && chatView === "list" && /*#__PURE__*/React.createElement(ChatList, {
-    chats: chats,
-    onOpen: id => {
-      setActiveId(id);
-      setChatView("chat");
-    },
-    onCreate: newChat,
-    onStartChat: startChat,
-    onDel: delChat
-  }), tab === "chat" && chatView === "chat" && /*#__PURE__*/React.createElement(ChatConvo, {
-    chat: activeChat,
-    onBack: () => setChatView("list"),
-    onSend: sendMsg,
-    busy: busy,
-  }), tab === "agents" && agentView === "hub" && /*#__PURE__*/React.createElement(AgentsHub, {
-    onSel: v => setAgentView(v),
-    onHome: () => nav("home")
-  }), tab === "agents" && agentView !== "hub" && /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      display: "flex",
-      flexDirection: "column",
-      overflow: "hidden"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: DARK,
-      borderBottom: `1px solid ${BORDER}`,
-      display: "flex",
-      alignItems: "center",
-      flexShrink: 0
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: () => nav("home"),
-    "aria-label": "Home",
-    style: {
-      background: "none",
-      border: "none",
-      borderRight: `1px solid ${BORDER}`,
-      padding: "10px 14px",
-      color: GTXT1,
-      fontSize: 18,
-      cursor: "pointer"
-    }
-  }, "\uD83C\uDFE0"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => setAgentView("hub"),
-    style: {
-      background: "none",
-      border: "none",
-      padding: "10px 16px",
-      color: RED,
-      fontWeight: 700,
-      fontSize: 13,
-      cursor: "pointer",
-      flex: 1,
-      textAlign: "left"
-    }
-  }, "\u2190 All Agents")), agentView === "diag" && /*#__PURE__*/React.createElement(DiagAgent, {
-    ctx: wCtx,
-    setCtx: c => setWCtx(p => ({
-      ...p,
-      ...c
-    })),
-    onChain: id => setAgentView(id)
-  }), agentView === "predict" && /*#__PURE__*/React.createElement(PredAgent, null), agentView === "parts" && /*#__PURE__*/React.createElement(PartsAgent, {
-    ctx: wCtx
-  }), agentView === "refcalc" && /*#__PURE__*/React.createElement(RefAgent, null), agentView === "safety" && /*#__PURE__*/React.createElement(SafetyAgent, {
-    ctx: wCtx
-  }), agentView === "report" && /*#__PURE__*/React.createElement(ClosingComment, {
-    ctx: wCtx,
-    profile: profile
-  })), tab === "docs" && /*#__PURE__*/React.createElement(Docs, null), tab === "tools" && toolView === "hub" && /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      display: "flex",
-      flexDirection: "column",
-      overflow: "hidden"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: DARK,
-      borderBottom: `3px solid ${RED}`,
-      padding: "12px 16px",
-      display: "flex",
-      alignItems: "center",
-      gap: 10,
-      flexShrink: 0
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: () => nav("home"),
-    "aria-label": "Home",
-    style: {
-      background: GREY1,
-      border: "none",
-      borderRadius: 8,
-      padding: "6px 12px",
-      color: TXT,
-      fontSize: 18,
-      cursor: "pointer"
-    }
-  }, "\uD83C\uDFE0"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 17,
-      fontWeight: 800,
-      color: TXT
-    }
-  }, "TOOLS"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: RED,
-      fontWeight: 600,
-      marginTop: 2
-    }
-  }, "FIELD TOOLS"))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      padding: 14,
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
-      gap: 12,
-      alignContent: "start"
-    }
-  }, [{
-    id: "pt",
-    i: "🌡️",
-    l: "PT Chart",
-    d: "Pressure-temp calculator"
-  }, {
-    id: "belt",
-    i: "⚙️",
-    l: "Belt Calculator",
-    d: "Size belt from pulley measurements"
-  }, {
-    id: "equip",
-    i: "🏢",
-    l: "Equipment Log",
-    d: "Sites, units, filters, belts"
-  }, {
-    id: "notes",
-    i: "📝",
-    l: "Job Notes",
-    d: "Field notes"
-  }].map(t => /*#__PURE__*/React.createElement("button", {
-    key: t.id,
-    onClick: () => setToolView(t.id),
-    style: {
-      background: CARD,
-      border: `1px solid ${BORDER}`,
-      borderRadius: 14,
-      padding: 16,
-      cursor: "pointer",
-      textAlign: "left",
-      display: "flex",
-      flexDirection: "column",
-      gap: 6
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 28
-    }
-  }, t.i), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 13,
-      fontWeight: 700,
-      color: TXT
-    }
-  }, t.l), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 11,
-      color: GTXT2,
-      lineHeight: 1.4
-    }
-  }, t.d))))), tab === "tools" && toolView !== "hub" && /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      display: "flex",
-      flexDirection: "column",
-      overflow: "hidden"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: DARK,
-      borderBottom: `1px solid ${BORDER}`,
-      display: "flex",
-      alignItems: "center",
-      flexShrink: 0
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: () => nav("home"),
-    "aria-label": "Home",
-    style: {
-      background: "none",
-      border: "none",
-      borderRight: `1px solid ${BORDER}`,
-      padding: "10px 14px",
-      color: GTXT1,
-      fontSize: 18,
-      cursor: "pointer"
-    }
-  }, "\uD83C\uDFE0"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => setToolView("hub"),
-    style: {
-      background: "none",
-      border: "none",
-      padding: "10px 16px",
-      color: RED,
-      fontWeight: 700,
-      fontSize: 13,
-      cursor: "pointer",
-      flex: 1,
-      textAlign: "left"
-    }
-  }, "\u2190 All Tools")), toolView === "pt" && /*#__PURE__*/React.createElement(PTChart, null), toolView === "belt" && /*#__PURE__*/React.createElement(BeltCalc, null), toolView === "equip" && /*#__PURE__*/React.createElement(EquipmentLog, null), toolView === "notes" && /*#__PURE__*/React.createElement(Notes, null))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: _darkMode?"linear-gradient(180deg,#0a0a0a 0%,#000 100%)":"#ffffff",
-      borderTop: `1px solid rgba(227,6,19,${_darkMode?".25":".3"})`,
-      display: "flex",
-      flexShrink: 0,
-      boxShadow: "0 -1px 0 rgba(227,6,19,.15), 0 -20px 40px rgba(0,0,0,.8), inset 0 1px 0 rgba(227,6,19,.08)"
-    }
-  }, TABS.map(t => /*#__PURE__*/React.createElement("button", {
-    key: t.id,
-    onClick: () => nav(t.id),
-    style: {
-      flex: 1,
-      background: "transparent",
-      border: "none",
-      padding: "8px 2px 6px",
-      cursor: "pointer",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      gap: 1,
-      color: tab === t.id ? RED : _darkMode ? GTXT2 : "rgba(0,0,0,0.45)"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 20
-    }
-  }, t.i), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 9,
-      fontWeight: 700,
-      letterSpacing: ".03em"
-    }
-  }, t.l), tab === t.id && /*#__PURE__*/React.createElement("div", {
-    style: {
-      width: 18,
-      height: 2,
-      background: RED,
-      borderRadius: 1,
-      marginTop: 1
-    }
-  })))));
-}
-ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
 
