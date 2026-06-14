@@ -1,12 +1,11 @@
 export default {
-  async fetch(request) {
-    // Handle CORS preflight
+  async fetch(request, env) {
     if (request.method === 'OPTIONS') {
       return new Response(null, {
         headers: {
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          'Access-Control-Allow-Headers': 'Content-Type',
         }
       });
     }
@@ -22,7 +21,7 @@ export default {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${AI_Key}`,
+          'Authorization': `Bearer ${env.AI_Key}`,
           'HTTP-Referer': 'https://solmasta.github.io/mts-assistant/',
           'X-Title': 'MTS Assistant'
         },
