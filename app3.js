@@ -1077,13 +1077,13 @@ function PTChart() {
         marginBottom: 12
       }
     }, "ENTER ONE VALUE"), /*#__PURE__*/React.createElement(Inp, {
-      label: "TEMPERATURE (\xB0F)",
-      val: temp,
+      label: "GAUGE PRESSURE (psig)",
+      val: press,
       set: v => {
-        setTemp(v);
-        setPress("");
+        setPress(v);
+        setTemp("");
       },
-      ph: "e.g. 45",
+      ph: "e.g. 130",
       type: "number"
     }), /*#__PURE__*/React.createElement("div", {
       style: {
@@ -1093,13 +1093,13 @@ function PTChart() {
         margin: "4px 0 12px"
       }
     }, "\u2014 or \u2014"), /*#__PURE__*/React.createElement(Inp, {
-      label: "PRESSURE (psig)",
-      val: press,
+      label: "SATURATION TEMP (\xB0F)",
+      val: temp,
       set: v => {
-        setPress(v);
-        setTemp("");
+        setTemp(v);
+        setPress("");
       },
-      ph: "e.g. 130",
+      ph: "e.g. 40",
       type: "number"
     }), /*#__PURE__*/React.createElement(Btn, {
       red: true,
