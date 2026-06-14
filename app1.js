@@ -119,7 +119,7 @@ async function ai(system, prompt, retries = 2, history = []) {
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       const messages = [
-        ...history.map(h => ({ role: h.role, content: h.parts[0].text })),
+        ...history.filter(h => h.role !== "system").map(h => ({ role: h.role, content: h.parts[0].text })),
         { role: "user", content: prompt }
       ];
       const r = await fetch(WORKER_URL, {
