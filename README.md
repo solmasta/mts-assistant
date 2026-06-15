@@ -145,6 +145,26 @@ For AI to work locally, the Cloudflare Worker URL in `app1.js` needs to be acces
 
 ---
 
+## Market Context
+
+The commercial field service market forces HVAC engineers to use 4–9 separate apps on every job (source: XOi industry research). MTS Assistant unifies the entire workflow.
+
+| Capability | MTS Assistant | Bluon | measureQuick | ServiceTitan | Aquant |
+|------------|:---:|:---:|:---:|:---:|:---:|
+| Fault Diagnosis | ✅ | ✅ | ✅ | ❌ | ✅ |
+| Refrigerant Charging | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Safety Briefings | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Parts Finder | ✅ | ✅ | ❌ | ✅ | ✅ |
+| Work Order Docs | ✅ | ❌ | ❌ | ✅ | ❌ |
+| Technical Documents | ✅ | ✅ | ❌ | ❌ | ✅ |
+| Equipment Log | ✅ | ❌ | ❌ | ✅ | ✅ |
+| No install required | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Free to deploy | ✅ | ❌ | ❌ | ❌ | ❌ |
+
+**Market validation:** XOi raised $230M from KKR (2025). Bluon serves 170,000 technicians. ServiceTitan charges $245–$600/user/month. MTS Assistant delivers the same capability at zero cost with no infrastructure required.
+
+---
+
 ## Team
 
 | Name | Role | Location |
