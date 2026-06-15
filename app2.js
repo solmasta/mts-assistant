@@ -158,7 +158,7 @@ function renderMarkdown(text) {
         const boldMatch = remaining.match(/^(.*?)\*\*(.+?)\*\*(.*)/s);
         if (boldMatch) {
           if (boldMatch[1]) parts.push(React.createElement('span', {key: k++}, boldMatch[1]));
-          parts.push(React.createElement('strong', {key: k++, style:{color:'#fff',fontWeight:700}}, boldMatch[2]));
+          parts.push(React.createElement('strong', {key: k++, style:{color:TXT,fontWeight:700}}, boldMatch[2]));
           remaining = boldMatch[3];
         } else {
           parts.push(React.createElement('span', {key: k++}, remaining));
@@ -171,7 +171,7 @@ function renderMarkdown(text) {
     const numMatch = line.match(/^(\d+)\.\s+(.+)/);
     if (numMatch) {
       elements.push(React.createElement('div', {key: key++, style:{display:'flex',gap:6,marginBottom:3}},
-        React.createElement('span', {style:{color:'rgba(255,255,255,.5)',minWidth:16,flexShrink:0,fontWeight:700}}, numMatch[1]+'.'),
+        React.createElement('span', {style:{color:GTXT2,minWidth:16,flexShrink:0,fontWeight:700}}, numMatch[1]+'.'),
         React.createElement('span', {style:{flex:1}}, renderInline(numMatch[2]))
       ));
       continue;
@@ -185,7 +185,7 @@ function renderMarkdown(text) {
     }
     // Section header (all caps line or ends with :)
     if (line.match(/^[A-Z⚠️🔴🟡🟢✅📞🔐☢️⚡][^a-z]{2,}:?$/) && line.length < 40) {
-      elements.push(React.createElement('div', {key: key++, style:{color:'rgba(255,255,255,.5)',fontSize:10,fontWeight:700,letterSpacing:'.08em',marginTop:8,marginBottom:3}},
+      elements.push(React.createElement('div', {key: key++, style:{color:GTXT1,fontSize:10,fontWeight:700,letterSpacing:'.08em',marginTop:8,marginBottom:3}},
         line
       ));
       continue;
@@ -662,11 +662,11 @@ function ChatList({
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      background: m.role === "user" ? RED : GREY1,
+      background: m.role === "user" ? RED : _darkMode ? GREY1 : "#e8e8eb",
       borderRadius: m.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
       padding: "10px 14px",
       fontSize: 13,
-      color: m.role === "user" ? "#fff" : TXT,
+      color: m.role === "user" ? "#fff" : _darkMode ? TXT : "#111111",
       lineHeight: 1.65,
       whiteSpace: m.role === "user" ? "pre-wrap" : "normal",
       wordBreak: "break-word",
