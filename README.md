@@ -40,6 +40,12 @@ Conversational assistant powered by Anthropic Claude Sonnet 4.6. Ask anything ab
 | **Safety Briefing** | Task-specific PPE list, LOTO procedure, and hazard checklist |
 | **Closing Comment** | Professional CMMS-ready work order comment, one tap to copy |
 
+## Why This Matters
+
+MTS Assistant is the only field tool that connects fault diagnosis directly to safety compliance. When a technician runs Fault Diagnosis, the Safety Briefing agent pre-fills with task-specific PPE requirements and LOTO procedures for that exact equipment and fault — not a generic checklist.
+
+No commercial competitor does this. Bluon, measureQuick, Aquant, and ServiceTitan all treat safety as a separate workflow. MTS Assistant makes it automatic.
+
 ### ⚡ Connected Workflow
 Fault Diagnosis → Safety Briefing → Closing Comment. Each agent pre-fills from the previous one. One job. Zero re-entry.
 
