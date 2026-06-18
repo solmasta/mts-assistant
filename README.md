@@ -1,19 +1,4 @@
-# MTS Assistant — AI Field Assistant for HVAC Engineers
-
-**JLL MTS · Accelerate 2030 Hackathon 2026 · AMER Region**
-
-🔗 **Live app:** https://solmasta.github.io/mts-assistant  
-📁 **GitHub repo:** https://github.com/solmasta/mts-assistant  
-🎥 **Demo video:** https://drive.google.com/file/d/1FEiaxkGVhYP_aDUN2orLTyT7FTg75VEC/view?usp=drivesdk
-
----
-
-## The Problem
-
-JLL MTS field engineers arrive on site every day to diagnose complex HVAC faults — often alone, on unfamiliar equipment, with paper binders that may be years out of date. When they hit a fault code they haven't seen before, they call a colleague, wait, and the building stays down.
-
-This creates delays, inconsistency across the team, safety risk, and knowledge gaps that are especially costly for less experienced technicians on complex equipment.
-
+745747
 ---
 
 ## The Solution
