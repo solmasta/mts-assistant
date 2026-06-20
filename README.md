@@ -16,6 +16,12 @@
 
 ---
 
+## Why It Was Built
+
+MTS Assistant was built by Luke Dorsett, a lead HVAC engineer on the JLL MTS team with 15 years in the field — not for a prize, but for his own crew. His engineers are out every day, often alone, on equipment they've never seen, making calls that affect whether a building runs and whether they go home safe. They help each other, but everyone works off what's in their own head. Luke built this so his team has the best information — the same information — every time.
+
+---
+
 ## The Problem
 
 JLL MTS field engineers arrive on site every day to diagnose complex HVAC faults — often alone, on unfamiliar equipment, with paper binders that may be years out of date. When they hit a fault code they haven't seen before, they call a colleague, wait, and the building stays down.
@@ -97,9 +103,11 @@ Full theme system with smooth circular wipe transition. Preference saved across 
 
 ## Why This Matters
 
-MTS Assistant is the only field tool that connects fault diagnosis directly to safety compliance. When a technician runs Fault Diagnosis, the Safety Briefing agent pre-fills with task-specific PPE requirements and LOTO procedures for that exact equipment and fault — not a generic checklist.
+**Safety runs through every answer.** MTS Assistant is the only field tool that connects fault diagnosis directly to safety compliance. Safety isn't a separate tab a technician might skip — every diagnosis, every agent, and every workflow surfaces the right PPE, LOTO procedures, and hazards for that exact equipment and fault. When a technician runs Fault Diagnosis, the Safety Briefing agent pre-fills automatically. No commercial competitor does this — Bluon, measureQuick, Aquant, and ServiceTitan all treat safety as a separate workflow.
 
-No commercial competitor does this. Bluon, measureQuick, Aquant, and ServiceTitan all treat safety as a separate workflow. MTS Assistant makes it automatic.
+**It learns and compounds.** The more engineers use it, the more the agents see real-world patterns across jobs and data. The guidance gets stronger and the technician gets smarter right along with it — every job makes the next one better.
+
+**One consistent source of truth.** Today, knowledge lives in individual engineers' heads, and the help one tech gives another varies person to person. Our engineers want to help each other — but the answers aren't consistent, and inconsistency is risk. MTS Assistant delivers the same accurate, detailed procedures, manuals, and parts information to every engineer, every time — replacing a dozen versions of "how I'd do it" with one reliable answer.
 
 ---
 
