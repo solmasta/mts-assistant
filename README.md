@@ -3,16 +3,16 @@
 **JLL MTS · Accelerate 2030 Hackathon 2026 · AMER Region**
 
 🔗 **Live app:** https://solmasta.github.io/mts-assistant
-📁 **GitHub repo:** https://github.com/solmasta/mts-assistant
-🎥 **Demo video:** https://www.youtube.com/watch?v=Pv7f4dNrduQ
+📁 **GitHub repo:** https://github.com/JLL-Hackathon/MTS_Assistant
+🎥 **Demo video:** https://youtube.com/shorts/sKXUWkjIIyY
 
 ---
 
 ## ▶️ Watch the 2-Minute Demo
 
-[![MTS Assistant Demo](https://img.youtube.com/vi/Pv7f4dNrduQ/maxresdefault.jpg)](https://www.youtube.com/watch?v=Pv7f4dNrduQ)
+[![MTS Assistant Demo](https://img.youtube.com/vi/sKXUWkjIIyY/hqdefault.jpg)](https://youtube.com/shorts/sKXUWkjIIyY)
 
-*Full walkthrough of the app — AI chat, field tools, the six agents, the connected workflow, and the ROI.*
+*Full 2-minute walkthrough — AI chat, the six agents, the connected workflow, field tools, the document library, and equipment logging.*
 
 ---
 
@@ -127,7 +127,7 @@ The commercial field service market forces HVAC engineers to use 4–9 separate 
 | No install required | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Free to deploy | ✅ | ❌ | ❌ | ❌ | ❌ |
 
-**Market validation:** XOi raised $230M from KKR (2025). Bluon serves 170,000 technicians. ServiceTitan charges $245–$600/user/month. MTS Assistant delivers the same capability at zero licensing cost with no infrastructure required.
+**Market validation:** XOi raised $230M from KKR (2025). Bluon serves 100,000+ technicians (roughly one-third of all U.S. HVAC techs). ServiceTitan charges $245–$500/user/month. MTS Assistant delivers the same capability at zero licensing cost with no infrastructure required.
 
 ---
 
@@ -140,7 +140,7 @@ The commercial field service market forces HVAC engineers to use 4–9 separate 
 | API Proxy | Cloudflare Workers (API key secured server-side, never exposed) |
 | Hosting | GitHub Pages (static, free, auto-deploys on push) |
 | Storage | localStorage with in-memory fallback |
-| Platform | Mobile-first PWA — no install, works offline after first load |
+| Platform | Mobile-first web app — no install. Docs, tools & logs work offline; AI features need a connection |
 
 ---
 
@@ -165,13 +165,10 @@ index.html              App shell — React, ReactDOM, CSS (179KB)
 app1.js                 Core logic — AI function, theme, base components (100KB)
 app2.js                 Agents, chat UI, document data (99KB)
 app3.js                 Tools, demo mode, equipment log, app root (86KB)
-worker.js               Cloudflare Worker — secure API proxy
-wrangler.toml           Cloudflare Worker config
+worker.js               Cloudflare Worker — secure API proxy (deployed via Cloudflare dashboard)
 README.md               This file
 package.json            Project metadata v1.4.0
-.github/
-  workflows/
-    deploy.yml          GitHub Actions → GitHub Pages auto-deploy
+Deploy.yml              GitHub Actions workflow → GitHub Pages auto-deploy
 ```
 
 ---

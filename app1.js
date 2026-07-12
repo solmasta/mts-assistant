@@ -5,6 +5,7 @@ const {
   useRef
 } = React;
 const RED = "#E30613";
+const APP_VERSION = "1.4.3";
 
 // ── THEME ────────────────────────────────────────────────────────────────
 const THEMES = {
@@ -553,22 +554,6 @@ function Dashboard({
       /*#__PURE__*/React.createElement("div", {style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}},
         /*#__PURE__*/React.createElement("img", {src:JLL_FULL,alt:"JLL",style:{height:44,display:"block",imageRendering:"crisp-edges",mixBlendMode:_darkMode?"screen":"multiply"}}),
         /*#__PURE__*/React.createElement("div", {style:{display:"flex",alignItems:"center",gap:8}},
-          /* Demo button */
-          /*#__PURE__*/React.createElement("button", {
-            onClick: onDemo,
-            style:{
-              background:`linear-gradient(135deg,${RED},#b00010)`,
-              border:"none",
-              borderRadius:20, padding:"5px 12px",
-              cursor:"pointer", display:"flex", alignItems:"center", gap:5,
-              fontSize:12, fontWeight:800, color:"#fff",
-              fontFamily:"inherit",
-              boxShadow:"0 2px 8px rgba(227,6,19,.4)"
-            }
-          },
-            /*#__PURE__*/React.createElement("span", {style:{fontSize:11}}, "▶"),
-            /*#__PURE__*/React.createElement("span", null, "DEMO")
-          ),
           /* Theme toggle button */
           /*#__PURE__*/React.createElement("button", {
             onClick: (e) => toggleThemeAndSync(e),
@@ -598,13 +583,15 @@ function Dashboard({
           fontSize:16,fontWeight:900,color: TXT,
           boxShadow:"0 4px 14px rgba(227,6,19,0.4)"
         }}, initials),
-        /*#__PURE__*/React.createElement("div", null,
+        /*#__PURE__*/React.createElement("div", {style:{flex:1}},
           /*#__PURE__*/React.createElement("div", {style:{fontSize:12,color: GTXT1,fontWeight:500,letterSpacing:".04em"}}, greet+","),
           /*#__PURE__*/React.createElement("div", {style:{fontSize:22,fontWeight:900,color:TXT,letterSpacing:".01em",lineHeight:1.1}},
             profile.name.split(" ")[0]),
           profile.region && /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:RED,fontWeight:600,marginTop:2,letterSpacing:".05em"}},
             profile.region)
-        )
+        ),
+        /*#__PURE__*/React.createElement("div", {style:{fontSize:9,color:GTXT3,fontWeight:600,letterSpacing:".05em",alignSelf:"flex-start",marginTop:2}},
+          "v"+APP_VERSION)
       ),
 
       /* Stat pills */

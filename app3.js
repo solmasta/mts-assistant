@@ -473,7 +473,7 @@ KEY SPECS TO VERIFY
     id: "more",
     title: "And there's more…",
     subtitle: "FULL FEATURE SET",
-    desc: "11 technical documents with AI Q&A · Belt & PT calculators · Equipment log · Refrigerant charging · Predictive maintenance",
+    desc: "23 technical documents with AI Q&A · Belt & PT calculators · Equipment log · Refrigerant charging · Predictive maintenance",
     icon: "📱",
     duration: 3500,
   },

@@ -1,7 +1,7 @@
 {
   "name": "mts-assistant",
-  "version": "1.4.0",
-  "description": "JLL MTS AI Field Assistant for HVAC engineers — Claude AI, Cloudflare proxy, belt calc, parts finder, 11 doc library, dark/light mode, demo mode",
+  "version": "1.4.3",
+  "description": "JLL MTS AI Field Assistant for HVAC engineers — Claude AI, Cloudflare proxy, belt calc, parts finder, 23 doc library, dark/light mode, auto-update",
   "private": true,
   "scripts": {
     "start": "npx serve ."
