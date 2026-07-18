@@ -917,11 +917,13 @@ function Dashboard({
             onClick: (e) => toggleThemeAndSync(e),
             title: _darkMode ? "Switch to light mode" : "Switch to dark mode",
             style:{
-              background: GREY1, border:`1px solid ${GREY2}`,
-              borderRadius:20, padding:"5px 12px",
+              background: RED, border:`2px solid ${RED}`,
+              borderRadius:22, padding:"6px 14px",
               cursor:"pointer", display:"flex", alignItems:"center", gap:6,
-              fontSize:12, fontWeight:700, color:GTXT1,
-              fontFamily:"inherit"
+              fontSize:12, fontWeight:700, color: TXT,
+              fontFamily:"inherit",
+              boxShadow: "0 4px 12px rgba(37,99,235,0.3)",
+              transition: "all 0.2s ease"
             }
           },
             /*#__PURE__*/React.createElement("span", {key:String(_darkMode), className:"theme-icon-spin", style:{fontSize:14,display:"inline-block"}}, _darkMode ? "☀️" : "🌙"),
@@ -1079,11 +1081,35 @@ function AgentScreen({
   canRun,
   onReset,
   resetLabel,
-  chainBtns
+  chainBtns,
+  autoChainMs
 }) {
   const [step, setStep] = useState(0);
   const [res, setRes] = useState("");
   const [err, setErr] = useState("");
+  const [countdown, setCountdown] = useState(autoChainMs ? Math.ceil(autoChainMs / 1000) : 0);
+  
+  // Auto-chain after result is shown
+  useEffect(() => {
+    if (step === 2 && autoChainMs && autoChainMs > 0) {
+      setCountdown(Math.ceil(autoChainMs / 1000));
+      const countdownInterval = setInterval(() => {
+        setCountdown(c => {
+          if (c <= 1) {
+            clearInterval(countdownInterval);
+            // Click the first chain button (stored in window._chainFirstBtn)
+            setTimeout(() => {
+              if (window._chainFirstBtn) window._chainFirstBtn.click();
+            }, 100);
+            return 0;
+          }
+          return c - 1;
+        });
+      }, 1000);
+      return () => clearInterval(countdownInterval);
+    }
+  }, [step, autoChainMs]);
+  
   async function run() {
     setStep(1);
     setErr("");
@@ -1100,6 +1126,7 @@ function AgentScreen({
     setStep(0);
     setRes("");
     setErr("");
+    setCountdown(0);
     if (onReset) onReset();
   }
   return /*#__PURE__*/React.createElement("div", {
@@ -1167,7 +1194,19 @@ function AgentScreen({
       lineHeight: 1.7,
       marginBottom: 12
     }
-  }, res), chainBtns && /*#__PURE__*/React.createElement("div", {
+  }, res), autoChainMs && countdown > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "rgba(37,99,235,.1)",
+      border: "1px solid rgba(37,99,235,.3)",
+      borderRadius: 10,
+      padding: "8px 12px",
+      fontSize: 12,
+      color: RED,
+      fontWeight: 600,
+      marginBottom: 10,
+      textAlign: "center"
+    }
+  }, "Auto-advancing to next step in ", countdown, "s\u2026"), chainBtns && /*#__PURE__*/React.createElement("div", {
     style: {
       background: "rgba(227,6,19,.07)",
       border: `1px solid rgba(227,6,19,.25)`,
@@ -1228,6 +1267,7 @@ function DiagAgent({
       return r;
     },
     chainBtns: onChain && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
+      ref: el => { window._chainFirstBtn = el; },
       onClick: () => onChain("safety"),
       style: {
         background: RED,
@@ -1264,6 +1304,7 @@ function DiagAgent({
         color: TXT
       }
     }, "\uD83D\uDCCB Comment \u2192")),
+    autoChainMs: onChain ? 2000 : 0,
     form: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Sel, {
       label: "EQUIPMENT TYPE",
       val: equip,
@@ -1685,7 +1726,8 @@ function RefAgent() {
 
 // 5. Safety Briefing
 function SafetyAgent({
-  ctx
+  ctx,
+  onChain
 }) {
   const [job, setJob] = useState("");
   const [equip, setEquip] = useState(ctx?.diagEquip || "");
@@ -1703,6 +1745,21 @@ function SafetyAgent({
     canRun: !!job,
     onRun: () => ai("You are an expert HVAC safety officer for FieldPro. Generate thorough task-specific safety briefings covering OSHA, NFPA 70E, and EPA 608 requirements. Be specific about exact PPE items with ratings and standards.", `Pre-job safety briefing:\nJob: ${job}\nEquipment: ${equip || "Not specified"}\nLocation: ${loc || "Not specified"}\nRefrigerant: ${ref || "Not specified"}\nAdditional hazards: ${haz.join(", ") || "None"}\n\nGenerate this exact structure:\n\n⚠️ CRITICAL SAFETY WARNINGS\n(2-3 top hazards for this specific job)\n\n🦺 REQUIRED PPE - JOB SPECIFIC\nList every item the tech must wear, with ratings/standards. Cover:\n- Head/eye protection (safety glasses ANSI Z87.1, face shield if needed)\n- Hand protection (cut-resistant, electrical-rated, cryogenic for refrigerant — specify which)\n- Foot protection (steel-toe ASTM F2413, slip-resistant for rooftop)\n- Hearing protection (if equipment >85 dB)\n- High-vis vest (rooftop, occupied building)\n- Arc flash gear (NFPA 70E Cat 2 for electrical work — specify cal/cm² rating)\n- Respiratory protection (refrigerant exposure, dust)\n- Fall protection (>6ft height — harness, lanyard, anchor point)\n- Body protection (long sleeves, FR clothing for electrical)\n\n🔐 LOTO PROCEDURE\n(Step-by-step for THIS equipment)\n\n☢️ REFRIGERANT SAFETY (if applicable)\n\n⚡ ELECTRICAL SAFETY\n\n✅ PRE-JOB CHECKLIST (8-10 items)\n\n📞 EMERGENCY RESPONSE`),
     onReset: () => setHaz([]),
+    chainBtns: onChain && /*#__PURE__*/React.createElement("button", {
+      ref: el => { window._chainFirstBtn = el; },
+      onClick: () => onChain("report"),
+      style: {
+        background: RED,
+        border: "none",
+        borderRadius: 8,
+        padding: "8px 12px",
+        cursor: "pointer",
+        fontSize: 12,
+        fontWeight: 700,
+        color: TXT
+      }
+    }, "\uD83D\uDCCB Closing Comment \u2192"),
+    autoChainMs: onChain ? 2000 : 0,
     form: /*#__PURE__*/React.createElement(React.Fragment, null, (ctx?.diagEquip || ctx?.diagRef) && /*#__PURE__*/React.createElement(Card, {
       style: {
         background: "rgba(39,174,96,.08)",
