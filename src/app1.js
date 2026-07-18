@@ -817,7 +817,7 @@ function Onboarding({
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
-      color: GTXT1,
+      color: "rgba(255,255,255,0.75)",
       letterSpacing: ".15em",
       marginBottom: 6
     }
@@ -825,13 +825,13 @@ function Onboarding({
     style: {
       fontSize: 32,
       fontWeight: 900,
-      color: _darkMode?"#fff":RED,
+      color: "#ffffff",
       lineHeight: 1
     }
   }, "FieldPro Assistant"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
-      color: TXTBODY,
+      color: "rgba(255,255,255,0.80)",
       marginTop: 4
     }
   }, "AI Field Assistant")), /*#__PURE__*/React.createElement("div", {
@@ -967,10 +967,10 @@ function Dashboard({
       /*#__PURE__*/React.createElement("div", {style:{display:"flex",alignItems:"center",gap:12,marginBottom:14}},
         /*#__PURE__*/React.createElement("div", {style:{
           width:44,height:44,borderRadius:12,flexShrink:0,
-          background:`linear-gradient(135deg,${RED},#8b0000)`,
+          background:`linear-gradient(135deg,${RED},#1d4ed8)`,
           display:"flex",alignItems:"center",justifyContent:"center",
-          fontSize:16,fontWeight:900,color: TXT,
-          boxShadow:"0 4px 14px rgba(227,6,19,0.4)"
+          fontSize:16,fontWeight:900,color:"#ffffff",
+          boxShadow:"0 4px 14px rgba(37,99,235,0.4)"
         }}, initials),
         /*#__PURE__*/React.createElement("div", {style:{flex:1}},
           /*#__PURE__*/React.createElement("div", {style:{fontSize:12,color: GTXT1,fontWeight:500,letterSpacing:".04em"}}, greet+","),
@@ -1049,8 +1049,8 @@ function Dashboard({
         }
       },
         /*#__PURE__*/React.createElement("div", {style:{textAlign:"left"}},
-          /*#__PURE__*/React.createElement("div", {style:{fontSize:15,fontWeight:800,color: TXT,letterSpacing:".02em",marginBottom:4}}, "💬 ASK THE AI ASSISTANT"),
-          /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:GTXT2,lineHeight:1.6}},
+          /*#__PURE__*/React.createElement("div", {style:{fontSize:15,fontWeight:800,color:"#ffffff",letterSpacing:".02em",marginBottom:4}}, "💬 ASK THE AI ASSISTANT"),
+          /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:"rgba(255,255,255,0.82)",lineHeight:1.6}},
             "Fault diagnosis · Part numbers · Safety", /*#__PURE__*/React.createElement("br",null),
             "Refrigerant charging · Service reports"
           )
