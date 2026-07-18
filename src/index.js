@@ -87,3 +87,9 @@ Promise.all([
   .finally(() => {
     setTimeout(hideSplash, 2500);
   });
+
+// Import and render the main App component
+import App from './App';
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(React.createElement(App));
