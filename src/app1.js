@@ -802,59 +802,146 @@ function Onboarding({
 }) {
   const [name, setName] = useState("");
   const [region, setRegion] = useState("");
+  const canStart = !!name.trim();
   return /*#__PURE__*/React.createElement("div", {
     style: {
       height: "100vh",
       background: BG,
       display: "flex",
-      flexDirection: "column"
+      flexDirection: "column",
+      position: "relative",
+      overflow: "hidden"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      background: RED,
-      padding: "40px 24px 28px"
+      position: "absolute",
+      inset: 0,
+      pointerEvents: "none",
+      background: _darkMode ? "radial-gradient(circle at 18% 8%, rgba(227,6,19,.28), transparent 34%), radial-gradient(circle at 82% 92%, rgba(227,6,19,.16), transparent 36%)" : "radial-gradient(circle at 18% 8%, rgba(227,6,19,.12), transparent 34%), radial-gradient(circle at 82% 92%, rgba(227,6,19,.08), transparent 36%)"
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: _darkMode ? "linear-gradient(155deg,#c30012 0%, #e30613 40%, #86000a 100%)" : "linear-gradient(155deg,#ff3550 0%, #e30613 45%, #b4000e 100%)",
+      padding: "40px 24px 52px",
+      position: "relative",
+      overflow: "hidden",
+      boxShadow: "0 18px 40px rgba(0,0,0,.28)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "absolute",
+      right: -60,
+      top: -80,
+      width: 240,
+      height: 240,
+      borderRadius: "50%",
+      background: "rgba(255,255,255,.14)",
+      filter: "blur(2px)"
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "absolute",
+      left: -90,
+      bottom: -140,
+      width: 280,
+      height: 280,
+      borderRadius: "50%",
+      background: "rgba(0,0,0,.15)"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
-      color: GTXT1,
+      color: "rgba(255,255,255,.86)",
       letterSpacing: ".15em",
-      marginBottom: 6
+      marginBottom: 8,
+      textTransform: "uppercase"
     }
   }, "JLL MTS"), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 32,
+      fontSize: 46,
       fontWeight: 900,
-      color: _darkMode?"#fff":RED,
-      lineHeight: 1
+      color: "#fff",
+      lineHeight: .95,
+      letterSpacing: "-.02em"
     }
   }, "MTS ASSISTANT"), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 13,
-      color: TXTBODY,
-      marginTop: 4
+      fontSize: 15,
+      color: "rgba(255,255,255,.9)",
+      marginTop: 10,
+      maxWidth: 360,
+      lineHeight: 1.5
     }
-  }, "AI Field Assistant")), /*#__PURE__*/React.createElement("div", {
+  }, "Your field-ready assistant for diagnostics, safety, and faster close-outs."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 16,
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 8,
+      background: "rgba(0,0,0,.22)",
+      border: "1px solid rgba(255,255,255,.22)",
+      borderRadius: 999,
+      padding: "7px 12px",
+      color: "#fff",
+      fontSize: 12,
+      fontWeight: 700
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 8,
+      height: 8,
+      borderRadius: "50%",
+      background: "#6bff95",
+      boxShadow: "0 0 0 6px rgba(107,255,149,.22)"
+    }
+  }), "Setup takes about 30 seconds"))), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1,
       overflowY: "auto",
       overflowX: "hidden",
-      padding: 20
+      padding: "0 20px 22px",
+      marginTop: -26
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 20,
+      background: _darkMode ? "linear-gradient(145deg, rgba(23,23,23,.94), rgba(14,14,14,.96))" : "linear-gradient(145deg, rgba(255,255,255,.95), rgba(248,248,248,.97))",
+      border: `1px solid ${_darkMode ? "rgba(255,255,255,.12)" : "rgba(0,0,0,.1)"}`,
+      borderRadius: 20,
+      padding: 18,
+      boxShadow: _darkMode ? "0 20px 50px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06)" : "0 18px 36px rgba(0,0,0,.12), inset 0 1px 0 rgba(255,255,255,.9)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 23,
       fontWeight: 800,
-      color: TXT,
-      marginBottom: 6
+      color: TXT
     }
   }, "Quick setup"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: GTXT2,
-      marginBottom: 20
+      marginBottom: 16,
+      lineHeight: 1.55
     }
-  }, "30 seconds. Personalises your reports."), /*#__PURE__*/React.createElement(Inp, {
+  }, "Tell us who you are and we will personalize the assistant and reports for your team."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      marginBottom: 14,
+      flexWrap: "wrap"
+    }
+  }, ["Safer guidance", "Faster diagnosis", "Cleaner reports"].map(tag => /*#__PURE__*/React.createElement("span", {
+    key: tag,
+    style: {
+      fontSize: 11,
+      fontWeight: 700,
+      color: _darkMode ? "rgba(255,255,255,.84)" : "rgba(0,0,0,.7)",
+      background: _darkMode ? "rgba(227,6,19,.18)" : "rgba(227,6,19,.1)",
+      border: "1px solid rgba(227,6,19,.22)",
+      borderRadius: 999,
+      padding: "6px 10px"
+    }
+  }, tag))), /*#__PURE__*/React.createElement(Inp, {
     label: "YOUR NAME *",
     val: name,
     set: setName,
@@ -864,7 +951,45 @@ function Onboarding({
     val: region,
     set: setRegion,
     opts: ["AMER – North", "AMER – South", "AMER – East", "AMER – West", "APAC", "EMEA"]
-  }), /*#__PURE__*/React.createElement(Btn, {
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 10,
+      marginBottom: 6,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: GTXT2,
+      fontWeight: 700,
+      letterSpacing: ".08em",
+      textTransform: "uppercase"
+    }
+  }, "Profile readiness"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: canStart ? RED : GTXT2,
+      fontWeight: 800
+    }
+  }, canStart ? "Ready" : "Name needed")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: "100%",
+      height: 6,
+      borderRadius: 999,
+      background: _darkMode ? "rgba(255,255,255,.1)" : "rgba(0,0,0,.08)",
+      overflow: "hidden",
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: canStart ? "100%" : "46%",
+      height: "100%",
+      background: "linear-gradient(90deg,#ff445f,#e30613)",
+      transition: "width .35s cubic-bezier(.16,1,.3,1)"
+    }
+  })), /*#__PURE__*/React.createElement(Btn, {
     red: true,
     c: "Get Started \u2192",
     onClick: () => onDone({
@@ -872,13 +997,24 @@ function Onboarding({
       region,
       joined: Date.now()
     }),
-    disabled: !name.trim(),
+    disabled: !canStart,
     style: {
       width: "100%",
-      padding: 14,
+      padding: 16,
       fontSize: 15,
-      marginTop: 8
+      marginTop: 2,
+      borderRadius: 14,
+      letterSpacing: ".02em",
+      boxShadow: canStart ? "0 14px 26px rgba(227,6,19,.38), inset 0 1px 0 rgba(255,255,255,.2)" : "none"
     }
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 10,
+      fontSize: 11,
+      color: GTXT3,
+      textAlign: "center"
+    }
+  }, "You can update this anytime in settings.")));
   })));
 }
 
