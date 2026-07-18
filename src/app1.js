@@ -2126,3 +2126,6 @@ Do not include the technician's name in the text. Do not add any preamble or sig
     }
   }, "\u21A9 Generate again"))));
 }
+// Export App1 for React app to render
+window.App1 = App1;
+console.log('✅ App1 exported to window');
