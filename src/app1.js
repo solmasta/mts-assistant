@@ -541,6 +541,24 @@ class PartsFinder {
   }
 }
 
+// Expose utilities to the global window for console interaction
+if (typeof window !== 'undefined') {
+  try {
+    window.DataManager = DataManager;
+    window.HVAC_DB = HVAC_EQUIPMENT_DB;
+    window.HVACAssistant = HVACAssistantAI;
+    window.PartsFinder = PartsFinder;
+
+    window.dataManager = window.dataManager || new DataManager();
+    window.hvacAssistant = window.hvacAssistant || new HVACAssistantAI();
+    window.partsFinder = window.partsFinder || new PartsFinder();
+
+    console.log('✅ MTS Assistant enhancements loaded: DataManager, HVAC_DB, HVACAssistant, PartsFinder');
+  } catch (e) {
+    console.warn('Failed to attach MTS Assistant globals', e);
+  }
+}
+
 // ── AI CALL ──────────────────────────────────────────────────────────────
 // ── HELPERS ──────────────────────────────────────────────────────────────
 const gid = () => "id" + Date.now() + Math.random().toString(36).slice(2, 5);
