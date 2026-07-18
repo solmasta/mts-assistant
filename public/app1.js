@@ -908,9 +908,9 @@ function Dashboard({
       flexShrink:0
     }},
 
-      /* Top row: JLL logo left, theme toggle + MTS badge right */
+      /* Top row: FieldPro logo left, theme toggle right */
       /*#__PURE__*/React.createElement("div", {style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}},
-        /*#__PURE__*/React.createElement("img", {src:JLL_FULL,alt:"JLL",style:{height:44,display:"block",imageRendering:"crisp-edges",mixBlendMode:_darkMode?"screen":"multiply"}}),
+        /*#__PURE__*/React.createElement("div", {style:{fontSize:18,fontWeight:900,color:"#2563EB",letterSpacing:".05em",fontFamily:"Space Grotesk, sans-serif"}}, "FieldPro"),
         /*#__PURE__*/React.createElement("div", {style:{display:"flex",alignItems:"center",gap:8}},
           /* Theme toggle button */
           /*#__PURE__*/React.createElement("button", {
@@ -926,9 +926,7 @@ function Dashboard({
           },
             /*#__PURE__*/React.createElement("span", {key:String(_darkMode), className:"theme-icon-spin", style:{fontSize:14,display:"inline-block"}}, _darkMode ? "☀️" : "🌙"),
             /*#__PURE__*/React.createElement("span", null, _darkMode ? "Light" : "Dark")
-          ),
-          /* MTS Assistant badge */
-          /*#__PURE__*/React.createElement("img", {src:MTS_BADGE,alt:"MTS Assistant",style:{height:56,display:"block",mixBlendMode:_darkMode?"screen":"multiply"}})
+          )
         )
       ),
 
