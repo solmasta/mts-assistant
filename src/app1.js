@@ -2320,13 +2320,6 @@ function App1() {
   );
 }
 
-// Mount App1 to DOM root
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(React.createElement(App1));
-  });
-} else {
-  const root = ReactDOM.createRoot(document.getElementById('root'));
-  root.render(React.createElement(App1));
-}
+// Export App1 for React app to render
+window.App1 = App1;
+console.log('✅ App1 component exported to window');
