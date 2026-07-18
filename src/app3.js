@@ -333,7 +333,7 @@ function Docs() {
 const DEMO_STEPS = [
   {
     id: "intro",
-    title: "Welcome to MTS Assistant",
+    title: "Welcome to FieldPro",
     subtitle: "FieldPro HVAC AI Field Tool",
     desc: "An AI expert in every engineer's pocket. Let's walk through a real job scenario.",
     icon: "🔧",

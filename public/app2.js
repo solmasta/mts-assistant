@@ -578,7 +578,7 @@ function ChatList({
       color: TXT,
       marginBottom: 4
     }
-  }, "MTS Field Assistant"), /*#__PURE__*/React.createElement("div", {
+  }, "FieldPro Field Assistant"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: GTXT2,
