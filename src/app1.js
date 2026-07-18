@@ -895,7 +895,8 @@ function Dashboard({
   const greet = hr < 12 ? "Good morning" : hr < 17 ? "Good afternoon" : "Good evening";
   const initials = profile.name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
 
-  // PWA install prompt
+  // Subscribe to theme changes so button label + colors re-render on toggle
+  useTheme();
   const [installPrompt, setInstallPrompt] = useState(null);
   const [installDismissed, setInstallDismissed] = useState(() => {
     try { return localStorage.getItem("fp-install-dismissed") === "1"; } catch { return false; }
