@@ -538,7 +538,7 @@ function ChatList({
       fontWeight: 600,
       marginTop: 1
     }
-  }, "JLL MTS AI ASSISTANT")), hasMessages && /*#__PURE__*/React.createElement("div", {
+  }, "FieldPro AI ASSISTANT")), hasMessages && /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 10,
       color: GTXT2
@@ -1026,11 +1026,11 @@ Subcooling at outdoor unit liquid service port: 8–15°F.`
   id: "d4",
   name: "Refrigerant Safety & Handling — R-410A, R-22, R-454B",
   brand: "General",
-  type: "JLL SOP",
+  type: "FieldPro SOP",
   tags: ["R-410A", "R-22", "R-454B", "safety", "EPA 608", "PPE", "recovery", "GWP"],
-  content: `REFRIGERANT SAFETY & HANDLING SOP — JLL MTS
+  content: `REFRIGERANT SAFETY & HANDLING SOP — FieldPro
 
-SCOPE: All JLL MTS technicians handling refrigerants. Compliance with EPA Section 608, ASHRAE 15, OSHA 29 CFR 1910.1000, and local codes required.
+SCOPE: All FieldPro technicians handling refrigerants. Compliance with EPA Section 608, ASHRAE 15, OSHA 29 CFR 1910.1000, and local codes required.
 
 REFRIGERANT IDENTIFICATION & PROPERTIES
 
@@ -1973,7 +1973,7 @@ EMI/RFI: VFDs generate high-frequency noise. Install EMC/EMI filter on input for
   id: "d12",
   name: "Insulation & Weatherproofing — Refrigerant Lines, Ductwork & Piping",
   brand: "General",
-  type: "JLL SOP",
+  type: "FieldPro SOP",
   tags: ["insulation", "weatherproofing", "condensation", "CUI", "maintenance"],
   content: `INSULATION & WEATHERPROOFING — FIELD REFERENCE
 
