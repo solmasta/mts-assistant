@@ -2126,6 +2126,66 @@ Do not include the technician's name in the text. Do not add any preamble or sig
     }
   }, "\u21A9 Generate again"))));
 }
+
+// Main App1 component that manages onboarded state and renders appropriate screens
+function App1() {
+  const [isOnboarded, setIsOnboarded] = React.useState(() => {
+    try {
+      return localStorage.getItem('mts_onboarded') === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const [profile, setProfile] = React.useState(() => {
+    try {
+      const p = localStorage.getItem('mts_profile');
+      return p ? JSON.parse(atob(p)) : { name: '', region: '' };
+    } catch {
+      return { name: '', region: '' };
+    }
+  });
+  const [ctx, setCtx] = React.useState({});
+
+  const handleOnboard = (profile) => {
+    setProfile(profile);
+    setIsOnboarded(true);
+    try {
+      localStorage.setItem('mts_profile', btoa(JSON.stringify(profile)));
+      localStorage.setItem('mts_onboarded', 'true');
+    } catch {}
+  };
+
+  return React.createElement(
+    'div',
+    {
+      style: {
+        width: '100%',
+        height: '100%',
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        background: 'inherit'
+      }
+    },
+    isOnboarded
+      ? React.createElement(Dashboard, {
+          profile,
+          ctx,
+          setCtx,
+          onLogout: () => {
+            setIsOnboarded(false);
+            try {
+              localStorage.removeItem('mts_onboarded');
+            } catch {}
+          }
+        })
+      : React.createElement(Onboarding, {
+          onDone: handleOnboard
+        })
+  );
+}
+
 // Export App1 for React app to render
 window.App1 = App1;
-console.log('✅ App1 exported to window');
+console.log('✅ App1 component exported to window');
+
