@@ -87,6 +87,10 @@ const _origToggle = toggleTheme;
 function toggleThemeAndSync(evt) {
   _origToggle();
   _syncThemeVars();
+  // Re-render subscribers after theme vars are synchronized.
+  // _origToggle notifies listeners before _syncThemeVars runs,
+  // which can leave parts of the UI one toggle behind.
+  _themeListeners.forEach(fn => fn());
   // Circular wipe from click position
   const ripple = document.getElementById("theme-ripple");
   if (ripple && evt) {
