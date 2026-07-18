@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#E30613"/>
+  <title>MTS Assistant – JLL</title>
+  <meta name="description" content="JLL MTS AI Field Assistant for HVAC engineers"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="MTS Assistant"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="icon-192.png">
+</head>
+<body>
+  <div id="splash" role="status" aria-label="Loading MTS Assistant">
+    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARgAAAC7CAIAAAAxExYvAABgJUlEQVR42u29dZgcxbo+/FRVd0+Py85qduNuxI0kxD0ECwTXg7vDwQ7uwSG4hgQSEuJKHOLuttH..."
+         alt="MTS Assistant"/>
+    <div class="bar"><div class="bar-fill"></div></div>
+    <p style="color:#E30613;font-size:22px;font-weight:900;margin-top:12px;letter-spacing:-1px;font-family:Arial Black,Arial,sans-serif">JLL</p>
+    <p id="splash-status" style="color:rgba(255,255,255,.3);font-size:11px;margin-top:4px;letter-spacing:3px">MTS ASSISTANT · CHECKING FOR UPDATES</p>
+  </div>
+  <div id="theme-ripple"></div>
+  <div id="root"></div>
+
+  <script>
+    window._lastError = null;
+    window.__MTS_HTML_VERSION__ = "1.4.4";
+
+    window.onerror = function(msg, src, line) {
+      window._lastError = msg + ' [' + (src||'').split('/').pop() + ':' + line + ']';
+    };
+
+    window.addEventListener('unhandledrejection', function(e) {
+      window._lastError = 'Promise: ' + (e.reason && e.reason.message ? e.reason.message : String(e.reason));
+    });
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js');
+    }
+
+    window.addEventListener('load', function() {
+      setTimeout(function() {
+        const splash = document.getElementById('splash');
+        const root = document.getElementById('root');
+        if (splash) {
+          splash.style.opacity = '0';
+          setTimeout(() => splash.remove(), 500);
+        }
+        if (root && !root.hasChildNodes()) {
+          root.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:30px;text-align:center;background:#0a0a0a;font-family:sans-serif;color:#fff';
+          root.innerHTML = '<div style="font-size:32px;margin-bottom:12px">⚠️</div><div style="font-size:15px;font-weight:700;color:#E30613;margin-bottom:8px">App failed to load</div><div style="font-size:11px;color:rgba(255,255,255,0.6);margin-bottom:20px;max-width:300px;word-break:break-word">'+(window._lastError||'Unknown error')+'</div><button onclick="location.reload()" style="background:#E30613;color:#fff;border:none;border-radius:10px;padding:12px 28px;font-size:14px;font-weight:700;cursor:pointer">Reload</button>';
+        }
+      }, 3000);
+    });
+  </script>
+</body>
+</html>
