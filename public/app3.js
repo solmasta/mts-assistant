@@ -332,7 +332,7 @@ const DEMO_STEPS = [
   {
     id: "intro",
     title: "Welcome to MTS Assistant",
-    subtitle: "JLL HVAC AI Field Tool",
+    subtitle: "FieldPro HVAC AI Field Tool",
     desc: "An AI expert in every engineer's pocket. Let's walk through a real job scenario.",
     icon: "🔧",
     duration: 3000,
@@ -480,7 +480,7 @@ KEY SPECS TO VERIFY
   {
     id: "impact",
     title: "The Impact",
-    subtitle: "WHY THIS MATTERS FOR JLL MTS",
+    subtitle: "WHY THIS MATTERS FOR FieldPro",
     desc: "Faster fault resolution · Consistent safety compliance · Accurate work orders · Knowledge in every engineer's hands · Zero paper, zero phone calls",
     icon: "🚀",
     duration: 4000,
@@ -2090,7 +2090,7 @@ function App() {
     };
     setChats(prev => prev.map(c => c.id === currentId ? updated : c));
     try { await S.set("chat:" + currentId, JSON.stringify(updated)); } catch(e) {}
-    const sys = `You are MTS Assistant — an expert AI field assistant for JLL Managed Technology Services HVAC engineers.
+    const sys = `You are MTS Assistant — an expert AI field assistant for FieldPro Managed Technology Services HVAC engineers.
 
 Your role: help technicians in the field solve problems fast. Be their expert colleague on the job.
 
