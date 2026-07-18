@@ -985,7 +985,7 @@ function Dashboard({
       },
         /*#__PURE__*/React.createElement("div", {style:{textAlign:"left"}},
           /*#__PURE__*/React.createElement("div", {style:{fontSize:15,fontWeight:800,color: TXT,letterSpacing:".02em",marginBottom:4}}, "💬 ASK THE AI ASSISTANT"),
-          /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:"rgba(255,255,255,.9)",lineHeight:1.6}},
+          /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:GTXT2,lineHeight:1.6}},
             "Fault diagnosis · Part numbers · Safety", /*#__PURE__*/React.createElement("br",null),
             "Refrigerant charging · Service reports"
           )
@@ -1495,7 +1495,7 @@ function PartsAgent({
             border: locStatus==="got" ? "1px solid rgba(39,174,96,.4)" : "none",
             borderRadius:8, padding:"7px 14px", cursor:"pointer",
             fontSize:12, fontWeight:700,
-            color: locStatus==="got" ? "#27AE60" : "#fff",
+            color: locStatus==="got" ? "#27AE60" : GTXT1,
             flexShrink:0, opacity: locStatus==="getting" ? .5 : 1
           }
         }, locStatus==="got" ? "✓ Found" : locStatus==="getting" ? "…" : "Use GPS")
@@ -2065,7 +2065,7 @@ Do not include the technician's name in the text. Do not add any preamble or sig
       cursor: "pointer",
       fontSize: 11,
       fontWeight: 700,
-      color: copied ? "#27AE60" : "rgba(255,255,255,.7)",
+      color: copied ? "#27AE60" : GTXT1,
       fontFamily: "inherit",
       transition: "all .2s"
     }
