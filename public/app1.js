@@ -34,11 +34,11 @@ const THEMES = {
     GREY1:      "#f0f0f2",
     GREY2:      "#d4d4d8",
     GREY3:      "#a1a1aa",
-    GTXT1:      "rgba(0,0,0,0.7)",
-    GTXT2:      "rgba(0,0,0,0.45)",
-    GTXT3:      "rgba(0,0,0,0.25)",
-    TXT:        "#111111",
-    TXTBODY:    "rgba(0,0,0,0.75)",
+    GTXT1:      "rgba(0,0,0,0.82)",
+    GTXT2:      "rgba(0,0,0,0.70)",
+    GTXT3:      "rgba(0,0,0,0.45)",
+    TXT:        "#0a0a0a",
+    TXTBODY:    "rgba(0,0,0,0.85)",
     SURFACE:    "#f4f4f5",
   }
 };
@@ -900,8 +900,9 @@ function Dashboard({
 
     /* ── HERO HEADER ── */
     /*#__PURE__*/React.createElement("div", {style:{
-      background:_darkMode?"linear-gradient(160deg,#1a0000 0%,#0f0000 40%,#000 100%)":"linear-gradient(160deg,#fff5f5 0%,#fff 60%,#fff 100%)",
-      borderBottom:`1px solid rgba(227,6,19,0.25)`,
+      background:_darkMode?"linear-gradient(160deg,#0a1628 0%,#0d1b3e 40%,#0a0a0a 100%)":"linear-gradient(160deg,#eff6ff 0%,#fff 60%,#fff 100%)",
+      borderBottom:`1px solid rgba(37,99,235,0.25)`,
+
       padding:"20px 18px 18px",
       position:"relative",
       overflow:"hidden",
@@ -917,17 +918,19 @@ function Dashboard({
             onClick: (e) => toggleThemeAndSync(e),
             title: _darkMode ? "Switch to light mode" : "Switch to dark mode",
             style:{
-              background: RED, border:`2px solid ${RED}`,
+              background: _darkMode ? "#1e293b" : "#fef9c3",
+              border: _darkMode ? "2px solid #334155" : "2px solid #fcd34d",
               borderRadius:22, padding:"6px 14px",
               cursor:"pointer", display:"flex", alignItems:"center", gap:6,
-              fontSize:12, fontWeight:700, color: TXT,
+              fontSize:12, fontWeight:700,
+              color: _darkMode ? "#e2e8f0" : "#92400e",
               fontFamily:"inherit",
-              boxShadow: "0 4px 12px rgba(37,99,235,0.3)",
+              boxShadow: _darkMode ? "0 2px 8px rgba(0,0,0,0.5)" : "0 2px 8px rgba(253,211,77,0.5)",
               transition: "all 0.2s ease"
             }
           },
-            /*#__PURE__*/React.createElement("span", {key:String(_darkMode), className:"theme-icon-spin", style:{fontSize:14,display:"inline-block"}}, _darkMode ? "☀️" : "🌙"),
-            /*#__PURE__*/React.createElement("span", null, _darkMode ? "Light" : "Dark")
+            /*#__PURE__*/React.createElement("span", {key:String(_darkMode), className:"theme-icon-spin", style:{fontSize:14,display:"inline-block"}}, _darkMode ? "🌙" : "☀️"),
+            /*#__PURE__*/React.createElement("span", null, _darkMode ? "Dark" : "Light")
           )
         )
       ),
