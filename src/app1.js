@@ -442,6 +442,105 @@ class HVACAssistantAI {
   }
 }
 
+// Parts finder utility for cross-reference and alternative suggestions
+class PartsFinder {
+  constructor() {
+    this.partsDatabase = HVAC_EQUIPMENT_DB.partsDatabase || [];
+    this.crossReferenceDB = this.buildCrossReference();
+  }
+
+  buildCrossReference() {
+    const crossRef = {};
+    this.partsDatabase.forEach(part => {
+      if (part.crossReference) {
+        part.crossReference.forEach(ref => {
+          if (!crossRef[ref.brand]) crossRef[ref.brand] = {};
+          crossRef[ref.brand][ref.part] = {
+            original: part.name,
+            manufacturer: part.manufacturer,
+            originalPart: part.id,
+            specs: part.specs
+          };
+        });
+      }
+    });
+    return crossRef;
+  }
+
+  search(query, filters = {}) {
+    const results = [];
+    const lowerQuery = (query || '').toLowerCase();
+
+    // Direct matches
+    this.partsDatabase.forEach(part => {
+      if ((part.id || '').toLowerCase().includes(lowerQuery) || (part.name || '').toLowerCase().includes(lowerQuery) || (part.models || []).some(m => (m||'').toLowerCase().includes(lowerQuery))) {
+        if (this.matchesFilters(part, filters)) {
+          results.push({ ...part, matchType: 'direct', relevance: 100 });
+        }
+      }
+    });
+
+    // Cross-reference matches
+    Object.entries(this.crossReferenceDB).forEach(([brand, parts]) => {
+      Object.entries(parts).forEach(([partNum, info]) => {
+        if (partNum.toLowerCase().includes(lowerQuery) || brand.toLowerCase().includes(lowerQuery)) {
+          const originalPart = this.partsDatabase.find(p => p.id === info.originalPart);
+          if (originalPart && this.matchesFilters(originalPart, filters)) {
+            results.push({ ...originalPart, crossReference: [{ brand, part: partNum }], matchType: 'cross-reference', relevance: 90 });
+          }
+        }
+      });
+    });
+
+    // Equipment-type related parts (best-effort)
+    (HVAC_EQUIPMENT_DB.equipmentTypes || []).forEach(equipment => {
+      if ((equipment.name || '').toLowerCase().includes(lowerQuery) || (equipment.id || '').toLowerCase().includes(lowerQuery)) {
+        const relatedParts = this.partsDatabase.filter(p => p.type && (equipment.commonIssues || []).some(issue => (issue || '').toLowerCase().includes((p.type || '').toLowerCase())));
+        relatedParts.forEach(part => {
+          if (this.matchesFilters(part, filters)) results.push({ ...part, equipmentType: equipment.name, matchType: 'equipment', relevance: 80 });
+        });
+      }
+    });
+
+    return results.sort((a, b) => (b.relevance || 0) - (a.relevance || 0));
+  }
+
+  matchesFilters(part, filters) {
+    if (!filters) return true;
+    if (filters.type && part.type !== filters.type) return false;
+    if (filters.manufacturer && part.manufacturer !== filters.manufacturer) return false;
+    if (filters.voltage && part.specs && part.specs.voltage !== filters.voltage) return false;
+    return true;
+  }
+
+  getAlternativeParts(partId) {
+    const part = this.partsDatabase.find(p => p.id === partId);
+    if (!part) return [];
+    const alternatives = [];
+
+    const sameType = this.partsDatabase.filter(p => p.type === part.type && p.id !== partId && p.specs && part.specs && Math.abs(this.parseCapacity(p.specs.capacity) - this.parseCapacity(part.specs.capacity)) <= 0.5);
+    alternatives.push(...sameType);
+
+    if (part.crossReference) {
+      part.crossReference.forEach(ref => {
+        const altParts = this.partsDatabase.filter(p => p.crossReference && p.crossReference.some(r => r.brand === ref.brand && r.part === ref.part));
+        alternatives.push(...altParts);
+      });
+    }
+
+    // Deduplicate by id
+    const map = {};
+    alternatives.forEach(a => { if (a && a.id) map[a.id] = a; });
+    return Object.values(map);
+  }
+
+  parseCapacity(capacityStr) {
+    if (!capacityStr) return 0;
+    const match = (capacityStr || '').toString().match(/(\d+(?:\.\d+)?)/);
+    return match ? parseFloat(match[1]) : 0;
+  }
+}
+
 // ── AI CALL ──────────────────────────────────────────────────────────────
 // ── HELPERS ──────────────────────────────────────────────────────────────
 const gid = () => "id" + Date.now() + Math.random().toString(36).slice(2, 5);
