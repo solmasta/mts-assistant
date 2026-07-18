@@ -2315,7 +2315,7 @@ function App1() {
           }
         })
       : React.createElement(Onboarding, {
-          onComplete: handleOnboard
+          onDone: handleOnboard
         })
   );
 }
