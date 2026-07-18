@@ -2457,5 +2457,6 @@ ${profile ? `\nTechnician: ${profile.name}${profile.region ? `, ${profile.region
     }
   })))));
 }
-ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
+// Removed direct ReactDOM mount - this module is loaded as a dependency, not standalone
+// window.App3 = App;  // Export if needed for cross-module access
 
