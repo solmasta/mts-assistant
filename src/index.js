@@ -2,17 +2,47 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './styles.css';
 
-// Your app1.js content will be imported here
-// For now, let's create a basic app that loads your existing code
+function loadAppScripts() {
+  const loadScript = (src) => new Promise((resolve, reject) => {
+    const existing = document.querySelector(`script[src="${src}"]`);
+    if (existing) {
+      if (existing.dataset.loaded === 'true') {
+        resolve();
+        return;
+      }
+      existing.addEventListener('load', () => resolve(), { once: true });
+      existing.addEventListener('error', () => reject(new Error(`Failed to load ${src}`)), { once: true });
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = src;
+    script.async = false;
+    script.addEventListener('load', () => {
+      script.dataset.loaded = 'true';
+      resolve();
+    }, { once: true });
+    script.addEventListener('error', () => reject(new Error(`Failed to load ${src}`)), { once: true });
+    document.body.appendChild(script);
+  });
+
+  return loadScript('https://unpkg.com/react@18.2.0/umd/react.production.min.js')
+    .then(() => loadScript('https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js'))
+    .then(() => Promise.all(['app1.js', 'app2.js', 'app3.js'].map(loadScript)));
+}
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
-// Simple loader that shows your app
 root.render(
-  <div style={{width: '100%', height: '100%'}}>
+  <div style={{ width: '100%', height: '100%' }}>
     {/* Your app will load here */}
   </div>
 );
+
+loadAppScripts()
+  .catch((error) => {
+    console.error('Failed to load app scripts:', error);
+  });
 
 // Auto-update check
 fetch('build/asset-manifest.json')
