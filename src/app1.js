@@ -336,6 +336,112 @@ const HVAC_EQUIPMENT_DB = {
   }
 };
 
+// Lightweight AI helper for on-device assistance and fallback logic
+class HVACAssistantAI {
+  constructor() {
+    this.context = {
+      userRole: 'technician',
+      experienceLevel: 'intermediate',
+      currentEquipment: null,
+      location: null,
+      lastMaintenance: null
+    };
+
+    this.knowledgeBase = {
+      troubleshooting: {
+        'no cooling': ['Check thermostat settings', 'Verify condenser fan operation', 'Check compressor amp draw', 'Measure refrigerant pressures', 'Inspect filter condition'],
+        'no heat': ['Check gas valve operation', 'Verify igniter spark', 'Check flame sensor', 'Test limit switches', 'Inspect heat exchanger'],
+        'high head pressure': ['Clean condenser coils', 'Check condenser fan', 'Verify proper airflow', 'Check refrigerant charge', 'Look for non-condensables'],
+        'low suction pressure': ['Check filter condition', 'Verify evaporator airflow', 'Look for refrigerant leaks', 'Check TXV operation', 'Test compressor valves']
+      },
+      maintenanceChecklists: {
+        spring: ['Clean condenser coils', 'Check refrigerant charge', 'Test capacitor values', 'Inspect electrical connections', 'Check drain pan and lines'],
+        fall: ['Clean burners and heat exchanger', 'Test gas pressure', 'Check heat exchanger for cracks', 'Test safety controls', 'Check flue pipe condition'],
+        monthly: ['Change filters', 'Check thermostat operation', 'Listen for unusual noises', 'Check condensate drain', 'Verify proper airflow']
+      },
+      commonConversions: {
+        temperature: { 'F to C': f => (f - 32) * 5 / 9, 'C to F': c => (c * 9 / 5) + 32 },
+        pressure: { 'PSI to kPa': psi => psi * 6.895, 'kPa to PSI': kpa => kpa * 0.145, 'inHg to PSI': inhg => inhg * 0.491, 'PSI to inHg': psi => psi * 2.036 },
+        electrical: { 'kW to tons': kw => kw / 3.517, 'tons to kW': tons => tons * 3.517, 'BTU/hr to tons': btu => btu / 12000, 'tons to BTU/hr': tons => tons * 12000 }
+      },
+      safetyProtocols: ['Always lock out/tag out equipment', 'Wear appropriate PPE', 'Check for voltage before touching', 'Use refrigerant recovery equipment', 'Follow EPA 608 regulations', 'Never bypass safety controls']
+    };
+  }
+
+  async processQuery(query, context = {}) {
+    const lowerQuery = (query || '').toLowerCase();
+
+    try {
+      if (lowerQuery.includes('pressure') || lowerQuery.includes('psi')) return this.handlePressureQuery(query);
+      if (lowerQuery.includes('temperature') || lowerQuery.includes('temp')) return this.handleTemperatureQuery(query);
+      if (lowerQuery.includes('belt') || lowerQuery.includes('pulley')) return this.handleBeltQuery(query);
+      if (lowerQuery.includes('refrigerant') || lowerQuery.includes('charge')) return this.handleRefrigerantQuery(query);
+      if (lowerQuery.includes('fault') || lowerQuery.includes('error') || lowerQuery.includes('code')) return this.handleFaultCodeQuery(query);
+      if (lowerQuery.includes('part') || lowerQuery.includes('replace')) return this.handlePartsQuery(query);
+
+      // Fallback to cloud AI if available (uses existing ai() helper)
+      const reply = await ai(null, query);
+      return { type: 'ai', content: reply };
+    } catch (e) {
+      return { type: 'error', message: e.message || 'Processing error', fallback: this.getFallbackResponse(query) };
+    }
+  }
+
+  handlePressureQuery() {
+    const pressures = (HVAC_EQUIPMENT_DB.refrigerants || []).flatMap(r => (r.pressureTemp || []).map(pt => ({ refrigerant: r.type, temperature: pt.temp, pressure: pt.pressure, unit: 'PSIG' })));
+    return { type: 'pressure_data', data: pressures, suggestions: ['Compare readings to these charts', 'Verify ambient temperature', 'Check for non-condensables'] };
+  }
+
+  handleTemperatureQuery(query) {
+    // Simple parse for numeric temperature and unit
+    const m = (query || '').match(/(-?\d+(?:\.\d+)?)\s*(f|c)/i);
+    if (m) {
+      const val = parseFloat(m[1]); const unit = m[2].toLowerCase();
+      if (unit === 'f') return { type: 'conversion', value: this.knowledgeBase.commonConversions.temperature['F to C'](val), to: 'C' };
+      return { type: 'conversion', value: this.knowledgeBase.commonConversions.temperature['C to F'](val), to: 'F' };
+    }
+    return { type: 'temperature_help', message: 'Provide a temperature like "72 F" or "22 C" to convert.' };
+  }
+
+  handleBeltQuery(query) {
+    const match = (query || '').match(/(\d+(?:\.\d+)?)\s*(?:in|inch|\")?\s*pulley.*?(\d+(?:\.\d+)?)\s*(?:in|inch|\")?\s*pulley.*?(\d+(?:\.\d+)?)\s*(?:in|inch|\")?\s*center/i);
+    if (match) {
+      const pulley1 = parseFloat(match[1]); const pulley2 = parseFloat(match[2]); const center = parseFloat(match[3]);
+      const length = HVAC_EQUIPMENT_DB.beltCalculations.calculateVbeltLength(pulley1, pulley2, center);
+      return { type: 'belt_calculation', pulley1, pulley2, centerDistance: center, beltLength: length, recommendation: `Closest standard size to ${length.toFixed(2)}"` };
+    }
+    return { type: 'belt_info', commonSizes: ['A31','A33','A35','B50','B55','C90'], installationTips: ['Check sheave wear', 'Set proper tension (1/2"/ft)'] };
+  }
+
+  handleRefrigerantQuery() {
+    return { type: 'refrigerant_list', data: HVAC_EQUIPMENT_DB.refrigerants || [] };
+  }
+
+  handleFaultCodeQuery(query) {
+    const lower = (query || '').toLowerCase();
+    for (const brand of Object.keys(HVAC_EQUIPMENT_DB.faultCodes || {})) {
+      const codes = HVAC_EQUIPMENT_DB.faultCodes[brand] || [];
+      for (const c of codes) {
+        if (lower.includes((c.code || '').toLowerCase())) return { type: 'fault', brand, code: c.code, description: c.description, solution: c.solution };
+      }
+    }
+    return { type: 'fault_search', message: 'No matching fault code found locally.' };
+  }
+
+  handlePartsQuery(query) {
+    const q = (query || '').toLowerCase();
+    const matches = (HVAC_EQUIPMENT_DB.partsDatabase || []).filter(p => (p.name + ' ' + (p.models || []).join(' ')).toLowerCase().includes(q));
+    return { type: 'parts', results: matches.slice(0, 10) };
+  }
+
+  getFallbackResponse(query) {
+    const lowerQuery = (query || '').toLowerCase();
+    if (lowerQuery.includes('how to') || lowerQuery.includes('troubleshoot')) return { type: 'troubleshooting', steps: this.knowledgeBase.troubleshooting['no cooling'] || [], suggestion: 'See documentation' };
+    if (lowerQuery.includes('maintenance') || lowerQuery.includes('checklist')) return { type: 'maintenance', checklists: this.knowledgeBase.maintenanceChecklists, safety: this.knowledgeBase.safetyProtocols };
+    return { type: 'general', message: "I'm here to help—please be more specific." };
+  }
+}
+
 // ── AI CALL ──────────────────────────────────────────────────────────────
 // ── HELPERS ──────────────────────────────────────────────────────────────
 const gid = () => "id" + Date.now() + Math.random().toString(36).slice(2, 5);
