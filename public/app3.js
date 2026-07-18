@@ -1,8 +1,4 @@
-const {
-  useState,
-  useEffect,
-  useRef
-} = React;
+// React hooks already destructured in app1.js, so we can use them directly
 
 function Docs() {
   const [view, setView] = useState("list");
