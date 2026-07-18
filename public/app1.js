@@ -2262,3 +2262,71 @@ Do not include the technician's name in the text. Do not add any preamble or sig
     }
   }, "\u21A9 Generate again"))));
 }
+// ── MAIN APP COMPONENT ──────────────────────────────────────────────────────
+function App1() {
+  const [isOnboarded, setIsOnboarded] = React.useState(() => {
+    try {
+      return localStorage.getItem('mts_onboarded') === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const [profile, setProfile] = React.useState(() => {
+    try {
+      const p = localStorage.getItem('mts_profile');
+      return p ? JSON.parse(atob(p)) : { name: '', region: '' };
+    } catch {
+      return { name: '', region: '' };
+    }
+  });
+  const [ctx, setCtx] = React.useState({});
+
+  const handleOnboard = (profile) => {
+    setProfile(profile);
+    setIsOnboarded(true);
+    try {
+      localStorage.setItem('mts_profile', btoa(JSON.stringify(profile)));
+      localStorage.setItem('mts_onboarded', 'true');
+    } catch {}
+  };
+
+  return React.createElement(
+    'div',
+    {
+      style: {
+        width: '100%',
+        height: '100%',
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        background: 'inherit'
+      }
+    },
+    isOnboarded
+      ? React.createElement(Dashboard, {
+          profile,
+          ctx,
+          setCtx,
+          onLogout: () => {
+            setIsOnboarded(false);
+            try {
+              localStorage.removeItem('mts_onboarded');
+            } catch {}
+          }
+        })
+      : React.createElement(Onboarding, {
+          onComplete: handleOnboard
+        })
+  );
+}
+
+// Mount App1 to DOM root
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(React.createElement(App1));
+  });
+} else {
+  const root = ReactDOM.createRoot(document.getElementById('root'));
+  root.render(React.createElement(App1));
+}
