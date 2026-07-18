@@ -1,3 +1,9 @@
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+
 function Docs() {
   const [view, setView] = useState("list");
   const [doc, setDoc] = useState(null);
