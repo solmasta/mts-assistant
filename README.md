@@ -52,6 +52,13 @@ npm run build
 
 The app is published to GitHub Pages. The deployment workflow builds the app in CI and then publishes the generated build output.
 
+Source of truth for the deployed app:
+
+- `.github/workflows/Deploy.yml` builds the tracked React app and publishes `build/` to GitHub Pages.
+- `public/index.html` is the HTML shell used by the React build.
+- `src/index.js` is the startup entrypoint for the deployed app.
+- The repo-root `index.html` is a legacy/manual file and is not the page GitHub Pages publishes through the workflow.
+
 ## Notes
 
 This project is designed as a field-facing prototype rather than a full production SaaS platform. It focuses on a fast, practical experience for technicians who need answers quickly and clearly while working onsite.
