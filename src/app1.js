@@ -1187,7 +1187,8 @@ function AgentScreen({
   onReset,
   resetLabel,
   chainBtns,
-  autoChainMs
+  autoChainMs,
+  renderResult
 }) {
   const [step, setStep] = useState(0);
   const [res, setRes] = useState("");
@@ -1300,7 +1301,7 @@ function AgentScreen({
       lineHeight: 1.5,
       marginBottom: 10
     }
-  }, "\u26a0\ufe0f", /*#__PURE__*/React.createElement("span", null, "AI-generated \u2014 verify against OEM documentation before acting, especially PPE ratings and LOTO steps.")), /*#__PURE__*/React.createElement("div", {
+  }, "\u26a0\ufe0f", /*#__PURE__*/React.createElement("span", null, "AI-generated \u2014 verify against OEM documentation before acting, especially PPE ratings and LOTO steps.")), renderResult ? renderResult(res) : /*#__PURE__*/React.createElement("div", {
     className: "anim-result",
     style: {
       background: GREY1,
@@ -1580,6 +1581,8 @@ function PartsAgent({
   const [locStatus, setLocStatus] = useState("idle"); // idle | getting | got | denied
   const [locLabel, setLocLabel] = useState("");
   const [locCoords, setLocCoords] = useState(null);
+  const [partsResult, setPartsResult] = useState(null);
+  const [partsBusy, setPartsBusy] = useState(false);
   const PARTS = ["Run Capacitor", "Start Capacitor", "Contactor", "Condenser Fan Motor", "Evaporator Fan Motor", "Compressor", "TXV / Expansion Valve", "Filter Drier", "Control Board", "Thermostat", "Pressure Switch (High)", "Pressure Switch (Low)", "Gas Valve", "Reversing Valve", "Other"];
 
   function getLocation() {
@@ -1713,33 +1716,47 @@ function PartsAgent({
       /* Run button */
       /*#__PURE__*/React.createElement(Btn, {
         red: true,
-        c: "🔍 Find Parts + Pricing",
-        disabled: !part,
+        c: partsBusy ? "…" : "🔍 Find Parts + Pricing",
+        disabled: !part || partsBusy,
         style:{width:"100%",padding:13},
         onClick: async () => {
           if (!part) return;
-          // Use AgentScreen-style result — just call ai directly and show result
+          setPartsBusy(true);
+          setPartsResult(null);
           const locationCtx = locStatus==="got" ? `\nTechnician location: ${locLabel}` : "";
           const prompt = `Find replacement parts:\nBrand: ${brand||"Unknown"} Model: ${model||"Unknown"}\nFailed part: ${part}\nDetails: ${desc||"None"}${locationCtx}\n\nProvide:\n1) OEM part number and specs\n2) 2-3 compatible alternatives with part numbers\n3) Key specs to verify match\n4) Where to source: Johnstone Supply, Wesco, Grainger, Ferguson${locStatus==="got"?` — note these are common suppliers near ${locLabel}`:""}\n5) Typical price range\n6) Install notes\n7) ⚠️ Warnings`;
-          // Store result in state and show
-          window._partsResult = "searching";
-          const el = document.getElementById("parts-result");
-          if (el) { el.style.display="block"; el.textContent="Searching…"; }
           const result = await ai("You are an expert HVAC parts specialist for FieldPro. Provide OEM and compatible part numbers with real specifications. Include typical price ranges where known.", prompt);
-          if (el) { el.textContent = result; }
+          setPartsResult(result);
+          setPartsBusy(false);
         }
       }),
 
+      /* Loading */
+      partsBusy && /*#__PURE__*/React.createElement(Spin, {
+        label: "SEARCHING…"
+      }),
+
       /* Result box */
-      /*#__PURE__*/React.createElement("div", {
-        id:"parts-result",
-        style:{
-          display:"none", marginTop:14,
-          background:GREY1, border:`1px solid ${GREY2}`,
-          borderRadius:12, padding:14,
-          fontSize:13, color:TXT, lineHeight:1.7, whiteSpace:"pre-wrap"
-        }
-      })
+      partsResult && /*#__PURE__*/React.createElement(React.Fragment, null,
+        /*#__PURE__*/React.createElement("div", {
+          style:{
+            display:"flex", alignItems:"flex-start", gap:8,
+            background:"rgba(227,6,19,.1)", border:`1px solid rgba(227,6,19,.35)`,
+            borderRadius:10, padding:"8px 10px", marginTop:14, marginBottom:10,
+            fontSize:11, color:RED, lineHeight:1.5, fontWeight:600
+          }
+        }, "⚠️", /*#__PURE__*/React.createElement("span", null,
+          "Confirm this part number against the OEM parts catalog before ordering. AI-suggested part numbers and prices can be wrong or outdated — a wrong order costs real time and money."
+        )),
+        /*#__PURE__*/React.createElement("div", {
+          className: "anim-result",
+          style:{
+            background:GREY1, border:`1px solid ${GREY2}`,
+            borderRadius:12, padding:14,
+            fontSize:13, color:TXT, lineHeight:1.7, whiteSpace:"pre-wrap"
+          }
+        }, partsResult)
+      )
     )
   );
 }
@@ -1996,344 +2013,251 @@ function ClosingComment({
   const [workDone, setWorkDone] = useState("");
   const [outcome, setOutcome] = useState("Completed – unit operational");
   const [parts, setParts] = useState("");
-  const [step, setStep] = useState(0);
-  const [comment, setComment] = useState("");
   const [copied, setCopied] = useState(false);
-  const [err, setErr] = useState("");
-  function copy() {
-    navigator.clipboard?.writeText(comment).then(() => {
+  function copy(text) {
+    navigator.clipboard?.writeText(text).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
   }
-  async function generate() {
-    if (!workDone.trim() && !ctx?.diagSymp) return;
-    setStep(1);
-    setErr("");
-    try {
+  return /*#__PURE__*/React.createElement(AgentScreen, {
+    title: "CLOSING COMMENT",
+    sub: "WORK ORDER SUMMARY",
+    canRun: !!(workDone.trim() || ctx?.diagSymp),
+    onReset: () => setCopied(false),
+    resetLabel: "↩ Generate again",
+    onRun: async () => {
       const context = [ctx?.diagEquip && `Equipment type: ${ctx.diagEquip}`, unit && `Unit: ${unit}`, ctx?.diagRef && `Refrigerant: ${ctx.diagRef}`, ctx?.diagSymp && `Reported fault: ${ctx.diagSymp}`, workDone && `Work performed: ${workDone}`, parts && `Parts used: ${parts}`, `Outcome: ${outcome}`, tech && `Technician: ${tech}`, site && `Site: ${site}`].filter(Boolean).join("\n");
       const result = await ai(`You are a FieldPro field technician writing a closing comment for a work order or CMMS system.
 Write in first person, past tense. Be professional, factual, and concise.
 Output ONLY the closing comment text — no headings, no labels, no extra formatting.
 Keep it to 3–6 sentences maximum. Include: what was found, what was done, outcome, and any follow-up needed.
 Do not include the technician's name in the text. Do not add any preamble or sign-off.`, `Generate a closing comment from this job information:\n${context}`);
-      if (result.startsWith("⚠️")) {
-        setErr(result);
-        setStep(0);
-      } else {
-        setComment(result.trim());
-        setStep(2);
-      }
-    } catch (e) {
-      setErr("An error occurred. Please try again.");
-      setStep(0);
-    }
-  }
-  function reset() {
-    setStep(0);
-    setComment("");
-    setCopied(false);
-    setErr("");
-  }
-  return /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      display: "flex",
-      flexDirection: "column",
-      overflow: "hidden"
-    }
-  }, /*#__PURE__*/React.createElement(Hdr, {
-    title: "CLOSING COMMENT",
-    sub: "WORK ORDER SUMMARY",
-    onHome: () => _nav.go && _nav.go("home")
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      overflowY: "auto",
-      overflowX: "hidden",
-      padding: 14
-    }
-  }, step === 0 && /*#__PURE__*/React.createElement(React.Fragment, null, (ctx?.diagSymp || ctx?.diagEquip) && /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "rgba(39,174,96,.08)",
-      border: "1px solid rgba(39,174,96,.25)",
-      borderRadius: 10,
-      padding: "10px 14px",
-      marginBottom: 14,
-      display: "flex",
-      gap: 8,
-      alignItems: "flex-start"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 16
-    }
-  }, "\u26A1"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "#27AE60",
-      lineHeight: 1.5
-    }
-  }, "Pre-filled from diagnosis", ctx?.diagEquip ? ` · ${ctx.diagEquip}` : "", ctx?.diagSymp ? ` · "${ctx.diagSymp.slice(0, 40)}${ctx.diagSymp.length > 40 ? "…" : ""}"` : "")), err && /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "rgba(227,6,19,.12)",
-      border: "1px solid rgba(227,6,19,.4)",
-      borderRadius: 10,
-      padding: "10px 12px",
-      fontSize: 12,
-      color: "#ff6b6b",
-      marginBottom: 12
-    }
-  }, err), /*#__PURE__*/React.createElement(Card, {
-    style: {
-      marginBottom: 10
+      return result.trim();
     },
-    c: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    form: /*#__PURE__*/React.createElement(React.Fragment, null, (ctx?.diagSymp || ctx?.diagEquip) && /*#__PURE__*/React.createElement("div", {
       style: {
-        fontSize: 11,
-        color: RED,
-        fontWeight: 700,
-        marginBottom: 10,
-        letterSpacing: ".08em"
+        background: "rgba(39,174,96,.08)",
+        border: "1px solid rgba(39,174,96,.25)",
+        borderRadius: 10,
+        padding: "10px 14px",
+        marginBottom: 14,
+        display: "flex",
+        gap: 8,
+        alignItems: "flex-start"
       }
-    }, "JOB DETAILS"), /*#__PURE__*/React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("span", {
       style: {
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: 8
+        fontSize: 16
       }
-    }, /*#__PURE__*/React.createElement(Inp, {
-      label: "TECHNICIAN",
-      val: tech,
-      set: setTech,
-      ph: "Your name"
-    }), /*#__PURE__*/React.createElement(Inp, {
-      label: "SITE / BUILDING",
-      val: site,
-      set: setSite,
-      ph: "e.g. Tower One"
-    })), /*#__PURE__*/React.createElement(Inp, {
-      label: "UNIT / ASSET ID",
-      val: unit,
-      set: setUnit,
-      ph: "e.g. Carrier 48XC, AHU-3"
-    }))
-  }), /*#__PURE__*/React.createElement(Card, {
-    style: {
-      marginBottom: 10
-    },
-    c: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    }, "⚡"), /*#__PURE__*/React.createElement("div", {
       style: {
-        fontSize: 11,
-        color: "#F39C12",
-        fontWeight: 700,
-        marginBottom: 10,
-        letterSpacing: ".08em"
+        fontSize: 12,
+        color: "#27AE60",
+        lineHeight: 1.5
       }
-    }, "WORK PERFORMED *"), ctx?.diagSymp && /*#__PURE__*/React.createElement("div", {
+    }, "Pre-filled from diagnosis", ctx?.diagEquip ? ` · ${ctx.diagEquip}` : "", ctx?.diagSymp ? ` · "${ctx.diagSymp.slice(0, 40)}${ctx.diagSymp.length > 40 ? "…" : ""}"` : "")), /*#__PURE__*/React.createElement(Card, {
+      style: {
+        marginBottom: 10
+      },
+      c: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 11,
+          color: RED,
+          fontWeight: 700,
+          marginBottom: 10,
+          letterSpacing: ".08em"
+        }
+      }, "JOB DETAILS"), /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: 8
+        }
+      }, /*#__PURE__*/React.createElement(Inp, {
+        label: "TECHNICIAN",
+        val: tech,
+        set: setTech,
+        ph: "Your name"
+      }), /*#__PURE__*/React.createElement(Inp, {
+        label: "SITE / BUILDING",
+        val: site,
+        set: setSite,
+        ph: "e.g. Tower One"
+      })), /*#__PURE__*/React.createElement(Inp, {
+        label: "UNIT / ASSET ID",
+        val: unit,
+        set: setUnit,
+        ph: "e.g. Carrier 48XC, AHU-3"
+      }))
+    }), /*#__PURE__*/React.createElement(Card, {
+      style: {
+        marginBottom: 10
+      },
+      c: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 11,
+          color: "#F39C12",
+          fontWeight: 700,
+          marginBottom: 10,
+          letterSpacing: ".08em"
+        }
+      }, "WORK PERFORMED *"), ctx?.diagSymp && /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 11,
+          color: GTXT2,
+          marginBottom: 6
+        }
+      }, "Fault reported: ", /*#__PURE__*/React.createElement("span", {
+        style: {
+          color: GTXT1
+        }
+      }, ctx.diagSymp)), /*#__PURE__*/React.createElement(Inp, {
+        label: "DESCRIBE WHAT YOU DID",
+        val: workDone,
+        set: setWorkDone,
+        ph: "e.g. Replaced run capacitor, checked charge, tested operation…",
+        rows: 3
+      }), /*#__PURE__*/React.createElement(Inp, {
+        label: "PARTS USED (optional)",
+        val: parts,
+        set: setParts,
+        ph: "e.g. 45/5µF capacitor P291-4534RS, filter drier"
+      }))
+    }), /*#__PURE__*/React.createElement(Card, {
+      style: {
+        marginBottom: 14
+      },
+      c: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 11,
+          color: "#2980B9",
+          fontWeight: 700,
+          marginBottom: 10,
+          letterSpacing: ".08em"
+        }
+      }, "OUTCOME"), /*#__PURE__*/React.createElement(Sel, {
+        label: "",
+        val: outcome,
+        set: setOutcome,
+        opts: ["Completed – unit operational", "Completed – monitoring recommended", "Pending parts – unit offline", "Pending parts – unit operational on backup", "Requires follow-up visit", "Escalated to senior technician", "Requires engineering review"]
+      }))
+    })),
+    renderResult: (comment) => /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 11,
         color: GTXT2,
-        marginBottom: 6
-      }
-    }, "Fault reported: ", /*#__PURE__*/React.createElement("span", {
-      style: {
-        color: GTXT1
-      }
-    }, ctx.diagSymp)), /*#__PURE__*/React.createElement(Inp, {
-      label: "DESCRIBE WHAT YOU DID",
-      val: workDone,
-      set: setWorkDone,
-      ph: "e.g. Replaced run capacitor, checked charge, tested operation\u2026",
-      rows: 3
-    }), /*#__PURE__*/React.createElement(Inp, {
-      label: "PARTS USED (optional)",
-      val: parts,
-      set: setParts,
-      ph: "e.g. 45/5\xB5F capacitor P291-4534RS, filter drier"
-    }))
-  }), /*#__PURE__*/React.createElement(Card, {
-    style: {
-      marginBottom: 14
-    },
-    c: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        color: "#2980B9",
         fontWeight: 700,
-        marginBottom: 10,
+        letterSpacing: ".08em",
+        marginBottom: 8
+      }
+    }, "CLOSING COMMENT"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        background: "#0d0d0d",
+        border: `1px solid ${GREY2}`,
+        borderRadius: 12,
+        overflow: "hidden",
+        marginBottom: 12
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        background: GREY1,
+        borderBottom: `1px solid ${GREY2}`,
+        padding: "8px 14px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 6
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: 10,
+        height: 10,
+        borderRadius: "50%",
+        background: GREY1
+      }
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: 10,
+        height: 10,
+        borderRadius: "50%",
+        background: GREY1
+      }
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: 10,
+        height: 10,
+        borderRadius: "50%",
+        background: GREY1
+      }
+    })), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 10,
+        color: GTXT2,
         letterSpacing: ".08em"
       }
-    }, "OUTCOME"), /*#__PURE__*/React.createElement(Sel, {
-      label: "",
-      val: outcome,
-      set: setOutcome,
-      opts: ["Completed – unit operational", "Completed – monitoring recommended", "Pending parts – unit offline", "Pending parts – unit operational on backup", "Requires follow-up visit", "Escalated to senior technician", "Requires engineering review"]
-    }))
-  }), /*#__PURE__*/React.createElement(Btn, {
-    red: true,
-    c: "\u26A1 Generate Closing Comment",
-    onClick: generate,
-    disabled: !workDone.trim() && !ctx?.diagSymp,
-    style: {
-      width: "100%",
-      padding: 13,
-      fontSize: 14
-    }
-  })), step === 1 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: "60px 20px",
-      textAlign: "center"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "center",
-      gap: 6,
-      marginBottom: 14
-    }
-  }, [0, 1, 2].map(i => /*#__PURE__*/React.createElement("div", {
-    key: i,
-    style: {
-      width: 9,
-      height: 9,
-      borderRadius: "50%",
-      background: RED,
-      animation: "bounce 1.2s infinite",
-      animationDelay: i * .2 + "s"
-    }
-  }))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      color: GTXT2,
-      fontSize: 12,
-      letterSpacing: ".1em"
-    }
-  }, "GENERATING\u2026")), step === 2 && comment && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: GTXT2,
-      fontWeight: 700,
-      letterSpacing: ".08em",
-      marginBottom: 8
-    }
-  }, "CLOSING COMMENT"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "#0d0d0d",
-      border: `1px solid ${GREY2}`,
-      borderRadius: 12,
-      overflow: "hidden",
-      marginBottom: 12
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: GREY1,
-      borderBottom: `1px solid ${GREY2}`,
-      padding: "8px 14px",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 6
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      width: 10,
-      height: 10,
-      borderRadius: "50%",
-      background: GREY1
-    }
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      width: 10,
-      height: 10,
-      borderRadius: "50%",
-      background: GREY1
-    }
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      width: 10,
-      height: 10,
-      borderRadius: "50%",
-      background: GREY1
-    }
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: GTXT2,
-      letterSpacing: ".08em"
-    }
-  }, "WORK ORDER CLOSING COMMENT"), /*#__PURE__*/React.createElement("button", {
-    onClick: copy,
-    style: {
-      background: copied ? "rgba(39,174,96,.2)" : "rgba(255,255,255,.08)",
-      border: `1px solid ${copied ? "rgba(39,174,96,.4)" : BORDER}`,
-      borderRadius: 6,
-      padding: "4px 12px",
-      cursor: "pointer",
-      fontSize: 11,
-      fontWeight: 700,
-      color: copied ? "#27AE60" : GTXT1,
-      fontFamily: "inherit",
-      transition: "all .2s"
-    }
-  }, copied ? "✓ Copied!" : "Copy")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: 16
-    }
-  }, /*#__PURE__*/React.createElement("p", {
-    style: {
-      fontSize: 13,
-      color: "#e8e8e8",
-      lineHeight: 1.8,
-      margin: 0,
-      whiteSpace: "pre-wrap",
-      fontFamily: "system-ui,-apple-system,sans-serif"
-    }
-  }, comment))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: GTXT2,
-      marginBottom: 16,
-      textAlign: "right"
-    }
-  }, comment.length, " characters"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      marginBottom: 12
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: copy,
-    style: {
-      flex: 1,
-      background: copied ? "rgba(39,174,96,.15)" : "rgba(227,6,19,.12)",
-      border: `1px solid ${copied ? "rgba(39,174,96,.4)" : "rgba(227,6,19,.3)"}`,
-      borderRadius: 10,
-      padding: "12px",
-      cursor: "pointer",
-      fontSize: 13,
-      fontWeight: 700,
-      color: copied ? "#27AE60" : RED,
-      fontFamily: "inherit"
-    }
-  }, copied ? "✓ Copied to clipboard" : "📋 Copy to clipboard")), /*#__PURE__*/React.createElement("button", {
-    onClick: reset,
-    style: {
-      width: "100%",
-      background: GREY1,
-      border: `1px solid ${BORDER}`,
-      borderRadius: 10,
-      padding: "11px",
-      cursor: "pointer",
-      fontSize: 13,
-      color: GTXT1,
-      fontFamily: "inherit"
-    }
-  }, "\u21A9 Generate again"))));
+    }, "WORK ORDER CLOSING COMMENT"), /*#__PURE__*/React.createElement("button", {
+      onClick: () => copy(comment),
+      style: {
+        background: copied ? "rgba(39,174,96,.2)" : "rgba(255,255,255,.08)",
+        border: `1px solid ${copied ? "rgba(39,174,96,.4)" : BORDER}`,
+        borderRadius: 6,
+        padding: "4px 12px",
+        cursor: "pointer",
+        fontSize: 11,
+        fontWeight: 700,
+        color: copied ? "#27AE60" : GTXT1,
+        fontFamily: "inherit",
+        transition: "all .2s"
+      }
+    }, copied ? "✓ Copied!" : "Copy")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        padding: 16
+      }
+    }, /*#__PURE__*/React.createElement("p", {
+      style: {
+        fontSize: 13,
+        color: "#e8e8e8",
+        lineHeight: 1.8,
+        margin: 0,
+        whiteSpace: "pre-wrap",
+        fontFamily: "system-ui,-apple-system,sans-serif"
+      }
+    }, comment))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: GTXT2,
+        marginBottom: 16,
+        textAlign: "right"
+      }
+    }, comment.length, " characters"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 8,
+        marginBottom: 12
+      }
+    }, /*#__PURE__*/React.createElement("button", {
+      onClick: () => copy(comment),
+      style: {
+        flex: 1,
+        background: copied ? "rgba(39,174,96,.15)" : "rgba(227,6,19,.12)",
+        border: `1px solid ${copied ? "rgba(39,174,96,.4)" : "rgba(227,6,19,.3)"}`,
+        borderRadius: 10,
+        padding: "12px",
+        cursor: "pointer",
+        fontSize: 13,
+        fontWeight: 700,
+        color: copied ? "#27AE60" : RED,
+        fontFamily: "inherit"
+      }
+    }, copied ? "✓ Copied to clipboard" : "📋 Copy to clipboard")))
+  });
 }
+
 
 // Main App1 component that manages onboarded state and renders appropriate screens
 function App1() {

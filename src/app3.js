@@ -104,7 +104,21 @@ function Docs() {
       color: RED,
       fontWeight: 600
     }
-  }, t))), /*#__PURE__*/React.createElement(Card, {
+  }, t))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "flex-start",
+      gap: 8,
+      background: "rgba(230,126,34,.1)",
+      border: "1px solid rgba(230,126,34,.35)",
+      borderRadius: 10,
+      padding: "8px 10px",
+      fontSize: 11,
+      color: "#E67E22",
+      lineHeight: 1.5,
+      marginBottom: 12
+    }
+  }, "\u26a0\ufe0f", /*#__PURE__*/React.createElement("span", null, "Reference material built into the app \u2014 not a live or verified manufacturer source. Confirm fault codes, ratings, and procedures against the OEM's official documentation before acting.")), /*#__PURE__*/React.createElement(Card, {
     style: {
       marginBottom: 14
     },
