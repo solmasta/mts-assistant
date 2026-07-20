@@ -2454,5 +2454,5 @@ ${profile ? `\nTechnician: ${profile.name}${profile.region ? `, ${profile.region
   })))));
 }
 // Removed direct ReactDOM mount - this module is loaded as a dependency, not standalone
-// window.App3 = App;  // Export if needed for cross-module access
+window.App3 = App;
 

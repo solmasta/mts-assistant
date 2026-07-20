@@ -45,13 +45,13 @@ function App() {
         .then(() => loadScript(`${publicUrl}/app2.js`))
         .then(() => loadScript(`${publicUrl}/app3.js`))
         .then(() => {
-          console.log('✅ All scripts loaded. Checking for window.App1...');
-          console.log('window.App1 available:', !!window.App1);
-          if (window.App1) {
-            console.log('✅ window.App1 found, setting appLoaded to true');
+          console.log('✅ All scripts loaded. Checking for window.App3...');
+          console.log('window.App3 available:', !!window.App3);
+          if (window.App3) {
+            console.log('✅ window.App3 found, setting appLoaded to true');
             setAppLoaded(true);
           } else {
-            console.error('❌ window.App1 not found after loading all scripts');
+            console.error('❌ window.App3 not found after loading all scripts');
           }
         });
     };
@@ -59,10 +59,10 @@ function App() {
     loadLegacyApp().catch(err => console.error('❌ Failed to load legacy app:', err));
   }, []);
 
-  // Render App1 if available
-  if (window.App1 && appLoaded) {
-    console.log('🎨 Rendering window.App1');
-    return React.createElement(window.App1);
+  // Render App3 if available
+  if (window.App3 && appLoaded) {
+    console.log('🎨 Rendering window.App3');
+    return React.createElement(window.App3);
   }
 
   return <div style={{ width: '100%', height: '100vh', background: 'transparent' }} />;
