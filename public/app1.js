@@ -147,7 +147,8 @@ async function ai(system, prompt, retries = 2, history = []) {
       }
       const d = await r.json();
       if (d.error) return "⚠️ " + (d.error.message || "An error occurred.");
-      return d.content?.[0]?.text || "No response.";
+      const text = (d.content || []).filter(c => c.type === "text").map(c => c.text).join("\n\n");
+      return text || "⚠️ No response received. Please try again.";
     } catch (e) {
       if (attempt < retries) {
         await new Promise(res => setTimeout(res, 1000 * (attempt + 1)));
