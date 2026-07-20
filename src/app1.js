@@ -132,7 +132,7 @@ async function ai(system, prompt, retries = 2, history = []) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "claude-sonnet-5",
-          max_tokens: 1024,
+          max_tokens: 4096,
           system: system,
           messages: messages
         })
