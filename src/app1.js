@@ -118,7 +118,7 @@ function toggleThemeAndSync(evt) {
   }
 }
 
-const WORKER_URL = "https://mts-assistant.lukedorsett.workers.dev";
+const WORKER_URL = "https://feild-pro.lukedorsett.workers.dev/api/chat";
 
 async function ai(system, prompt, retries = 2, history = []) {
   for (let attempt = 0; attempt <= retries; attempt++) {
