@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "feild-pro",
+  "name": "mts-assistant",
   "compatibility_date": "2026-06-14",
   "observability": {
     "enabled": true
