@@ -1,3 +1,5 @@
+// React hooks already destructured in app1.js, so we can use them directly
+
 function AgentsHub({
   onSel,
   onHome
@@ -158,7 +160,7 @@ function renderMarkdown(text) {
         const boldMatch = remaining.match(/^(.*?)\*\*(.+?)\*\*(.*)/s);
         if (boldMatch) {
           if (boldMatch[1]) parts.push(React.createElement('span', {key: k++}, boldMatch[1]));
-          parts.push(React.createElement('strong', {key: k++, style:{color:'#fff',fontWeight:700}}, boldMatch[2]));
+          parts.push(React.createElement('strong', {key: k++, style:{color:TXT,fontWeight:700}}, boldMatch[2]));
           remaining = boldMatch[3];
         } else {
           parts.push(React.createElement('span', {key: k++}, remaining));
@@ -171,7 +173,7 @@ function renderMarkdown(text) {
     const numMatch = line.match(/^(\d+)\.\s+(.+)/);
     if (numMatch) {
       elements.push(React.createElement('div', {key: key++, style:{display:'flex',gap:6,marginBottom:3}},
-        React.createElement('span', {style:{color:'rgba(255,255,255,.5)',minWidth:16,flexShrink:0,fontWeight:700}}, numMatch[1]+'.'),
+        React.createElement('span', {style:{color:GTXT2,minWidth:16,flexShrink:0,fontWeight:700}}, numMatch[1]+'.'),
         React.createElement('span', {style:{flex:1}}, renderInline(numMatch[2]))
       ));
       continue;
@@ -185,7 +187,7 @@ function renderMarkdown(text) {
     }
     // Section header (all caps line or ends with :)
     if (line.match(/^[A-Z⚠️🔴🟡🟢✅📞🔐☢️⚡][^a-z]{2,}:?$/) && line.length < 40) {
-      elements.push(React.createElement('div', {key: key++, style:{color:'rgba(255,255,255,.5)',fontSize:10,fontWeight:700,letterSpacing:'.08em',marginTop:8,marginBottom:3}},
+      elements.push(React.createElement('div', {key: key++, style:{color:GTXT1,fontSize:10,fontWeight:700,letterSpacing:'.08em',marginTop:8,marginBottom:3}},
         line
       ));
       continue;
@@ -538,7 +540,7 @@ function ChatList({
       fontWeight: 600,
       marginTop: 1
     }
-  }, "JLL MTS AI ASSISTANT")), hasMessages && /*#__PURE__*/React.createElement("div", {
+  }, "FieldPro AI ASSISTANT")), hasMessages && /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 10,
       color: GTXT2
@@ -576,7 +578,7 @@ function ChatList({
       color: TXT,
       marginBottom: 4
     }
-  }, "MTS Field Assistant"), /*#__PURE__*/React.createElement("div", {
+  }, "FieldPro Field Assistant"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: GTXT2,
@@ -662,11 +664,11 @@ function ChatList({
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      background: m.role === "user" ? RED : GREY1,
+      background: m.role === "user" ? RED : _darkMode ? GREY1 : "#e8e8eb",
       borderRadius: m.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
       padding: "10px 14px",
       fontSize: 13,
-      color: m.role === "user" ? "#fff" : TXT,
+      color: m.role === "user" ? "#fff" : _darkMode ? TXT : "#111111",
       lineHeight: 1.65,
       whiteSpace: m.role === "user" ? "pre-wrap" : "normal",
       wordBreak: "break-word",
@@ -1026,11 +1028,11 @@ Subcooling at outdoor unit liquid service port: 8–15°F.`
   id: "d4",
   name: "Refrigerant Safety & Handling — R-410A, R-22, R-454B",
   brand: "General",
-  type: "JLL SOP",
+  type: "FieldPro SOP",
   tags: ["R-410A", "R-22", "R-454B", "safety", "EPA 608", "PPE", "recovery", "GWP"],
-  content: `REFRIGERANT SAFETY & HANDLING SOP — JLL MTS
+  content: `REFRIGERANT SAFETY & HANDLING SOP — FieldPro
 
-SCOPE: All JLL MTS technicians handling refrigerants. Compliance with EPA Section 608, ASHRAE 15, OSHA 29 CFR 1910.1000, and local codes required.
+SCOPE: All FieldPro technicians handling refrigerants. Compliance with EPA Section 608, ASHRAE 15, OSHA 29 CFR 1910.1000, and local codes required.
 
 REFRIGERANT IDENTIFICATION & PROPERTIES
 
@@ -1969,6 +1971,586 @@ POWER QUALITY & VFD
 Input harmonics: VFDs create harmonic distortion on input. 5th, 7th, 11th, 13th harmonics. Mitigation: Line reactor (5% impedance recommended), 12-pulse converter, active harmonic filter.
 Power factor: VFDs draw leading or lagging current depending on loading. Input power factor typically 0.95+ with line reactor.
 EMI/RFI: VFDs generate high-frequency noise. Install EMC/EMI filter on input for sensitive environments. Use shielded motor cable for long runs (>50ft). Ground shield at drive end only for output cables.`
-}];
+}, {
+  id: "d12",
+  name: "Insulation & Weatherproofing — Refrigerant Lines, Ductwork & Piping",
+  brand: "General",
+  type: "FieldPro SOP",
+  tags: ["insulation", "weatherproofing", "condensation", "CUI", "maintenance"],
+  content: `INSULATION & WEATHERPROOFING — FIELD REFERENCE
+
+REFRIGERANT LINE INSULATION
+Suction line insulation: closed-cell elastomeric foam (e.g. Armaflex), minimum 3/4" wall thickness for lines up to 1-3/8" OD, 1" wall for larger. Never insulate the liquid line on standard split systems — it should remain bare metal to reject heat. Exception: liquid lines exposed to direct sun on long exterior runs may need light insulation to prevent flash gas — check manufacturer guidance.
+UV protection is mandatory for any exterior insulation: bare foam insulation degrades from UV exposure within 12–24 months, cracking and losing R-value. Field fix: wrap with UV-resistant tape (aluminum foil tape or purpose-made UV jacketing) or apply water-based UV-protective mastic coating over the full exposed length.
+Seam sealing: all foam insulation seams and butt joints must be sealed with contact adhesive rated for the insulation type — a gapped seam is a direct path for moisture intrusion and condensation formation inside the insulation, which degrades performance and can cause line corrosion over years.
+Inspection signs of failure: cracking, splitting at bends, dark/wet staining (indicates moisture trapped inside), sagging or loose fit (foam has shrunk/hardened with age — typical after 8-10 years, full replacement needed not just patching).
+
+DUCTWORK INSULATION
+External duct wrap: standard commercial requirement is R-6 minimum per energy code (varies by climate zone — verify local requirement), consisting of fiberglass blanket with a foil-scrim-kraft (FSK) vapor barrier facing.
+Vapor barrier integrity is the critical factor on any duct carrying air below the dew point of surrounding air (typically all supply ducts in cooling mode). A break in the vapor barrier — from a puncture, a poorly-taped seam, or a hanger strap compressing the insulation — allows humid ambient air to contact the cold duct surface, causing condensation that can saturate the insulation, drip, and promote mold growth.
+Repair procedure: cut back damaged insulation 2" beyond the visible damage to reach sound material, install matching R-value replacement, tape all seams with FSK-rated foil tape (not general purpose duct tape — it fails over time), reseal around any penetrations.
+Duct liner (internal insulation, common in built-up AHU casings and some ductwork): inspect for erosion of the airstream-facing surface, which indicates excessive velocity or turbulence; eroding liner sheds fibers into the airstream, an IAQ concern. Also check for microbial growth, especially if liner has been wet from a coil leak or condensate issue.
+
+CHILLED WATER & HOT WATER PIPING INSULATION
+Chilled water piping (typically 40-45°F supply): closed-cell elastomeric foam or fiberglass with vapor-retardant jacket, thickness per ASHRAE 90.1 based on pipe size (commonly 1"-1.5" wall for pipe under 4" diameter). Vapor barrier is critical here too — the same condensation/CUI (corrosion under insulation) risk applies as with ductwork, but on metal pipe the consequence is worse: trapped moisture against carbon steel pipe under insulation is one of the leading causes of unexpected pipe failure in mechanical rooms, because the corrosion is hidden until the insulation is removed or the pipe fails.
+Hot water/steam piping: mineral wool or fiberglass insulation rated for the operating temperature (check insulation temperature rating against system design temp — using low-temp-rated insulation on a high-temp steam line is a fire/degradation risk). PVC or metal jacketing typically used for mechanical protection rather than vapor barrier (not usually needed on hot piping since it's above ambient dew point, except at startup/shutdown transients).
+Common failure points to inspect: pipe hangers and supports (insulation is frequently missing or crushed exactly at the hanger — install proper insulated pipe shields/saddles rather than letting the hanger clamp directly onto bare or thin insulation), valve bodies and flanges (often left uninsulated by original installers — a bare valve body on chilled water is both an energy loss and a condensation/drip point), unions and threaded connections (harder to insulate cleanly, frequently skipped).
+
+CABINET & EQUIPMENT INSULATION
+RTU/AHU cabinet panels: internal insulation (typically 1"-2" fiberglass with foil facing) prevents cabinet sweating on the exterior in humid conditions and reduces radiated heat gain/loss. Damaged or missing internal panel insulation shows as a "sweating" cabinet exterior or, on the interior, as fiberglass shedding into the airstream — replace damaged panels rather than attempting field insulation repair inside an air-handling cabinet due to IAQ concerns with exposed fiberglass.
+Access panel and door gaskets: inspect annually — compressed, torn, or missing gaskets allow air bypass (unconditioned air infiltration or conditioned air leakage) and are a common source of both energy waste and condensation at the panel edge. Replace with OEM gasket material matched to the panel profile.
+Curb-to-unit seal: verify continuous gasket/sealant around the full perimeter where a rooftop unit sits on its curb. Gaps here allow both air leakage and water intrusion into the building — re-seal with roofing-membrane-compatible sealant (do not use generic silicone on a modified bitumen or TPO roof without checking compatibility, as some sealants degrade certain membrane types).
+
+QUICK DIAGNOSTIC — "IS THIS A CONDENSATION OR A LEAK PROBLEM?"
+Dripping observed on a chilled water pipe, cold refrigerant line, or duct: 90% of the time on properly insulated systems this is condensation from a vapor barrier breach, not an actual fluid leak. Diagnostic steps: 1) Confirm the fluid is water, not refrigerant oil residue or a rust-colored leak (which points to an actual pipe/joint failure, not condensation). 2) Locate the exact point insulation is missing, gapped, or has a vapor barrier break directly above or at the drip point — condensation almost always originates exactly where the vapor seal is broken. 3) If insulation appears intact and sealed but dripping continues, escalate to leak investigation (pressure test, dye test, or infrared/acoustic leak detection) rather than continuing to treat it as an insulation issue.`
+}, {
+  id: "d13",
+  name: "Preventive Maintenance Procedures — RTU, Chiller, Boiler, Cooling Tower",
+  brand: "General",
+  type: "Maintenance Procedure",
+  tags: ["PM", "maintenance", "checklist", "quarterly", "annual"],
+  content: `PREVENTIVE MAINTENANCE PROCEDURES — FIELD CHECKLISTS
+
+QUARTERLY PM — PACKAGED ROOFTOP UNIT (RTU)
+1. Filters: replace or clean, confirm correct size and MERV rating per spec sheet. Note pressure drop across filter bank if manometer available — compare to prior readings for loading trend.
+2. Condenser coil: inspect for debris, leaves, cottonwood fluff; clean with coil cleaner and low-pressure rinse (high pressure can bend fins). Comb any bent fins with a fin comb to restore airflow.
+3. Evaporator coil: inspect through access panel for cleanliness, biological growth, or ice; clean if needed with coil cleaner rated for the coil material (aluminum vs copper require different chemistry in some cases).
+4. Refrigerant charge: verify via superheat/subcooling method against target values for that specific unit and refrigerant type; log actual readings.
+5. Electrical: tighten all power and control connections (a loose lug is one of the most common causes of premature contactor/compressor failure due to arcing and heat); check contactor contacts for pitting.
+6. Belts (belt-drive units only): check tension (standard: 1/64" deflection per inch of span under moderate thumb pressure) and condition; replace if cracked, glazed, or frayed.
+7. Bearings: lubricate per schedule if serviceable type (many modern motors are sealed — verify before greasing; over-greasing a sealed bearing causes failure).
+8. Condensate: check drain pan and trap for clogs, algae, correct slope; flush line; verify float switch (if equipped) trips correctly by manually raising water level.
+9. Economizer: cycle damper through full range (0–100%) and visually confirm smooth mechanical movement matching the commanded position; check linkage for looseness.
+10. Safety controls: test high/low pressure switches, freeze stat, high limit switch by simulated trip if safe to do so, or verify last-test documentation.
+11. Compressor amps: record running amps at steady state, compare to nameplate RLA — elevated amps can indicate high head pressure, low charge, or mechanical wear.
+12. Insulation: inspect refrigerant line and cabinet insulation per insulation SOP; repair any UV or seam damage found.
+13. BAS/controls: if unit is networked, confirm setpoints match sequence of operations and that all monitored points are updating (cross-check field reading against BAS display).
+
+ANNUAL PM — AIR-COOLED CHILLER
+1. Condenser coils: thorough clean, pressure wash from inside-out where accessible; heavy fouling may require coil cleaner chemical treatment.
+2. Oil analysis: pull sample per compressor manufacturer procedure; check moisture content and acid number (high acid indicates a burnout risk or has already occurred — investigate before returning to service).
+3. Sensor calibration: check all temperature and pressure sensors against a certified reference instrument; document any drift found and recalibrate or replace.
+4. Safety controls: test high pressure cutout, low pressure/freeze protection, oil pressure differential switch, motor overload/thermal protection — do not skip due to time pressure, these are life-safety and equipment-protection critical.
+5. Motor megger test: measure insulation resistance on compressor windings, compare to baseline and manufacturer minimum; trend year over year, as declining resistance predicts eventual failure.
+6. Electrical: inspect and tighten all control panel and power wiring; thermal-scan under load if an imaging camera is available — hot spots indicate developing connection problems before failure.
+7. Refrigerant charge: verify and log with subcooling calculation at as-close-to-design load as achievable.
+8. Fan motor bearings: inspect and lubricate condenser fan motors per schedule.
+9. VFD (if equipped): review fault history log in drive memory; clean cooling fans and heat sinks on the drive itself.
+10. Documentation: record entering/leaving chilled water temps, entering/leaving condenser temps (or ambient), suction/discharge pressures, compressor amps; compare against prior years to identify gradual degradation trends before they become failures.
+
+QUARTERLY PM — COOLING TOWER
+1. Fill media: inspect for scale, algae/biological growth, physical damage; fouled fill significantly reduces heat transfer and increases approach temperature.
+2. Water treatment: verify conductivity/cycles of concentration against program target; confirm biocide feed system is operating correctly per schedule — critical for Legionella risk management; check pH against target range.
+3. Basin: inspect for sediment and biological growth; schedule full drain-and-clean at minimum annually.
+4. Fan and drive: check belt condition/tension or gearbox oil level; inspect fan blades; verify vibration switch functions (safety device — do not bypass).
+5. Drift eliminators: inspect for damage; damaged eliminators increase water carryover, a water-waste and Legionella-aerosol-risk issue.
+6. Legionella water management plan: confirm facility's written plan (per ASHRAE 188) is current and that any observed deficiencies are reported through the proper channel — this is a serious life-safety item, not a routine maintenance checkbox.
+
+ANNUAL PM — COMMERCIAL BOILER
+1. Combustion analysis: measure O2/CO2%, CO (ppm), stack temperature, calculated efficiency with a calibrated combustion analyzer; elevated CO requires immediate investigation as a life-safety issue.
+2. Gas pressure: verify static and dynamic manifold pressure against manufacturer spec using a manometer at the test port.
+3. Safety controls — test every one, every year: high limit cutout, low water cutoff (LWCO — test by controlled drain-down while firing to confirm shutdown before unsafe water level), flame safeguard response time (should be ≤4 seconds from flame loss to burner shutdown per most codes), pressure relief valve (verify set pressure, test per code — some jurisdictions require periodic replacement rather than just testing).
+4. Refractory/heat exchanger: visually inspect for cracking, erosion, soot buildup (soot indicates a combustion problem needing correction).
+5. Venting: check draft, look for blockage, condensation damage, or corrosion in the flue system; confirm combustion air supply is unobstructed and adequate.
+6. Documentation: any safety control failure takes the boiler out of service until repaired. Never bypass a safety control to keep equipment running — this is a fireable/liability-critical rule, not a suggestion.
+
+BELT & BEARING MAINTENANCE (applies across RTU, AHU, cooling tower fan drives)
+Belt tension: 1/64" deflection per inch of span under moderate thumb pressure at midpoint is the standard rule of thumb; over-tight belts cause premature bearing wear, under-tight belts slip and glaze.
+Belt alignment: check with straightedge or laser tool across pulley faces; misalignment causes uneven wear and vibration.
+Bearing lubrication: use only the grease type specified by the manufacturer (do not mix lithium-based and other grease chemistries); typical interval 2000–4000 operating hours for continuous duty, but always follow the specific equipment's schedule; purge old grease but avoid overfilling a sealed bearing.
+Vibration baseline: where equipment has a vibration monitoring point or portable meter is available, establish a baseline reading on new/known-good equipment for future trend comparison — rising vibration is often the earliest indicator of bearing wear or misalignment, appearing before audible or visible symptoms.`
+}, {
+  id: "d14",
+  name: "BAS Integration — BACnet Fundamentals & Field Diagnostics",
+  brand: "General",
+  type: "BAS Integration",
+  tags: ["BAS", "BACnet", "controls", "VAV", "diagnostics", "integration"],
+  content: `BAS INTEGRATION — BACNET FUNDAMENTALS & FIELD DIAGNOSTICS
+
+WHAT A FIELD TECHNICIAN NEEDS TO KNOW ABOUT BACNET
+BACnet is the dominant open protocol for building automation integration in commercial buildings. Every point in the system — a sensor reading, a command, a status — is represented as a BACnet "object." The main object types a technician will encounter: Analog Input (AI) — a sensor reading such as space temperature or duct pressure; Analog Output (AO) — a command such as valve or damper position; Binary Input (BI) — an on/off status such as a fan proof switch or filter status; Binary Output (BO) — an on/off command such as a fan start relay; Multi-State Value (MSV) — a mode selection such as occupied/unoccupied/standby.
+Device Instance number: every controller on the network has a unique Device Instance ID. Duplicate device instances on the same network will cause unpredictable communication failures and must be corrected — usually by the controls contractor or BAS administrator — before any point-level troubleshooting will be productive. If a controller was recently replaced and is suddenly "invisible" to the BAS, a duplicate or incorrectly-set device instance is one of the first things to check.
+Network types: BACnet/IP runs over standard Ethernet and is typical for the supervisory/backbone level connecting building controllers together. BACnet MS/TP runs over RS-485 twisted-pair serial wiring and is typical at the field/unitary controller level (VAV boxes, unit controllers, etc.), usually connecting back to a network router or gateway that bridges to the BACnet/IP backbone.
+
+MS/TP WIRING RULES (the most common source of BAS communication problems a field tech will encounter)
+Topology must be daisy-chain (device to device to device), never a star or "home run" topology — MS/TP does not support star wiring and will produce intermittent or total communication failure if wired that way.
+Polarity matters: the +/− (sometimes labeled Net+/Net− or A/B) must be consistent in the same orientation at every device on the trunk. A single reversed pair anywhere on the trunk can degrade or kill communication for the whole segment.
+Termination: a 120-ohm termination resistor must be installed at each of the two physical ends of the trunk — and only at the two ends. Extra terminators or missing terminators both cause signal reflection problems and unreliable communication, especially as trunk length or device count increases.
+Shield grounding: cable shield should be grounded at one point only (typically at the head end/panel) — grounding the shield at multiple points can create ground loops that introduce noise onto the data lines.
+Baud rate and MAC address: all devices on an MS/TP trunk must be set to the same baud rate. Each device also needs a unique MAC address (separate from the Device Instance) on that trunk segment — conflicting MAC addresses cause token-passing failures.
+
+DIAGNOSTIC SEQUENCE — "BAS SHOWS A FAULT/BAD VALUE BUT THE UNIT SEEMS FINE" (or vice versa)
+1. Always physically verify actual field conditions first with a calibrated instrument (thermometer, manometer, clamp meter) before trusting or distrusting the BAS reading — never assume either the field or the graphic is correct without checking.
+2. If a controller shows offline/not communicating on the BAS graphic: check the controller has power and no fault LED; verify MS/TP wiring per rules above (polarity, termination, daisy-chain topology, unique address); check for a duplicate device instance or MAC address if the controller was recently replaced or reprogrammed.
+3. If a specific sensor reading looks wrong (implausible temperature, stuck value, wildly fluctuating): physically locate the sensor and check its position (e.g., a duct temperature sensor not fully inserted into the airstream, a return air sensor picking up nearby heat source like a light fixture, an outdoor air sensor without a sun shield reading falsely high in direct sun); check wiring for damage, corrosion, or a loose connection (many field sensors are 2-wire resistive/thermistor types where a partial short or high-resistance connection produces a predictable, calculable reading error rather than an obviously "broken" one).
+4. If an actuator/valve/damper position on the BAS doesn't match physical reality: this is very often a slipped or broken mechanical coupling between the actuator and the damper/valve shaft — the actuator itself moves and reports correctly, but the shaft isn't actually turning. Always verify by watching the physical device move through a commanded range, not just trusting the feedback signal.
+5. Calibration offsets: many BAS platforms allow a manual calibration offset to be applied to a sensor point. An incorrect offset entered by a previous technician or programmer is a real and surprisingly common cause of a "sensor reading wrong" complaint where the sensor hardware is actually fine. Check the raw/unscaled value at the controller versus the calibrated/displayed value if the platform provides that view.
+6. A unit that operates correctly in local/standalone/hand mode but doesn't respond to or report to BAS command points to a network/communication issue rather than a mechanical HVAC fault — don't spend time chasing a mechanical problem that isn't there.
+
+VAV BOX TROUBLESHOOTING USING BAS TREND DATA
+For a "zone too hot/cold" complaint, before mechanical inspection, pull BAS trend data for: zone temperature vs. setpoint over the complaint period; VAV box airflow (CFM) vs. its programmed minimum/maximum setpoints; damper position command vs. actual zone demand; discharge air temperature if the box has reheat.
+If airflow is stuck at or near minimum despite an active cooling call and the damper command shows fully open: suspect a mechanical damper linkage failure or stuck/failed actuator — confirm by physical inspection and a manual override test.
+If the airflow reading itself looks implausible (negative, erratic, wildly jumping): suspect the airflow sensor — typically a differential pressure sensor across an averaging pitot array inside the box — and specifically check for disconnected or pinched sensor tubing, which is an extremely common and easy-to-miss field failure.
+If the BAS zone temperature doesn't match a handheld reading at the space thermostat: treat as a sensor discrepancy per the diagnostic sequence above (position, wiring, calibration offset).
+If reheat isn't raising discharge air temperature despite a heating call and 100% valve command: check the actuator-to-valve-stem coupling first (very commonly slipped), then check for a scaled/stuck valve (common with poorly-treated hot water systems), then verify hot water is actually available at the coil — a manually closed isolation valve, left shut after prior work, is a frequently overlooked and easily fixed cause.
+
+ECONOMIZER/OUTDOOR AIR DAMPER — BAS-ASSISTED TROUBLESHOOTING
+Command the damper through its full range (0–100%) via BAS override and physically watch it move — confirms both the actuator and the mechanical linkage are functioning together, since a controller can report a commanded position that the damper physically isn't achieving if the coupling has slipped.
+Check outdoor and return air temperature/enthalpy sensors for accuracy against a calibrated handheld reference — a faulty outdoor air sensor is a common cause of an economizer that never opens during favorable conditions (wasting free cooling opportunity) or one that opens fully during unfavorable hot/humid conditions (driving up cooling load and potential humidity/IAQ problems).
+Verify minimum outdoor air damper position matches the design ventilation requirement for the space (per the original ASHRAE 62.1 ventilation calculation) — a damper stuck fully closed provides zero outdoor air and is a code compliance and IAQ issue that should be flagged immediately, not treated as routine.
+
+WHEN TO ESCALATE TO THE CONTROLS CONTRACTOR VS. HANDLE IN THE FIELD
+Field-technician-appropriate: verifying and repairing the mechanical side (actuator coupling, damper/valve mechanical operation, sensor physical position and wiring continuity), physically confirming field conditions against BAS readings.
+Escalate to controls contractor/BAS administrator: any change to point configuration, calibration offsets, sequence of operations logic, device addressing, or network-level programming — these are typically outside a field HVAC technician's scope and unauthorized changes can create larger problems across the network or violate the facility's controls service agreement. Document findings clearly (what was checked, what was found, what mechanical repair if any was made) so the controls contractor can act efficiently on a clear field report rather than starting their diagnosis from zero.`
+}
+, {
+  id: "d15",
+  name: "Commercial Boilers — Cleaver‑Brooks, Fulton, Hurst, Miura",
+  brand: "Cleaver-Brooks",
+  type: "Service Manual",
+  tags: ["boiler", "Cleaver-Brooks", "Fulton", "Hurst", "Miura", "firetube", "watertube", "steam", "hot water", "burner", "controls"],
+  content: `COMMERCIAL BOILERS — ADDITIONAL BRANDS & SERVICE REFERENCE
+
+CLEAVER‑BROOKS FIRE‑TUBE / WATER‑TUBE BOILERS
+Model examples:
+- CBLE / CBEX = fire‑tube, 15–800 HP, dryback or wetback
+- ICB = industrial water‑tube, up to 2,500 HP
+- FLX = 4‑pass fire‑tube (15–800 HP)
+- Prometha = fire‑tube with advanced controls
+
+Serial number decode: varies by decade – check nameplate for date code (YYWW format on newer).
+Burner control: Cleaver‑Brooks uses C‑B Hawk or Fireye control systems.
+Flame scanner: UV or IR. Check signal strength (≥4.0 µA for UV, ≥8.0 µA for IR) – clean lens quarterly.
+Gas train: double block & bleed or single shutoff. Verify safety shutoff valves (SSOV) close completely – leak test annually.
+Low water cutoff (LWCO): probe or float type – test blowdown weekly; clean probe monthly.
+O2 trim: optional – maintains excess O2 at 3–4% for best efficiency. Calibrate annually with flue gas analyser.
+
+FULTON VERTICAL / FLEXIBLE WATER‑TUBE
+Model examples:
+- VMP = vertical multi‑port, 4–50 HP, 80‑125 PSI
+- FB = flexible water‑tube (FB‑A, FB‑L), 10–150 HP, 160 PSI
+- ICS = immersion‑coil steam generator, electric
+- J Series = oil/gas, 20–150 HP
+
+Burner: Fulton uses Riello or Eclipse burners – check ignition transformer (spark should be strong, blue), gas pressure (3.5" WC NG, 11" WC LP).
+Steam pressure control: modulating control valve regulates firing rate – stroke and position feedback should be accurate (4–20 mA).
+Water hardness: ≤1 grain per gallon to prevent scale. Scale reduces heat transfer – can cause tube failure. Use water softener and chemical treatment.
+
+HURST SCOTCH MARINE / FIRE‑TUBE
+Model examples:
+- 4‑pass dryback, 5‑pass wetback, 5‑pass dryback, vertical scotch marine
+- 15–2,500 HP, up to 450 PSI design.
+Wetback vs dryback: wetback has water‑cooled rear turnaround – better efficiency, less refractory maintenance. Dryback has refractory rear door – need inspection for cracks/settlement.
+Burner: Hurst uses Power Flame, Riello, or Weishaupt – check air/fuel linkage for slop, ensure damper closes fully on shutdown.
+Safety relief valve: set at or below MAWP – test quarterly (manual lift). Replace every 5 years or if leaking.
+Refractory: inspect annually for spalling or cracking – damaged refractory causes short‑cycling, high flue temp, and CO formation.
+
+MIURA EX‑GAS / LX SERIES (once‑through, rapid steam)
+Model: EX‑GAS, LX, BL, K – compact, quick‑start (5 min from cold to full steam)
+Once‑through design: no steam drum; water tube coils in a single pass – efficient but scale‑sensitive.
+Water quality is critical: boiler feedwater TDS <150 ppm, hardness <0.5 grain. Use reverse osmosis or softener.
+Control system: Miura uses BOILERMATE™ – 4‑20 mA signals for O2, pressure, flow. Auto blowdown based on TDS.
+Fault codes: flash codes on LCD – refer to local display. Common: E01 (low water), E02 (high pressure), E03 (flame failure), E04 (gas pressure low).
+
+BOILER ROOM SAFETY
+- LOTO on all steam/piping before entering firebox.
+- Confined space entry required for firebox inspection – gas test, forced ventilation, standby.
+- NFPA 85 for boiler combustion controls – annual check of flame safeguard and safety interlock.
+- OSHA 1910.119 for steam systems >15 PSIG and water >250°F – documented PSM required if hazardous substances present.
+- Blowdown vessel and separator – check every 6 months; ensure blowdown line unobstructed.`
+},
+{
+  id: "d16",
+  name: "Cooling Towers & Evaporative Coolers — BAC, Marley, Evapco",
+  brand: "BAC",
+  type: "Service & Maintenance Manual",
+  tags: ["cooling tower", "evaporative cooler", "BAC", "Marley", "Evapco", "water treatment", "fan", "drift", "fill", "vibration"],
+  content: `COOLING TOWERS & EVAPORATIVE COOLERS — FIELD REFERENCE
+
+BRANDS & TYPES
+- BAC (Baltimore Aircoil): series 1500, VXT (hybrid), FXT (forced draft), CXVB (closed circuit), TrilliumSeries (adiabatic).
+- Marley (SPX Cooling): NC (induced draft), LW (low‑noise), SS (stainless), MH (field‑erected).
+- Evapco: ATW (induced), LSW (low‑sound), PM (pump‑assisted), ESW (closed circuit).
+
+KEY COMPONENTS
+Fill media: splash or film. Film fill is efficient but fouling‑sensitive – clean with low‑pressure water (max 40 PSI) to avoid damaging fins.
+Drift eliminators: capture water droplets. If drift >0.001% of circulation flow, check eliminators for damage or fouling.
+Fan: direct‑drive or belt‑drive. Belt tension: deflect ½" per foot of span. Check sheave alignment with straight edge.
+Gearbox (induced draft): oil level and condition – check monthly. Change oil annually (ISO 220 or OEM spec).
+Distribution basin / spray nozzles: check for even water flow – plugged nozzles cause dry spots and reduced efficiency.
+Bleed / blowdown: maintain cycles of concentration (3–5) per water treatment plan. Use conductivity controller (setpoint 1000–2000 µS/cm typical).
+Make‑up water valve: check float or solenoid operation – stuck open = overflow, stuck closed = low sump.
+
+MAINTENANCE SCHEDULE (monthly)
+- Visual: water level, fan rotation, vibration, leaks, excessive drift.
+- Water chemistry: pH (6.5–8.0), conductivity, hardness, alkalinity, biocide (free chlorine 0.3–0.5 ppm or bromine).
+- Strainer / suction screen: clean – debris reduces pump flow and causes cavitation.
+- Fan belt: inspect for wear, glazing, cracks – replace if damaged.
+- Motor bearings: grease per motor nameplate (typically every 3–6 months, 2–3 pumps of grease).
+
+ANNUAL / SEMI‑ANNUAL
+- Clean sump and basin – remove sludge and debris.
+- Inspect fill: remove and clean if scaled/fouled. Use chemical soak for heavy scale (acid or alkaline degreaser depending on scale type).
+- Inspect gearbox oil – replace if milky (water contamination) or dark/black (overheating).
+- Fan balance / vibration analysis: use portable meter – ISO 1940 Grade G6.3 typical. Vibration >0.3 in/s (7.6 mm/s) RMS indicates problem.
+- Motor megohm test (500V) – minimum 1 MΩ per kV plus 1 MΩ.
+- Check drift eliminator condition – missing/damaged sections increase drift (water loss and potential Legionella).
+
+TROUBLESHOOTING
+High leaving water temp:
+- Fan speed low or reverse rotation – check motor rotation (should match arrow).
+- Air recirculation – adjacent units or building causing hot air ingestion – adjust fan speed or add discharge screens.
+- Low water flow – check pump, strainer, distribution nozzles.
+- Fouled fill – reduced heat transfer surface – clean.
+
+Excessive drift: damaged eliminators – inspect and replace sections.
+
+Vibration / noise:
+- Unbalanced fan – clean blades and check for debris buildup; balance if needed.
+- Loose belt or sheave – tighten and align.
+- Worn bearings – replace gearbox or motor bearings.
+- Cavitation in pump – check suction strainer, NPSH, pump speed.
+
+WINTER OPERATION
+- Basin heaters: should be on when ambient <40°F – check thermostat and amperage.
+- Ice buildup on fan blades or fill: reduce fan speed, add basin heaters, maintain water flow.
+- Shut down for freeze: drain all piping, basin, and pump; use compressed air to clear heat exchanger coils (closed circuit).
+- Freeze protection of outdoor water piping: trace heating or glycol (if system design allows).`
+},
+{
+  id: "d17",
+  name: "Air Handlers, VAV Boxes & DOAS — Trane, Carrier, York",
+  brand: "Trane",
+  type: "Service Manual",
+  tags: ["AHU", "air handler", "VAV", "DOAS", "Trane", "Carrier", "York", "fan array", "reheat", "static pressure", "filters"],
+  content: `AIR HANDLING UNITS, VAV BOXES & DOAS — FIELD REFERENCE
+
+AIR HANDLING UNITS (AHU)
+Major brands: Trane (M‑Series, Climate Changer, Modular), Carrier (39/40 series, Aero), York (Sunline, Airfoil).
+Components:
+- Fan: belt‑drive or direct‑drive (plug or plenum). Check shaft alignment, bearing condition, belt tension (deflect ½" per foot of span).
+- Coils: cooling (chilled water or DX) and heating (hot water, steam, electric). Air‑side pressure drop <0.5" w.c. at design flow – higher = fouled coil.
+- Filters: MERV 8, 11, 13, HEPA. Pressure drop across filter bank should be monitored with magnahelic – change when ΔP exceeds initial + 0.5" w.c. (or per spec).
+- Mixing box: outdoor air and return air dampers. Check for binding, correct actuator travel (0–90°), end switches.
+- Drain pan: slope to drain, no standing water. Clean quarterly with antimicrobial treatment. Check condensate trap (at least 1" per foot).
+- Insulation: inspect for moisture or delamination – wet insulation reduces R‑value and can harbor mold.
+
+VAV BOXES (Variable Air Volume)
+Brands: Titus, Price, Nailor, Trane, Carrier.
+Types: single‑duct, dual‑duct, fan‑powered (series or parallel), induction.
+Components:
+- Inlet flow sensor (averaging pitot): reads velocity pressure; must be clean – dirt causes under‑reporting.
+- Actuator: 24V modulating (2‑10V or 4‑20mA). Check for full stroke (0–90°), damper linkage tight.
+- Reheat coil: hot water or electric. Check coil ∆T (water) or amp draw (electric) – reheat should engage at minimum flow per zone setpoint.
+- Fan‑powered: small centrifugal fan for recirculation – check wheel balance, motor bearings, capacitor.
+
+Commissioning VAV:
+1. Set minimum airflow per zone (typically 20–30% of design).
+2. Set maximum airflow per zone.
+3. Calibrate flow sensor with manometer (inlet pressure taps) – compare to flow coefficient (K‑factor) for box size.
+4. Test heating mode: reheat valve opens when zone temp below setpoint.
+5. Test cooling mode: box modulates to max airflow when zone temp above setpoint.
+
+DOAS (Dedicated Outdoor Air Systems)
+Brands: Trane (DOAS), Carrier (DOAS), Semco (energy recovery), Munters (desiccant).
+Energy recovery wheel: rotating total energy wheel (sensible + latent). Check wheel speed (10–20 RPM), belt tension, and wheel cleanliness.
+Enthalpy bypass: used for economiser operation – check outdoor air and return air enthalpy sensors (calibrated annually).
+Frost control: pre‑heat coil or wheel speed control – prevents wheel icing in cold climates.
+Supply air setpoint: typically 55–60°F (dry‑cooling) or 70–72°F (neutral). CO2 control (800–1000 ppm) drives outdoor air damper.
+
+AHU TROUBLESHOOTING
+Low airflow: check filters, fan speed, VFD, blocked duct (dampers), belt slip.
+High static pressure: check VFD setpoint, duct restriction, VAV boxes at minimum, excess pressure drop in filters or coils.
+Water carryover: high face velocity (>550 fpm across coil) or frozen coil (poor drainage).
+Temperature out of spec: check chilled water valve / DX operation, hot water / steam valve, economiser mode (free cooling), and controls.
+VFD fault: check drive display (common: OC – overcurrent, OV – overvoltage, GF – ground fault).
+Fan vibration: check bearings, balance, sheave alignment, shaft straightness – correct within ISO 1940 Grade G6.3.
+
+FILTER REPLACEMENT SCHEDULE
+- MERV 8: 3–6 months (or 0.5" w.c. ΔP rise)
+- MERV 11: 6–12 months
+- MERV 13: 12 months
+- HEPA: annual or per differential pressure monitor
+- Bag filters: replace at 1.0–1.5" w.c. ΔP rise.`
+},
+{
+  id: "d18",
+  name: "Exhaust Fans & Make‑Up Air Units — Roof, Wall, Kitchen & Lab",
+  brand: "General",
+  type: "Service & Maintenance Manual",
+  tags: ["exhaust fan", "make-up air", "MUA", "roof fan", "wall fan", "kitchen hood", "lab exhaust", "belt", "motor", "vibration"],
+  content: `EXHAUST FANS & MAKE‑UP AIR (MUA) UNITS — FIELD REFERENCE
+
+TYPES & BRANDS
+Exhaust fans: roof (upblast, downblast), wall (propeller, centrifugal), inline (duct mount), kitchen hood (Grease Master, CaptiveAire), lab exhaust (fume hood).
+Make‑up air (MUA): rooftop units with heating (gas or electric), sometimes cooling (DX or chilled water). Brands: Greenheck, Loren Cook, Trane (MUA), Carrier (MUA), York.
+Common sizes: 500–50,000+ CFM.
+
+FAN TYPES – CFM & PRESSURE
+- Propeller (axial): high CFM, low static pressure (<1" w.c.). Use for general ventilation.
+- Centrifugal: medium‑high CFM, higher static pressure (up to 4–6" w.c.). Use for ducted exhaust.
+- Vaneaxial: high CFM, moderate pressure – use for large roof exhaust.
+- Inline (duct fan): boost duct static.
+
+SAFETY – CRITICAL FIRST STEP
+- LOTO at disconnect.
+- Check that fan wheel is mechanically locked before entering.
+- Lock out gas supply (for MUA units) – double block and bleed if required.
+- Test for hazardous fumes (kitchen grease, lab chemicals) with appropriate detector.
+
+ROOF EXHAUST FAN MAINTENANCE
+- Belt tension: deflect ½" per foot of span – adjust by moving motor base.
+- Sheave alignment: use straight edge – within 1/16" per foot.
+- Bearings: grease with NLGI #2 lithium complex – 2–3 pumps every 6 months (or per motor nameplate).
+- Motor: check amp draw vs nameplate FLA. 10–15% higher indicates mechanical binding, overvoltage, or undersized pulley.
+- Fan wheel: clean quarterly – debris buildup causes imbalance and reduced flow. Use plastic scraper (no impact on blades).
+- Bird screen / inlet guard: clean monthly – clogged inlet reduces CFM and can cause motor overload.
+
+KITCHEN HOOD EXHAUST – SPECIAL
+- Grease filters: wash monthly (or per local fire code) – use degreaser.
+- Fire suppression system: inspect by certified contractor semi‑annually – fusible links, chemical cylinder pressure, nozzle caps.
+- UL 300 compliance: grease removal and fire suppression – verify tags.
+- Fan speed: often interlocked with cooking equipment (dishwasher, grill) – check sequence.
+- Ductwork cleanout: schedule semi‑annual grease removal (NFPA 96) – use qualified contractor.
+
+LAB FUME HOOD EXHAUST
+- Face velocity: 100 fpm at hood face – check with velometer / anemometer.
+- Static pressure: check at hood collar (≈0.4–0.6" w.c. typical).
+- Corrosion‑resistant materials: FRP, stainless, or coated – inspect for rust, chemical attack.
+- Exhaust fan: typically VFD‑controlled to maintain hood face velocity.
+- Alarm: audible / visual if face velocity drops below 80 fpm – test monthly.
+
+MUA (MAKE‑UP AIR) UNITS
+- Gas heating: check burner flame (blue, stable), gas pressure (3.5" WC NG, 11" WC LP), flue exhaust (CO < 100 ppm air‑free).
+- Electric heating: check contactors, heater elements (resistance), safety limit switches.
+- Supply fan: similar to AHU fan checks – belt, motor, bearings, vibration.
+- Interlock: MUA must run at same or slightly lower CFM than exhaust to avoid negative pressure building.
+- Temperature control: discharge air setpoint (55–65°F for cooling, 70–75°F for heating) – check sensors and modulating valves.
+
+TROUBLESHOOTING
+Low CFM: fan rotation reverse, dirty wheel, clogged filters, VFD fault, belt slip, dampers closed.
+High amp draw: over‑voltage, tight belt, misaligned sheave, wheel rubbing housing, motor bearings failing.
+Excessive vibration: unbalanced wheel (clean or rebalance), worn bearings, loose mounting.
+Noise: turbulence from damper or duct transition, worn bearings, loose panel.
+MUA burner won't fire: gas pressure low, igniter failed (check resistance), flame sensor dirty, combustion air pressure switch stuck.
+Overheating (electric MUA): clogged filter, fan low speed, stuck contactor, failed limit.`
+}, {
+  id: "d19",
+  name: "Electrical & Motors — Diagnostics, Testing & VFD Tuning",
+  brand: "General",
+  type: "Electrical Reference",
+  tags: ["electrical", "motors", "VFD", "megger", "single-phasing", "amperage", "troubleshooting"],
+  content: `ELECTRICAL & MOTORS — FIELD DIAGNOSTICS REFERENCE
+
+MOTOR NAMEPLATE INTERPRETATION
+FLA (Full Load Amps): the amp draw at rated load and voltage — this is the number to compare field readings against, not LRA.
+LRA (Locked Rotor Amps): the momentary inrush current at startup, typically 5-7x FLA. A motor that trips on start every time but runs fine once up to speed often points to an undersized breaker/starter for the LRA, not a motor problem.
+Service Factor (SF): a multiplier showing how much overload the motor can handle continuously (e.g., 1.15 SF means the motor can run at 115% of nameplate HP without immediate damage) — this is a safety margin, not a target operating point.
+NEMA design letter (B, C, D): describes the torque/slip characteristic — Design B is standard for most HVAC fan and pump loads, Design C for high-inertia starting loads.
+Insulation class (A, B, F, H): maximum allowable winding temperature rise. Class F (155°C) is most common in modern commercial motors. Running a motor consistently at or near its insulation class temperature limit shortens life dramatically — insulation life roughly halves for every 10°C above rated temperature.
+
+MOTOR AMPERAGE DIAGNOSTICS
+Amps below FLA at rated load: possible undervoltage, or motor is underloaded (fan/pump not achieving design flow — check for a closed valve, damper, or slipping belt reducing actual mechanical load).
+Amps above FLA: mechanical binding (bearing failure, coupling misalignment, impeller/wheel rubbing), overvoltage causing higher magnetizing current, or the driven load genuinely exceeds design (e.g., a fan moving more air than intended due to a wide-open damper that should be throttled).
+Unbalanced phase currents (more than 10% difference between phases on a 3-phase motor): almost always indicates a voltage imbalance problem upstream, a connection issue (loose or corroded terminal), or developing winding damage. A small voltage imbalance causes a much larger current imbalance — roughly 6-10x amplification — and generates significant extra heat, so even a 2-3% voltage imbalance is worth investigating.
+Single-phasing: occurs when one leg of a 3-phase supply is lost while the motor is running (fuse blown, loose connection, contactor contact failure) — the motor will attempt to keep running on the remaining two legs, drawing very high current on those legs and overheating rapidly. This is one of the most common causes of sudden 3-phase motor burnout. Symptoms: motor hums loudly, may still turn but with reduced torque, high amp draw on two legs with the third reading near zero. If a motor won't start and hums: de-energize immediately and check all three phases at the motor terminals before attempting to restart — running a stalled single-phased motor for even a short time can cause severe winding damage.
+
+MEGGER (INSULATION RESISTANCE) TESTING
+Purpose: measures the resistance of motor winding insulation to ground, detecting moisture intrusion, insulation breakdown, or contamination before it causes a ground fault failure.
+Procedure: disconnect motor from all power and control wiring, disconnect any solid-state devices (VFD, soft starter) as they can be damaged by megger test voltage, test each phase winding to ground and phase-to-phase if accessible.
+Test voltage: typically 500V DC for motors rated up to 600V (do not exceed manufacturer's recommended test voltage — always check nameplate/manual first).
+Minimum acceptable reading: a common rule of thumb is 1 megohm per kV of rated voltage plus 1 megohm (e.g., a 460V motor: roughly 1.46+ megohm minimum), but always defer to the manufacturer's specific minimum if published — readings in the hundreds of megohms or higher (with a good meter, often shown as ">999" or in gigohms) indicate excellent insulation condition.
+Trending matters more than a single reading: a motor reading 50 megohms today that read 500 megohms a year ago is degrading even though 50 megohms might still pass a one-time minimum threshold — always log readings for year-over-year comparison.
+Temperature and humidity affect readings: cold, dry conditions give artificially high readings; hot, humid conditions give lower readings — note ambient conditions when testing for accurate trend comparison.
+
+VFD (VARIABLE FREQUENCY DRIVE) TUNING & COMMISSIONING
+Motor parameter entry: before running, enter the exact motor nameplate data into the drive (voltage, FLA, frequency, poles/RPM, service factor) — running a drive with generic/default motor parameters instead of the actual nameplate data is a common cause of poor performance, nuisance trips, and reduced motor life.
+Auto-tune function: most modern drives have an auto-tune routine (sometimes called "motor ID" or "auto-tuning") that runs a brief test sequence to measure actual motor characteristics (winding resistance, inductance) for optimal control — always run this after initial parameter entry and after any motor replacement, as it significantly improves control accuracy versus using only nameplate-derived defaults.
+Acceleration/deceleration ramp times: too fast causes nuisance overcurrent trips and mechanical stress; too slow wastes energy and can cause process control issues. Typical starting point for HVAC fan/pump loads: 10-30 second ramps, adjusted based on the specific application and any observed trip behavior.
+V/Hz curve vs. vector control: V/Hz (volts per hertz) is simpler and adequate for most constant-torque HVAC fan and pump applications; vector control (sensorless or with encoder feedback) provides better low-speed torque and is used where precise speed/torque control matters — most standard HVAC applications do not need vector control.
+Minimum speed setting: many HVAC applications should not run the motor below a certain frequency (commonly 15-20 Hz) — running too slow on a motor with a shaft-mounted cooling fan (most standard motors) can cause overheating since the cooling fan also slows down, reducing airflow over the motor at exactly the point where the motor may be working harder relative to its speed.
+Carrier frequency (PWM switching frequency): higher carrier frequency reduces audible motor noise but increases drive heat generation and can increase motor bearing current issues on some installations — default settings are usually appropriate; only adjust if there's a specific noise complaint or bearing failure pattern suggesting VFD-induced bearing current damage (common on larger motors, mitigated with shaft grounding rings).
+
+COMMON ELECTRICAL FIELD MEASUREMENTS & WHAT THEY MEAN
+Voltage drop under load: measure voltage at the source and at the load while running — a significant drop (more than about 3% under normal load) indicates undersized wiring, a loose connection, or excessive circuit length for the wire gauge; voltage drop causes equipment to draw higher current to deliver the same power, generating extra heat and reducing efficiency and lifespan.
+Ground fault: current is leaking from a circuit conductor to ground instead of returning through the intended neutral/return path — a ground fault circuit interrupter (GFCI) or ground fault protection relay detects this by comparing current going out versus coming back; in motor circuits, a ground fault often indicates winding insulation breakdown (confirm with megger test) or physical damage to conductor insulation.
+Power factor: the ratio of real power (doing useful work) to apparent power (total power drawn) — inductive loads like motors typically have lagging power factor; low power factor doesn't damage equipment directly but can result in utility power factor penalty charges on the electric bill, and correction (via capacitor banks) is sometimes specified for large motor loads.
+Thermal imaging: an infrared camera scan of electrical panels and connections under load is one of the most effective non-invasive PM tools — a connection running hotter than its neighbors of the same rating and load is a developing failure point (loose termination, corrosion) that can be identified and corrected before it causes an outage or fire; document baseline thermal images for critical equipment for future comparison.`
+}, {
+  id: "d20",
+  name: "Controls Sequences of Operation — Common System Types",
+  brand: "General",
+  type: "Controls Reference",
+  tags: ["sequence of operation", "controls", "SOO", "programming reference", "commissioning"],
+  content: `SEQUENCES OF OPERATION — COMMON COMMERCIAL HVAC SYSTEM TYPES
+
+WHY THIS MATTERS IN THE FIELD
+Understanding the intended sequence of operation (SOO) is what separates diagnosing "this behavior is wrong" from just observing "this behavior is unusual." Many service calls that appear to be equipment failures are actually the system doing exactly what it was programmed to do — just not what the occupant or even the technician expected. Always compare observed behavior against the intended sequence before assuming a mechanical or control fault.
+
+PACKAGED RTU — TYPICAL SINGLE-ZONE SEQUENCE
+Occupied mode: fan runs continuously (or per schedule); cooling stages engage based on space temperature rising above cooling setpoint plus a deadband (typically 1-2°F); heating stages engage based on space temperature falling below heating setpoint minus deadband; economizer (if equipped) checks outdoor conditions first — if outdoor air is suitable for free cooling (below a temperature or enthalpy changeover point, commonly 55-65°F depending on design), the economizer damper modulates to meet the cooling call before mechanical cooling stages engage.
+Unoccupied mode: fan cycles with demand rather than running continuously (unless a specific unoccupied ventilation requirement applies); setpoints widen (setback heating lower, setup cooling higher) to save energy while maintaining minimum protection against extreme conditions.
+Morning warmup/cooldown: many systems have a pre-occupancy period where the system runs to bring the space to occupied setpoint before the scheduled occupied time begins, sometimes with economizer/outdoor air locked out during this period to avoid pulling in unconditioned outdoor air while trying to recover space temperature quickly.
+Common "not a fault" observations: short cycling appearing to occur when it's actually staged equipment cycling individual stages on/off around a single space temperature reading (normal for multi-stage equipment); economizer running with mechanical cooling appearing "off" when outdoor conditions are fully meeting the load (correct free-cooling operation, not a compressor failure).
+
+VAV AIR HANDLER WITH VAV BOXES — TYPICAL SEQUENCE
+Supply fan: VFD-controlled to maintain a duct static pressure setpoint (commonly 1.0-1.5" w.c., measured at a point roughly 2/3 down the longest duct run) — the fan speed is not directly tied to any single zone's demand but to the overall system static pressure requirement created by all VAV boxes' collective damper positions.
+Discharge air temperature reset: many systems reset the AHU discharge air temperature setpoint based on the zone(s) with the highest cooling demand — if all zones are satisfied with a warmer discharge temp, the system raises the setpoint to save cooling energy (this can appear to a technician as "discharge temp isn't at 55°F" when in fact 58-60°F is correct for current conditions under a properly functioning reset sequence).
+VAV box sequence: each box modulates airflow between its programmed minimum and maximum CFM to satisfy its zone temperature; reheat (if equipped) engages only after the box reaches minimum airflow and the zone still calls for heat — a box calling for heat while still at a high airflow percentage typically indicates the box hasn't reached minimum yet, which is expected behavior, not a fault.
+Static pressure reset (advanced/optimized systems): rather than holding a fixed static pressure setpoint, the system monitors all VAV box damper positions and resets the AHU static pressure setpoint down as long as at least one box remains nearly fully open — saving significant fan energy versus a fixed high setpoint; if this logic malfunctions, boxes may appear "starved" for airflow even though the AHU output seems adequate — check the actual static pressure trend against box damper positions.
+
+CHILLED WATER PLANT — TYPICAL PRIMARY/SECONDARY SEQUENCE
+Chiller staging: lead chiller starts based on system load (often determined by return water temperature or a calculated load estimate); lag chiller(s) stage on when the lead chiller reaches a high percentage of capacity for a sustained period, and stage off in reverse as load drops — nuisance staging (chillers cycling on/off too frequently) often indicates the staging deadband or timer is too tight for the actual load swings at the building.
+Primary/secondary pumping: primary pumps run at fixed/constant flow matched to each chiller's design flow requirement; secondary pumps (VFD-controlled) vary flow to meet actual building demand, decoupled from the primary loop via a common bypass pipe — if the secondary loop begins pulling more flow than the primary loop is providing (detectable by reversed flow or unusual temperature readings in the bypass), it indicates the primary pumps/chillers aren't keeping pace with secondary demand.
+Chilled water reset: supply water temperature setpoint may reset upward when building load is low (saving chiller energy) — a chilled water supply reading 46-48°F instead of a fixed 44°F is not necessarily a problem if reset logic is active and load is genuinely low; verify by checking actual zone comfort complaints against the reset schedule before assuming an equipment problem.
+Condenser water reset (cooling tower loop): tower fan staging and/or VFD speed modulates to maintain a condenser water supply temperature setpoint, which itself may reset based on outdoor wet-bulb temperature and chiller efficiency optimization logic on more advanced systems.
+
+HOT WATER HEATING PLANT — TYPICAL SEQUENCE
+Boiler staging: similar logic to chiller staging — lead/lag based on load, with reset schedules for supply water temperature based on outdoor air temperature (a common and effective energy-saving sequence: colder outside means higher hot water supply temp, warmer outside allows a lower supply temp) — hot water supply reading lower than a fixed expected number is often correct reset operation on a mild day, not an underperforming boiler.
+Primary/secondary or variable primary pumping: similar decoupling concept as chilled water — verify actual system type before assuming a fixed-flow expectation.
+Outdoor air reset curve: typically defined by two points (e.g., at 0°F outdoor, supply water = 180°F; at 60°F outdoor, supply water = 120°F) with linear interpolation between — if a zone is cold on a mild day, check whether the reset curve is delivering adequate temperature for that specific zone's actual load rather than assuming the boiler itself is at fault.
+
+ECONOMIZER-INTEGRATED SYSTEM — SEQUENCE LOGIC
+Changeover method — fixed dry-bulb: economizer enabled whenever outdoor temperature is below a fixed setpoint (simple, doesn't account for humidity, can cause high-humidity outdoor air to be pulled in on a cool-but-humid day).
+Changeover method — differential dry-bulb: compares outdoor temperature to return air temperature, enabling economizer whenever outdoor air is cooler than return air (better than fixed, still doesn't account for humidity directly).
+Changeover method — enthalpy (single or differential): compares total heat content (temperature + humidity) of outdoor versus a fixed reference or return air — most effective at avoiding high-humidity "free cooling" that isn't actually beneficial, but requires properly calibrated and maintained humidity sensors, which are a common failure/drift point requiring periodic verification.
+100% outdoor air economizer mode: when outdoor conditions are favorable enough, the system may fully open the outdoor air damper and close return air damper for "free cooling" without any mechanical cooling — a system appearing to run with compressors off and outdoor damper wide open during mild weather is very likely correct high-economizer operation, not a broken compressor.
+
+DEMAND-CONTROLLED VENTILATION (DCV) — TYPICAL SEQUENCE
+CO2 sensor(s) in representative space(s) or return air duct drive outdoor air damper position above the fixed minimum when CO2 rises above a setpoint (commonly 800-1000 ppm), indicating higher occupancy than the minimum ventilation design assumed.
+A system correctly reducing outdoor air toward the fixed minimum during low-occupancy periods (evenings, weekends, partially-occupied spaces) is functioning as designed for energy savings — this is often mistaken for an economizer or damper fault by someone unfamiliar with the DCV sequence, when in fact the reduced outdoor air is intentional and correct.`
+}, {
+  id: "d21",
+  name: "Codes & Compliance — ASHRAE, NFPA, EPA Refrigerant Regulations",
+  brand: "General",
+  type: "Codes & Compliance",
+  tags: ["codes", "compliance", "ASHRAE", "NFPA", "EPA", "refrigerant regulations", "safety codes"],
+  content: `CODES & COMPLIANCE — FIELD REFERENCE FOR HVAC TECHNICIANS
+
+EPA SECTION 608 — REFRIGERANT MANAGEMENT
+Certification requirement: any technician who opens equipment containing refrigerant (for repair, maintenance, or disposal) must hold EPA 608 certification appropriate to the equipment type — Type I (small appliances), Type II (high-pressure/medium-pressure appliances, most commercial split systems and RTUs), Type III (low-pressure appliances, most chillers), or Universal (all three).
+Venting prohibition: intentionally releasing refrigerant to the atmosphere during installation, maintenance, repair, or disposal is illegal under federal law regardless of refrigerant type (this applies to ozone-depleting substances and, as of recent rule updates, to many HFCs as well) — always recover to an appropriate recovery cylinder.
+Leak repair requirements: for appliances containing 50+ lbs of covered refrigerant, if the annual leak rate exceeds the applicable trigger rate (commonly 10-30% depending on equipment type and current rule set — verify current EPA threshold, as these have been updated over time), the owner is legally required to repair the leak within a specified timeframe and may need to file leak repair reports; technicians should document leak rate calculations and refer facility owners/managers to their compliance obligation rather than assuming it's outside the technician's concern.
+Refrigerant sales restrictions: many refrigerants can only be purchased by certified technicians — always verify current purchase restriction status for the specific refrigerant type being used, as regulations have expanded certification requirements to additional refrigerant types over time (including some HFCs previously unrestricted).
+Recordkeeping: technicians and companies are generally required to keep service records showing refrigerant added, recovered, and equipment serviced — maintain accurate field documentation as a compliance matter, not just good practice.
+
+AIM ACT & HFC PHASEDOWN (U.S.)
+The American Innovation and Manufacturing (AIM) Act established a phasedown schedule for HFC refrigerant production and consumption in the United States, driving the industry-wide shift toward lower-GWP (Global Warming Potential) alternatives like R-454B, R-32, and R-1234yf/ze in new equipment. Field implication: expect continued introduction of new refrigerant types in commercial equipment, often with different safety classifications (some newer refrigerants are A2L — mildly flammable — requiring different handling precautions than traditional A1 non-flammable refrigerants). Always verify the specific refrigerant classification and required precautions before servicing unfamiliar equipment, rather than assuming standard A1 refrigerant handling procedures apply.
+
+A2L REFRIGERANT SAFETY (R-32, R-454B, R-1234yf, and similar)
+A2L classification means mildly flammable, lower toxicity under ASHRAE 34 — these refrigerants require additional precautions beyond standard A1 refrigerant handling: no open flame or spark-producing tools in the immediate work area during recovery/charging operations; ensure adequate ventilation, especially in confined spaces or mechanical rooms with limited air exchange; use only refrigerant-specific rated recovery machines, cylinders, and gauge sets (do not cross-contaminate A2L equipment with A1 refrigerant service tools); leak detection equipment must be rated appropriately for flammable refrigerant detection, as standard electronic leak detectors calibrated for A1 refrigerants may not perform correctly. Charge limits per room volume apply per manufacturer specification and adopted mechanical/fire code — do not assume a charge amount is safe without checking the applicable limit for the specific space volume and ventilation characteristics.
+
+NFPA 70E — ELECTRICAL SAFETY IN THE WORKPLACE
+Arc flash risk assessment: before working on or near energized electrical equipment, an arc flash risk assessment determines the incident energy exposure and required PPE category — always check for equipment-specific arc flash labeling (required on most commercial electrical equipment) rather than assuming a generic PPE level is adequate.
+Established boundaries: NFPA 70E defines approach boundaries (limited approach, restricted approach, arc flash boundary) based on voltage and calculated incident energy — unqualified persons must stay outside the limited approach boundary; only qualified persons with appropriate PPE and an energized work permit (where required) may work within the arc flash boundary.
+De-energized work as the default: the standard's core principle is that electrical equipment should be placed in an electrically safe work condition (properly locked out, tagged, and verified de-energized with a rated tester) before work begins whenever feasible — energized work should be the exception, justified and documented, not the default approach for convenience.
+PPE categories: arc-rated clothing and equipment is selected based on the calculated incident energy at the specific piece of equipment (measured in cal/cm²) — PPE category requirements range from minimal (Category 1) to substantial arc-rated suits (Category 4) depending on the equipment's fault current and clearing time characteristics; always use the PPE specified for that specific equipment's labeled category, not a generic assumption.
+
+NFPA 90A / 90B — AIR CONDITIONING AND VENTILATING SYSTEMS
+Governs construction and installation requirements for HVAC systems, including fire damper requirements at fire-rated wall/floor penetrations, duct construction and insulation flame spread ratings, and smoke detector requirements in air handling systems above certain airflow thresholds. Field relevance: fire/smoke dampers must remain functional and are subject to periodic testing requirements (commonly tested at set intervals per adopted code and insurance requirements) — a damper found stuck or inoperative during PM should be flagged as a life-safety deficiency requiring prompt repair, not treated as routine deferred maintenance.
+
+NFPA 96 — VENTILATION CONTROL AND FIRE PROTECTION OF COMMERCIAL COOKING OPERATIONS
+Governs kitchen exhaust hood, ductwork, and fire suppression system requirements. Grease duct cleaning frequency is specified based on cooking volume/type (ranges from monthly for high-volume solid fuel cooking to semi-annually for moderate-volume operations) — always verify current cleaning documentation is in place and current, as this is a common fire marshal inspection point and liability issue for the facility. Fire suppression system (wet chemical, typically) requires semi-annual inspection by a certified contractor — a field technician noticing an expired inspection tag during other kitchen exhaust work should flag it, even though the suppression system inspection itself is typically outside general HVAC technician scope.
+
+NFPA 85 — BOILER AND COMBUSTION SYSTEMS HAZARDS CODE
+Establishes safety requirements for boiler combustion control systems, including flame safeguard supervision, purge sequences before ignition, and safety interlock requirements. Field relevance for PM: flame safeguard response time testing (verifying the burner shuts down within the required time after simulated flame loss) is a code-driven safety test, not an optional check — document results and never return a boiler to service with a failed or bypassed safety interlock.
+
+ASHRAE 62.1 — VENTILATION FOR ACCEPTABLE INDOOR AIR QUALITY
+Establishes minimum outdoor air ventilation rates based on space type and occupancy. Field relevance: verify economizer/outdoor air minimum damper positions are actually delivering the design ventilation rate — a damper mechanically stuck at a lower position than its intended minimum setting is both a comfort/IAQ issue and a code compliance gap; when in doubt about whether current airflow meets design intent, this is worth flagging to building management/engineering rather than assuming "it's always been like that" is acceptable.
+
+ASHRAE 15 — SAFETY STANDARD FOR REFRIGERATION SYSTEMS
+Establishes requirements for refrigerant charge limits per occupied space volume, machinery room ventilation and refrigerant detection requirements for larger systems, and general refrigeration system safety provisions. Machinery rooms containing chillers or large refrigeration systems typically require mechanical ventilation interlocked with a refrigerant leak detection system — verify these systems are tested periodically and functioning, as a machinery room refrigerant leak without proper detection/ventilation is a serious life-safety hazard, particularly for A2L, A3, or toxic (B-classified) refrigerants.
+
+ASHRAE 188 — LEGIONELLOSIS RISK MANAGEMENT
+Establishes a framework for building water systems (cooling towers being the primary HVAC-relevant application) to have a documented water management program addressing Legionella risk. Field relevance: any facility with a cooling tower should have a written water management plan; technicians performing cooling tower maintenance should be familiar with their specific facility's plan requirements (water treatment parameters, inspection frequency, documentation) and report any observed deficiencies (e.g., biocide feed system malfunction, basin not being cleaned per schedule) through the appropriate channel rather than treating it as a purely mechanical maintenance matter.
+
+GENERAL COMPLIANCE PRINCIPLE FOR FIELD TECHNICIANS
+Codes and standards referenced here establish minimums and requirements, but the specific code edition and any local amendments adopted by the Authority Having Jurisdiction (AHJ) govern actual legal compliance for a given facility and location — this reference provides general field awareness, not a substitute for verifying the specific applicable code edition and any local requirements for a given job. When a safety-critical compliance question arises that isn't clearly resolved by this reference (a safety control test result, a suspected code violation, an unclear regulatory requirement), escalate to a supervisor or the facility's compliance/engineering resource rather than making an independent judgment call on a life-safety or legal compliance matter.`
+}, {
+  id: "d22",
+  name: "Pumps & Hydronics — Troubleshooting, Glycol Systems & Balancing",
+  brand: "General",
+  type: "Service Manual",
+  tags: ["pumps", "hydronics", "glycol", "cavitation", "circulator", "balancing"],
+  content: `PUMPS & HYDRONICS — FIELD REFERENCE
+
+CENTRIFUGAL PUMP FUNDAMENTALS
+Pump curve basics: a centrifugal pump produces a specific flow rate (GPM) at a corresponding head (feet of water, or psi) — as system resistance (head) increases, flow decreases along the pump's curve, and vice versa; a pump doesn't have a single fixed flow rate, it operates at whatever point its curve intersects the system's actual resistance curve.
+Affinity laws: for a centrifugal pump, flow varies directly with speed, head varies with the square of speed, and power varies with the cube of speed — this is why even modest speed reduction via VFD produces significant energy savings (a pump running at 80% speed uses roughly 51% of full-speed power, not 80%).
+Impeller trim: reducing impeller diameter (a common energy-efficiency retrofit) reduces both flow and head capability at a given speed — follows similar but not identical relationships to the affinity laws; consult manufacturer pump curves for accurate trimmed performance rather than estimating.
+
+CAVITATION — DIAGNOSIS AND CAUSES
+Symptoms: a rattling or "marbles in a can" noise from the pump, vibration, reduced flow/head performance, and accelerated impeller erosion damage over time if not corrected.
+Root cause: cavitation occurs when the pressure at the pump suction (impeller eye) drops below the fluid's vapor pressure, causing vapor bubbles to form and then violently collapse as they move into the higher-pressure discharge area — this bubble collapse is what causes the noise and physical erosion damage to the impeller.
+Common causes: insufficient NPSH (Net Positive Suction Head) available — the pump is trying to pull more flow than the suction-side piping and elevation can supply without the pressure dropping too low; a clogged suction strainer restricting inlet flow; suction piping that's undersized or has too many restrictive fittings for the flow rate; pump running significantly beyond its rated capacity (operating far right on the pump curve, which increases NPSH required); air entrainment from a leak on the suction side of the pump (drawing air into a system that should be a closed loop) or from inadequate air separation/venting on an open or partially-open system.
+Correction approach: verify strainer/suction piping isn't restricted first — this is the most common and easiest-to-fix cause; check for suction-side leaks if air entrainment is suspected; if the pump is oversized for the system and operating far right on its curve, throttling the discharge valve slightly can sometimes help by moving the operating point, but the better long-term fix is correcting the pump selection or trimming the impeller.
+
+GLYCOL SYSTEMS — SPECIAL CONSIDERATIONS
+Purpose: propylene glycol (more common, lower toxicity) or ethylene glycol (higher toxicity, avoid in systems where any potable water cross-contamination risk exists) is added to hydronic systems for freeze protection (outdoor piping, systems that may be exposed to freezing temperatures) or sometimes for burst protection in systems that could freeze during a power/equipment failure.
+Concentration and freeze point: glycol concentration is checked with a refractometer (more accurate) or a hydrometer — typical concentrations range from 20-50% depending on the required freeze protection level for the specific climate and application; always verify actual concentration rather than assuming the original fill percentage remains accurate, as water loss/makeup over time changes the ratio (adding only water to top off a glycol system dilutes the concentration and reduces freeze protection).
+Reduced heat transfer: glycol solutions have lower specific heat and higher viscosity than plain water, which reduces heat transfer efficiency and increases pumping energy/pressure drop — systems are typically designed accounting for this at the intended concentration, but if concentration is significantly higher than design (over-concentrated), it can noticeably reduce system capacity and increase pump energy use beyond what the original design anticipated.
+Glycol degradation: over time, glycol can break down chemically (especially with air exposure/oxidation or overheating), forming acidic byproducts that can attack system metals — periodic testing of glycol pH/reserve alkalinity is recommended per the glycol manufacturer's guidance, with glycol replacement or chemical treatment adjustment if degradation is found; a system with unexplained recurring pump seal failures or unusual pipe corrosion should have glycol condition checked as a possible contributing factor.
+Corrosion inhibitor depletion: most commercial glycol products include corrosion inhibitor packages that deplete over time and require periodic testing/replenishment (test kits are typically available from the glycol manufacturer) — using an automotive-grade glycol product instead of an HVAC-specific product is a common and problematic mistake, as automotive glycols are not formulated for the metals and long service intervals typical of commercial hydronic systems.
+
+CIRCULATOR PUMP TROUBLESHOOTING
+Pump runs but no/low flow: check for a closed isolation valve somewhere in the loop (very common after other maintenance work — always verify all valves are in their correct operating position after any service), an air-bound system (air pocket preventing flow, especially at a high point in the piping — bleed air from high points), or a failed/seized check valve preventing flow in the intended direction.
+Pump won't run: check power supply and any interlocks (many circulators are interlocked with a call for heat/cooling from a control system or aquastat — verify the pump should actually be calling to run before assuming a pump failure); check capacitor on single-phase pumps (a common wear component); check for a seized rotor (many wet-rotor circulators can seize from mineral deposit buildup if the pump sits idle for extended periods, particularly in hard water areas — some models have a manual "bleed screw" at the pump shaft that can be used to manually free a seized rotor).
+Noisy pump: cavitation (see above), a worn/failing bearing (dry-rotor style pumps have separate bearings subject to wear, unlike wet-rotor pumps where the fluid itself provides bearing lubrication), or entrained air in the system.
+Pump seal leak (dry-rotor/mechanical seal pumps): mechanical seals wear over time and eventually leak — this is a normal wear item requiring seal replacement or pump replacement, not usually indicative of a system problem, unless the seal failure is premature (check for cavitation, excessive vibration from misalignment, or running dry as possible causes of premature seal failure rather than normal wear-out).
+
+SYSTEM BALANCING BASICS
+Purpose: hydronic balancing ensures each piece of equipment (coil, terminal unit, etc.) receives its designed flow rate — without balancing, equipment closest to the pump (lowest resistance path) tends to receive excess flow while equipment furthest away is starved, causing uneven comfort and capacity across the system.
+Balancing valves: circuit setters or balancing valves with a measurable port allow a technician to measure actual flow (using a differential pressure meter matched to the valve) and adjust the valve position to achieve the design flow rate at each piece of equipment — balancing should be performed with the system at or near design operating conditions where practical.
+Symptoms of an unbalanced system: some zones/coils perform well while others consistently underperform despite adequate overall system capacity and no apparent equipment fault at the underperforming location — if individual equipment checks out fine (clean coil, functioning valve, correct control operation) but capacity is still inadequate, insufficient flow due to poor system balance is a strong candidate, verifiable by an actual flow measurement at that piece of equipment compared to its design flow requirement.
+Variable flow systems: on modern variable-flow hydronic systems (VFD-controlled pumps with 2-way control valves at each coil, rather than traditional 3-way valves and constant flow), traditional fixed balancing valve settings are less critical since flow inherently self-adjusts to each coil's control valve position, but minimum flow bypass and proper valve authority (the pressure drop ratio of the control valve versus the rest of its circuit) still matter for good control response — a control valve with poor authority (too small a pressure drop relative to the circuit) will be sluggish and non-linear in its response even if perfectly functional itself.
+
+EXPANSION TANK & SYSTEM PRESSURIZATION
+Purpose: as water heats and expands in a closed hydronic loop, the expansion tank absorbs the volume change while maintaining system pressure within an acceptable range — without proper expansion capacity, system pressure would rise dangerously as water heats, potentially lifting relief valves repeatedly or causing other pressure-related problems.
+Diaphragm/bladder tanks: pre-charged with air on one side of a diaphragm, separated from system water — pre-charge pressure should be set (with the system depressurized/isolated from the tank) to match the system's static fill pressure at the tank's installed elevation; an incorrectly pre-charged tank (checked with a tire-gauge-style tool at the tank's air valve when isolated from system water) is a common cause of a system that won't hold pressure properly, cycles the makeup water feeder excessively, or has a relief valve that weeps/lifts more than expected.
+Makeup water and relief valve troubleshooting: a system requiring frequent makeup water addition indicates a leak somewhere in the system (even a small one) or a failed/leaking relief valve — investigate rather than simply continuing to add makeup water, as continuous fresh water makeup also introduces additional dissolved oxygen and minerals that accelerate corrosion and scale formation in the system over time.`
+}, {
+  id: "d23",
+  name: "Equipment Commissioning — New Installation & Retrofit Startup",
+  brand: "General",
+  type: "Commissioning",
+  tags: ["commissioning", "startup", "retrofit", "checklist", "verification"],
+  content: `EQUIPMENT COMMISSIONING — NEW INSTALLATION & RETROFIT STARTUP PROCEDURE
+
+WHY FORMAL COMMISSIONING MATTERS
+A significant share of equipment problems discovered months after installation actually originated at startup — an issue that would have been caught and corrected easily during commissioning becomes a much more disruptive and costly service call once the equipment has been "accepted" and is in normal operation. A disciplined commissioning process catches these issues while the installing contractor and design intent are still fresh and accessible.
+
+PRE-STARTUP VERIFICATION (BEFORE ANY POWER OR REFRIGERANT)
+Physical installation check: verify equipment is mounted level and per manufacturer clearance requirements (service access, airflow clearance for condensers, etc.) — inadequate clearance discovered after startup is far more disruptive to correct than catching it before energizing equipment.
+Electrical verification: confirm supply voltage matches equipment nameplate before energizing (a surprisingly common and completely avoidable failure is connecting 208V-rated equipment to a 230V supply or vice versa, especially relevant since many nameplates list a dual rating like "208/230V" with different performance implications at each); verify proper wire sizing and overcurrent protection per equipment documentation, not just "whatever was already there."
+Refrigerant piping verification (split systems, VRF): confirm line set sizing matches manufacturer specification for the given equivalent length and elevation change — undersized piping causes excessive pressure drop and poor performance that can be very difficult to diagnose after the fact if not verified against spec at installation; pressure test and evacuate per manufacturer procedure (deep vacuum, typically 500 microns or per specific manufacturer requirement, held to verify no significant rise before charging) — a system charged without proper evacuation retains non-condensable gases and moisture that cause long-term reliability problems and are difficult to fully correct after the fact without a full recovery and re-evacuation.
+Ductwork/piping verification: confirm ductwork or piping connections match design (correct sizing, no unauthorized field changes that weren't verified against the design's airflow/head calculations) before startup airflow or flow testing.
+Controls pre-check: verify all field wiring matches the control wiring diagram before applying power — energizing a system with a wiring error can damage control boards or sensors, whereas the same error found with a continuity/point-to-point check before power-up is a simple correction.
+
+INITIAL STARTUP SEQUENCE
+Energize and observe: bring equipment up per manufacturer startup sequence (many have a specific required order — e.g., crankcase heater energized for a specified period before compressor start on some equipment) rather than simply throwing every disconnect at once; observe for any abnormal sounds, smells, or visible issues immediately upon startup before proceeding further.
+Rotation verification: for any 3-phase motor (fans, pumps, compressors on some equipment types), verify correct rotation direction before allowing extended run time — reversed rotation on a fan will still move air but at drastically reduced volume and can cause overcurrent trip or motor damage if run for an extended period; reversed rotation on a scroll compressor is a well-known cause of rapid, sometimes immediate, compressor damage.
+Safety control verification: confirm all safety controls (high/low pressure switches, freeze protection, high limit switches, flow switches) are wired and functioning correctly before the equipment is placed in unattended service — testing these at commissioning (with an appropriate simulated fault where safely possible) is far preferable to discovering a non-functional safety control during an actual fault event later.
+
+PERFORMANCE VERIFICATION
+Refrigerant charge verification: charge per manufacturer weight specification for the installed line length (with any required adjustment for line length beyond base allowance), then fine-tune using superheat/subcooling method at stable operating conditions — record actual operating pressures, temperatures, and calculated superheat/subcooling as baseline documentation for future service reference.
+Airflow verification: measure actual delivered airflow (via traverse, flow hood, or other appropriate method for the equipment type) against design CFM — airflow significantly below design reduces both capacity and efficiency and can cause coil icing (cooling) or overheating/short-cycling (heating on gas furnaces); document actual measured airflow as commissioning baseline.
+Electrical load verification: record actual running amps on all major components (compressor, fan motors, pump motors) against nameplate FLA at stable operating conditions — this becomes the baseline for future trend comparison and immediately flags any component running outside expected range even at initial startup.
+Control sequence verification: actually exercise every control sequence the equipment/system is supposed to perform (not just confirm it turns on) — cycle through occupied/unoccupied modes if applicable, verify economizer operation across its range if equipped, verify staging sequence on multi-stage equipment, verify safety shutdowns actually shut the equipment down when simulated (where safely testable) rather than assuming the programming is correct because it compiled without error.
+
+BAS/CONTROLS INTEGRATION COMMISSIONING
+Point-to-point verification: for any equipment integrated with a building automation system, verify every physical input and output point matches its intended BAS graphic/point list — command each output point from the BAS and physically confirm the equipment responds correctly; read each input point on the BAS and physically confirm it matches the actual field condition; a point list with points that are wired but never actually verified against physical reality is a common source of "the BAS shows X but the equipment does Y" problems discovered much later.
+Alarm verification: confirm alarm points (high temperature, equipment fault, filter status, etc.) actually generate the expected notification when the condition is simulated or genuinely present — an alarm point that exists in the programming but was never actually tested to confirm it fires and notifies correctly provides false confidence and can mean a real fault condition goes unnoticed.
+Trend verification: confirm key points are actually being trended/logged at an appropriate interval for future diagnostic use — discovering during a troubleshooting investigation that a critical point was never actually being logged (due to a trend configuration oversight at commissioning) significantly hampers the ability to diagnose intermittent issues after the fact.
+
+RETROFIT-SPECIFIC CONSIDERATIONS
+Existing infrastructure compatibility: verify existing electrical service, structural support, ductwork/piping connections, and controls infrastructure are actually compatible with the new equipment's requirements — retrofits are more prone to "it should work with what's already there" assumptions that don't get formally verified the way a new installation's complete design typically does.
+Transition/interim operation: if the retrofit involves any period where old and new equipment must coexist or where the space must remain occupied and conditioned during the changeover, verify the transition plan and sequence explicitly rather than assuming it will work itself out — document what interim conditions (temporary equipment, partial capacity, etc.) are acceptable during the changeover period.
+Removed equipment disconnection: verify any replaced/decommissioned equipment is fully and safely disconnected (electrically, and refrigerant/fluid systems properly evacuated or drained per applicable regulation) rather than simply left in place de-energized — abandoned but still-connected equipment is a source of future confusion and potential hazard for anyone working on the system later without knowledge of its decommissioned status.
+
+DOCUMENTATION — THE COMMISSIONING RECORD
+A complete commissioning record should include: as-installed equipment nameplate data, initial refrigerant charge and line length/adjustment calculation, startup performance readings (pressures, temperatures, superheat/subcooling, airflow, electrical loads), control sequence verification results, and any deficiencies found and corrected during the process (or, if not correctable at the time, formally noted and communicated to the responsible party for follow-up). This record is the baseline every future service technician will wish existed when trying to determine whether a current reading represents equipment degradation or was simply the as-installed condition from day one.`
+}
+
+];
 
 
