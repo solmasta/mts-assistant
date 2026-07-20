@@ -766,14 +766,7 @@ function DemoMode({ onExit }) {
 }
 
 // ── PT CHART ─────────────────────────────────────────────────────────────
-const PT = {
-  "R-410A": [[40, 83], [50, 102], [60, 123], [70, 147], [80, 174], [90, 205], [100, 238], [110, 275], [120, 315]],
-  "R-22": [[20, 37], [30, 47], [40, 59], [50, 72], [60, 87], [70, 103], [80, 121], [90, 141], [100, 163]],
-  "R-32": [[40, 90], [50, 111], [60, 134], [70, 160], [80, 189], [90, 221], [100, 256], [110, 294], [120, 335]],
-  "R-454B": [[40, 83], [50, 102], [60, 124], [70, 148], [80, 175], [90, 205], [100, 238], [110, 274], [120, 314]],
-  "R-407C": [[40, 72], [50, 89], [60, 108], [70, 129], [80, 152], [90, 178], [100, 207], [110, 238], [120, 272]],
-  "R-134a": [[20, 26], [30, 35], [40, 46], [50, 59], [60, 73], [70, 90], [80, 110], [90, 132], [100, 157]]
-};
+// PT is now defined once, shared with the Refrigerant Calc agent, in app1.js
 
 // ── BELT CALCULATOR ─────────────────────────────────────────────────────
 function BeltCalc() {
@@ -968,42 +961,19 @@ function PTChart() {
   const [scLiqLineTemp, setScLiqLineTemp] = useState("");
   const [scResult, setScResult] = useState(null);
 
-  function getSatTemp(psig) {
-    const d = PT[ref];
-    if (psig <= d[0][1]) return d[0][0];
-    if (psig >= d[d.length-1][1]) return d[d.length-1][0];
-    for (let i = 0; i < d.length-1; i++) {
-      if (psig >= d[i][1] && psig <= d[i+1][1]) {
-        return d[i][0] + (d[i+1][0]-d[i][0]) * (psig-d[i][1]) / (d[i+1][1]-d[i][1]);
-      }
-    }
-    return null;
-  }
-  function getSatPress(degF) {
-    const d = PT[ref];
-    if (degF <= d[0][0]) return d[0][1];
-    if (degF >= d[d.length-1][0]) return d[d.length-1][1];
-    for (let i = 0; i < d.length-1; i++) {
-      if (degF >= d[i][0] && degF <= d[i+1][0]) {
-        return d[i][1] + (d[i+1][1]-d[i][1]) * (degF-d[i][0]) / (d[i+1][0]-d[i][0]);
-      }
-    }
-    return null;
-  }
-
-  const SH_TARGETS = {"R-410A":"8-12\u00b0F","R-22":"10-15\u00b0F","R-32":"8-12\u00b0F","R-454B":"8-12\u00b0F","R-407C":"10-15\u00b0F","R-134a":"10-15\u00b0F"};
-  const SC_TARGETS = {"R-410A":"10-15\u00b0F","R-22":"10-15\u00b0F","R-32":"10-15\u00b0F","R-454B":"10-15\u00b0F","R-407C":"10-15\u00b0F","R-134a":"8-12\u00b0F"};
+  // getSatTemp, getSatPress, SH_TARGETS, SC_TARGETS are shared globals defined
+  // once in app1.js (also used by the Refrigerant Calc agent).
 
   function calcPT() {
     if (press !== "") {
       const p = parseFloat(press);
       if (isNaN(p)) { setResult({type:"Error",output:"Invalid pressure"}); return; }
-      const sat = getSatTemp(p);
+      const sat = getSatTemp(ref, p);
       setResult({type:"Press\u2192Sat Temp",output:sat.toFixed(1)+"\u00b0F"});
     } else if (temp !== "") {
       const t = parseFloat(temp);
       if (isNaN(t)) { setResult({type:"Error",output:"Invalid temperature"}); return; }
-      const sat = getSatPress(t);
+      const sat = getSatPress(ref, t);
       setResult({type:"Sat Temp\u2192Press",output:sat.toFixed(1)+" psig"});
     }
   }
@@ -1013,7 +983,7 @@ function PTChart() {
     const lt = parseFloat(shSuctLineTemp);
     const oat = parseFloat(shOAT);
     if (isNaN(p) || isNaN(lt)) { setShResult({error:"Enter suction pressure and suction line temp"}); return; }
-    const satT = getSatTemp(p);
+    const satT = getSatTemp(ref, p);
     if (satT === null) { setShResult({error:"Pressure out of range"}); return; }
     const sh = lt - satT;
     const target = SH_TARGETS[ref];
@@ -1027,7 +997,7 @@ function PTChart() {
     const p = parseFloat(scLiqPress);
     const lt = parseFloat(scLiqLineTemp);
     if (isNaN(p) || isNaN(lt)) { setScResult({error:"Enter liquid pressure and liquid line temp"}); return; }
-    const satT = getSatTemp(p);
+    const satT = getSatTemp(ref, p);
     if (satT === null) { setScResult({error:"Pressure out of range"}); return; }
     const sc = satT - lt;
     const target = SC_TARGETS[ref];

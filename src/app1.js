@@ -572,6 +572,45 @@ const ago = t => {
 };
 const BRANDS = ["Carrier", "Trane", "York", "Lennox", "Daikin", "Mitsubishi", "LG", "Goodman", "Rheem", "Ruud", "Bryant", "Bosch", "American Standard", "Amana"];
 const REFS = ["R-410A", "R-22", "R-32", "R-454B", "R-407C", "R-134a"];
+
+// Shared refrigerant PT (pressure/temperature) table — single source of truth
+// for the PT Chart tool and the Refrigerant Calc agent, so superheat/subcooling
+// numbers come from real tabulated data instead of an LLM freehand-calculating them.
+const PT = {
+  "R-410A": [[40, 83], [50, 102], [60, 123], [70, 147], [80, 174], [90, 205], [100, 238], [110, 275], [120, 315]],
+  "R-22": [[20, 37], [30, 47], [40, 59], [50, 72], [60, 87], [70, 103], [80, 121], [90, 141], [100, 163]],
+  "R-32": [[40, 90], [50, 111], [60, 134], [70, 160], [80, 189], [90, 221], [100, 256], [110, 294], [120, 335]],
+  "R-454B": [[40, 83], [50, 102], [60, 124], [70, 148], [80, 175], [90, 205], [100, 238], [110, 274], [120, 314]],
+  "R-407C": [[40, 72], [50, 89], [60, 108], [70, 129], [80, 152], [90, 178], [100, 207], [110, 238], [120, 272]],
+  "R-134a": [[20, 26], [30, 35], [40, 46], [50, 59], [60, 73], [70, 90], [80, 110], [90, 132], [100, 157]]
+};
+function getSatTemp(refrigerant, psig) {
+  const d = PT[refrigerant];
+  if (!d || isNaN(psig)) return null;
+  if (psig <= d[0][1]) return d[0][0];
+  if (psig >= d[d.length - 1][1]) return d[d.length - 1][0];
+  for (let i = 0; i < d.length - 1; i++) {
+    if (psig >= d[i][1] && psig <= d[i + 1][1]) {
+      return d[i][0] + (d[i + 1][0] - d[i][0]) * (psig - d[i][1]) / (d[i + 1][1] - d[i][1]);
+    }
+  }
+  return null;
+}
+function getSatPress(refrigerant, degF) {
+  const d = PT[refrigerant];
+  if (!d || isNaN(degF)) return null;
+  if (degF <= d[0][0]) return d[0][1];
+  if (degF >= d[d.length - 1][0]) return d[d.length - 1][1];
+  for (let i = 0; i < d.length - 1; i++) {
+    if (degF >= d[i][0] && degF <= d[i + 1][0]) {
+      return d[i][1] + (d[i + 1][1] - d[i][1]) * (degF - d[i][0]) / (d[i + 1][0] - d[i][0]);
+    }
+  }
+  return null;
+}
+const SH_TARGETS = {"R-410A":"8-12°F","R-22":"10-15°F","R-32":"8-12°F","R-454B":"8-12°F","R-407C":"10-15°F","R-134a":"10-15°F"};
+const SC_TARGETS = {"R-410A":"10-15°F","R-22":"10-15°F","R-32":"10-15°F","R-454B":"10-15°F","R-407C":"10-15°F","R-134a":"8-12°F"};
+
 // Global nav ref — set by App, used by any component to navigate home
 const _nav = {
   go: null
@@ -1248,6 +1287,20 @@ function AgentScreen({
   })), step === 1 && /*#__PURE__*/React.createElement(Spin, {
     label: "ANALYSING\u2026"
   }), step === 2 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "flex-start",
+      gap: 8,
+      background: "rgba(230,126,34,.1)",
+      border: "1px solid rgba(230,126,34,.35)",
+      borderRadius: 10,
+      padding: "8px 10px",
+      fontSize: 11,
+      color: "#E67E22",
+      lineHeight: 1.5,
+      marginBottom: 10
+    }
+  }, "\u26a0\ufe0f", /*#__PURE__*/React.createElement("span", null, "AI-generated \u2014 verify against OEM documentation before acting, especially PPE ratings and LOTO steps.")), /*#__PURE__*/React.createElement("div", {
     className: "anim-result",
     style: {
       background: GREY1,
@@ -1705,7 +1758,41 @@ function RefAgent() {
     sub: "SUPERHEAT \xB7 SUBCOOLING \xB7 CHARGE",
     intro: "\uD83E\uDDCA Enter pressures and temps \u2014 the agent calculates superheat, subcooling, and recommends charge action.",
     canRun: !!ref && (sp !== "" || st !== ""),
-    onRun: () => ai("You are an expert HVAC refrigerant charging agent. Show calculations clearly with target ranges. Include EPA 608 compliance notes.", `Refrigerant calculation:\nRefrigerant: ${ref}\nEquipment: ${equip || "Unknown"}\nSuction pressure: ${sp || "Unknown"} psig\nDischarge pressure: ${dp || "Unknown"} psig\nSuction line temp: ${st || "Unknown"}°F\nLiquid line temp: ${lt || "Unknown"}°F\nAmbient: ${at || "Unknown"}°F\n\nCalculate:\n1) Saturation temps from pressures\n2) Actual superheat + target + assessment\n3) Actual subcooling + target + assessment\n4) Charge assessment (under/over/correct)\n5) Recommended action with estimated amount\n6) ⚠️ EPA 608 notes`),
+    onRun: async () => {
+      // Compute superheat/subcooling deterministically from the verified PT
+      // table (same source as the PT Chart tool) instead of letting the AI
+      // freehand the saturation-temp lookup — precise numeric lookups are a
+      // known weak spot for LLMs, and a wrong number here cascades into a
+      // wrong charge recommendation.
+      const suctPress = parseFloat(sp);
+      const dischPress = parseFloat(dp);
+      const suctTemp = parseFloat(st);
+      const liqTemp = parseFloat(lt);
+
+      const satSuction = getSatTemp(ref, suctPress);
+      const sh = satSuction !== null && !isNaN(suctTemp) ? suctTemp - satSuction : null;
+      const satLiquid = getSatTemp(ref, dischPress);
+      const sc = satLiquid !== null && !isNaN(liqTemp) ? satLiquid - liqTemp : null;
+
+      const shTarget = SH_TARGETS[ref];
+      const scTarget = SC_TARGETS[ref];
+      const shStatus = sh === null ? null : sh < 5 ? "LOW — risk of liquid slugging" : sh > 20 ? "HIGH — possible low charge or restriction" : "NORMAL — good charge";
+      const scStatus = sc === null ? null : sc < 5 ? "LOW — possible undercharge or restriction" : sc > 20 ? "HIGH — possible overcharge" : "NORMAL — good charge";
+
+      const lines = ["✅ VERIFIED CALCULATION (refrigerant PT table — not AI-generated)"];
+      if (satSuction !== null) lines.push(`Suction saturation temp: ${satSuction.toFixed(1)}°F (from ${suctPress} psig)`);
+      if (sh !== null) lines.push(`Superheat: ${sh.toFixed(1)}°F  |  Target ${shTarget}  |  ${shStatus}`);
+      if (satLiquid !== null) lines.push(`Liquid saturation temp: ${satLiquid.toFixed(1)}°F (from ${dischPress} psig)`);
+      if (sc !== null) lines.push(`Subcooling: ${sc.toFixed(1)}°F  |  Target ${scTarget}  |  ${scStatus}`);
+      if (sh === null && sc === null) lines.push("Not enough data to calculate — enter a pressure and its matching line temp.");
+      const verified = lines.join("\n");
+
+      const aiReply = await ai(
+        "You are an expert HVAC refrigerant charging agent. The superheat and subcooling values you're given have already been calculated from a verified refrigerant PT table — treat them as ground truth, do NOT recompute or second-guess them. Interpret what they mean, assess the charge, and recommend action. Include EPA 608 compliance notes.",
+        `Refrigerant: ${ref}\nEquipment: ${equip || "Unknown"}\nAmbient: ${at || "Unknown"}°F\n\n${verified}\n\nBased on the verified calculation above, provide:\n1) Charge assessment (under/over/correct)\n2) Recommended action with estimated amount if adjustment needed\n3) ⚠️ EPA 608 notes`
+      );
+      return `${verified}\n\n──────────\n\n${aiReply}`;
+    },
     form: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Sel, {
       label: "REFRIGERANT *",
       val: ref,

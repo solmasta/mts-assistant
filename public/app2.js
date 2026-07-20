@@ -734,7 +734,14 @@ function ChatList({
       padding: "10px 12px",
       flexShrink: 0
     }
-  }, hasMessages && !busy && /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: "#E67E22",
+      marginBottom: 8,
+      lineHeight: 1.4
+    }
+  }, "\u26a0\ufe0f AI-generated \u2014 verify against OEM documentation before acting."), hasMessages && !busy && /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 6,
