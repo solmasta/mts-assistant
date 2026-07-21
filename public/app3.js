@@ -1,5 +1,59 @@
 // React hooks already destructured in app1.js, so we can use them directly
 
+// Minimal global toast for surfacing errors (e.g. storage save failures)
+// without prop-drilling through every component that persists data.
+const _toastListeners = [];
+function showToast(message) {
+  _toastListeners.forEach(fn => fn(message));
+}
+function Toast() {
+  const [msg, setMsg] = useState(null);
+  useEffect(() => {
+    let hideTimer;
+    const handler = m => {
+      clearTimeout(hideTimer);
+      setMsg(m);
+      hideTimer = setTimeout(() => setMsg(null), 4000);
+    };
+    _toastListeners.push(handler);
+    return () => {
+      clearTimeout(hideTimer);
+      const i = _toastListeners.indexOf(handler);
+      if (i >= 0) _toastListeners.splice(i, 1);
+    };
+  }, []);
+  if (!msg) return null;
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "fixed",
+      bottom: 74,
+      left: "50%",
+      transform: "translateX(-50%)",
+      background: "#b00010",
+      color: "#fff",
+      padding: "10px 16px",
+      borderRadius: 10,
+      fontSize: 13,
+      fontWeight: 600,
+      zIndex: 99999,
+      maxWidth: "90%",
+      textAlign: "center",
+      boxShadow: "0 4px 20px rgba(0,0,0,.4)"
+    }
+  }, msg);
+}
+// Wraps S.set with error handling so a full/blocked localStorage surfaces a
+// toast instead of silently discarding data the UI already shows as saved.
+async function safeSave(key, value) {
+  try {
+    await S.set(key, value);
+    return true;
+  } catch (e) {
+    showToast("⚠️ Couldn't save — storage may be full. Free up space and try again.");
+    return false;
+  }
+}
+
 function Docs() {
   const [view, setView] = useState("list");
   const [doc, setDoc] = useState(null);
@@ -1149,12 +1203,12 @@ function Notes() {
     setNotes(n);
     setText("");
     setTitle("");
-    await S.set("notes", JSON.stringify(n));
+    await safeSave("notes", JSON.stringify(n));
   }
   async function del(id) {
     const n = notes.filter(x => x.id !== id);
     setNotes(n);
-    await S.set("notes", JSON.stringify(n));
+    await safeSave("notes", JSON.stringify(n));
   }
   return /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1282,7 +1336,7 @@ function EquipmentLog() {
   }, []);
   async function persist(updated) {
     setSites(updated);
-    await S.set("equip-log", JSON.stringify(updated));
+    await safeSave("equip-log", JSON.stringify(updated));
   }
   function resetEqForm() {
     setEqBrand("");
@@ -1432,11 +1486,20 @@ function EquipmentLog() {
       fontSize: 32,
       marginBottom: 8
     }
-  }, "\uD83C\uDFE2"), /*#__PURE__*/React.createElement("div", null, "No sites yet. Add a site to start logging equipment.")), sites.map(s => /*#__PURE__*/React.createElement("button", {
+  }, "\uD83C\uDFE2"), /*#__PURE__*/React.createElement("div", null, "No sites yet. Add a site to start logging equipment.")), sites.map(s => /*#__PURE__*/React.createElement("div", {
     key: s.id,
+    role: "button",
+    tabIndex: 0,
     onClick: () => {
       setActiveSite(s);
       setView("siteDetail");
+    },
+    onKeyDown: e => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        setActiveSite(s);
+        setView("siteDetail");
+      }
     },
     style: {
       width: "100%",
@@ -2004,7 +2067,7 @@ function App() {
   }
   async function doOnboard(p) {
     setProfile(p);
-    await S.set("profile", JSON.stringify(p));
+    await safeSave("profile", JSON.stringify(p));
   }
   async function startChat(prompt) {
     if (busyRef.current || newChatInProgress.current) return;
@@ -2016,7 +2079,7 @@ function App() {
     setChatView("chat");
     setTab("chat");
     newChatInProgress.current = false;
-    try { await S.set("chat:" + c.id, JSON.stringify(c)); } catch(e) {}
+    await safeSave("chat:" + c.id, JSON.stringify(c));
     await sendMsg(prompt, c.id, snapshot);
   }
   async function newChat() {
@@ -2033,7 +2096,7 @@ function App() {
     setActiveId(c.id);
     setChatView("chat");
     setTab("chat");
-      try { await S.set("chat:" + c.id, JSON.stringify(c)); } catch(e) {}
+      await safeSave("chat:" + c.id, JSON.stringify(c));
     } finally {
       newChatInProgress.current = false;
     }
@@ -2075,7 +2138,7 @@ function App() {
       updatedAt: Date.now()
     };
     setChats(prev => prev.map(c => c.id === currentId ? updated : c));
-    try { await S.set("chat:" + currentId, JSON.stringify(updated)); } catch(e) {}
+    await safeSave("chat:" + currentId, JSON.stringify(updated));
     const sys = `You are MTS Assistant — an expert AI field assistant for FieldPro Managed Technology Services HVAC engineers.
 
 Your role: help technicians in the field solve problems fast. Be their expert colleague on the job.
@@ -2117,7 +2180,7 @@ ${profile ? `\nTechnician: ${profile.name}${profile.region ? `, ${profile.region
       updatedAt: Date.now()
     };
     setChats(prev => prev.map(c => c.id === currentId ? withReply : c).sort((a, b) => b.updatedAt - a.updatedAt));
-    try { await S.set("chat:" + currentId, JSON.stringify(withReply)); } catch(e) {}
+    await safeSave("chat:" + currentId, JSON.stringify(withReply));
     } finally {
       busyRef.current = false;
       setBusy(false);
@@ -2157,7 +2220,7 @@ ${profile ? `\nTechnician: ${profile.name}${profile.region ? `, ${profile.region
     i: "🛠️",
     l: "Tools"
   }];
-  return /*#__PURE__*/React.createElement("div", {
+  return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     style: {
       height: "100%",
       background: BG,
@@ -2249,7 +2312,8 @@ ${profile ? `\nTechnician: ${profile.name}${profile.region ? `, ${profile.region
   }), agentView === "predict" && /*#__PURE__*/React.createElement(PredAgent, null), agentView === "parts" && /*#__PURE__*/React.createElement(PartsAgent, {
     ctx: wCtx
   }), agentView === "refcalc" && /*#__PURE__*/React.createElement(RefAgent, null), agentView === "safety" && /*#__PURE__*/React.createElement(SafetyAgent, {
-    ctx: wCtx
+    ctx: wCtx,
+    onChain: id => setAgentView(id)
   }), agentView === "report" && /*#__PURE__*/React.createElement(ClosingComment, {
     ctx: wCtx,
     profile: profile
@@ -2435,7 +2499,7 @@ ${profile ? `\nTechnician: ${profile.name}${profile.region ? `, ${profile.region
       borderRadius: 1,
       marginTop: 1
     }
-  })))));
+  }))))), /*#__PURE__*/React.createElement(Toast, null));
 }
 // Removed direct ReactDOM mount - this module is loaded as a dependency, not standalone
 window.App3 = App;
