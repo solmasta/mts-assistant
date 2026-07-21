@@ -994,7 +994,7 @@ CA – Return air thermistor fault.
 E1 – PCB fault (outdoor): Replace outdoor main PCB.
 E3 – Discharge pressure too high: >609 psig (42 kg/cm²). Check: condenser coil, fans, charge, ambient temp.
 E4 – Discharge temperature too high: >230°F (110°C). Check: low suction pressure, low charge, compressor valve.
-E5 – Compressor motor overcurrent: Check compressor winding resistance phase to phase (should be equal, typically 0.5–2 ohms). Check inverter output voltage.
+E5 – Compressor overheat / overload (OL) trip: Check discharge thermistor connection, refrigerant charge and airflow, four-way valve leakage. Avoid repeated resets — repeated E5 without resolving root cause risks compressor/inverter damage.
 E6 – Compressor startup failure: Check power supply voltage, inverter, refrigerant charge, crankcase heater.
 E7 – Outdoor fan motor fault: Check fan motor winding, capacitor (single-phase fans), inverter (VFD fans).
 E8 – Input current protection: Check supply voltage, power factor, all phases present and balanced.
@@ -1045,35 +1045,35 @@ REFRIGERANT IDENTIFICATION & PROPERTIES
 
 R-410A (Most common in use):
 Type: HFC blend (R-32/R-125 50/50). GWP: 2088. ODP: 0.
-Cylinder: Pink/rose. Pressure at 77°F: 201 psig. Critical temp: 160.7°F.
-Boiling point: -61.9°F. Mildly flammable (A1 — non-flammable per ASHRAE 34).
+Cylinder: Pink/rose. Pressure at 77°F: 226 psig. Critical temp: 160.7°F.
+Boiling point: -61.9°F. Non-flammable (A1 per ASHRAE 34).
 Being phased out per AIM Act. New equipment after 2025 must use lower-GWP alternatives.
 
 R-22 (Legacy systems only):
-Type: HCFC. GWP: 1810. ODP: 0.034.
-Cylinder: Green. Pressure at 77°F: 123 psig. Critical temp: 204.9°F.
+Type: HCFC. GWP: 1810. ODP: 0.055.
+Cylinder: Green. Pressure at 77°F: 137 psig. Critical temp: 204.9°F.
 Production ended 2020. Reclaimed R-22 only. Document purchase/use. Cost: $50–120/lb.
 Never mix with R-410A or other refrigerants.
 
 R-454B (Puron Advance — new equipment replacement for R-410A):
 Type: HFO/HFC blend (R-32/R-1234yf). GWP: 467. ODP: 0.
-Cylinder: Light green. Pressure at 77°F: 186 psig. Mildly flammable (A2L classification).
+Cylinder: Light green. Pressure at 77°F: 213 psig. Mildly flammable (A2L classification).
 ASHRAE 34 Class A2L: Low burning velocity (<10 cm/s). Requires spark-free tools in confined spaces.
 Charge limit per ASHRAE 15: 35 lbs in occupied spaces without additional ventilation.
 
 R-32 (Pure refrigerant, increasingly common):
 Type: HFC. GWP: 675. ODP: 0.
-Cylinder: Red. Pressure at 77°F: 174 psig. A2L flammable classification.
+Cylinder: Red. Pressure at 77°F: 245 psig. A2L flammable classification.
 Higher pressure and lower charge weight than R-410A.
 
 R-407C (Drop-in for R-22 in some applications):
 Type: HFC blend. GWP: 1774. ODP: 0.
-Cylinder: Brown/tan. Pressure at 77°F: 130 psig. Temperature glide: ~9°F.
+Cylinder: Brown/tan. Pressure at 77°F: 154 psig. Temperature glide: ~9°F.
 Must charge as liquid (bottom of cylinder) due to glide.
 
 R-134a (Chillers, some RTUs):
 Type: HFC. GWP: 1430. ODP: 0.
-Cylinder: Light blue. Pressure at 77°F: 71 psig. Non-flammable (A1).
+Cylinder: Light blue. Pressure at 77°F: 82 psig. Non-flammable (A1).
 
 PPE REQUIREMENTS
 Minimum for all refrigerant work:
@@ -1478,36 +1478,24 @@ LWCO: Critical on steam — boiler can go dry. McDonnell-Miller 157S for steam. 
 Sight glass: Shows water level. Should be ½ to ⅔ of sight glass height when boiler is cold. Rising and falling during operation is normal (surging).
 Steam traps: Must be functional — test with infrared thermometer or ultrasonic detector. Failed-open trap: both inlet and outlet hot. Failed-closed trap: inlet hot, outlet cold.
 
-HOT WATER BOILER FAULT CODES — LOCHINVAR KNIGHT
-E01 – Ignition failure: Check gas pressure, igniter, flame sensor, gas valve.
-E02 – Flame loss after ignition: Check gas pressure stability, flame sensor signal (<1 µA = clean/replace), combustion air.
-E03 – High limit: Boiler water >210°F. Check circulator, air-bound system, setpoint.
-E04 – Blocked flue/air intake: Check vent for blockage, bird/insect screens, condensate drain.
-E05 – Temperature sensor fault (supply or return): Check 10K thermistor resistance. 77°F=10K, 140°F=3.8K, 200°F=1.5K.
-E06 – Low water temperature differential: Check for short-cycling, incorrect piping, system flow.
-E08 – Gas valve fault: Check 24V to gas valve, valve coil resistance.
-E10 – Fan fault: Check combustion blower, blocked air intake.
-E11 – Communication fault (cascade/BACnet).
-E12 – Igniter fault: Check igniter continuity and voltage.
-E27 – High water temperature: >185°F supply. Check high limit, strainer, flow.
-E28 – Delta-T (supply-return differential) too high: Poor flow — check circulator, air separator, balance valves.
-E32 – Return sensor fault.
-E38 – Header sensor fault (cascade systems).
-
-NAVIEN NCB/NFB COMBI BOILER FAULT CODES
-E001 – No ignition: Check gas pressure, inlet, valve coil, igniter.
-E002 – Abnormal flame: Unstable combustion. Check gas pressure, venting, combustion air.
-E003 – Ignition failure after max retries: Lockout. Check all E001/E002 causes plus check for air in gas line.
-E004 – False flame: Flame sensor signal without call. Check sensor, gas valve.
-E010 – Overheated: Check flow rate, scale buildup, heat exchanger.
-E012 – Flame loss during operation.
-E016 – Exhaust temperature high: Check blocked vent, improper vent length.
-E030 – Exhaust sensor fault.
-E033 – Outgoing water temperature sensor fault.
-E036 – Incoming cold water sensor fault.
-E046 – Fan motor fault: Check combustion blower wiring, operation.
-E047 – Air pressure sensor fault.
-E060 – Domestic hot water (DHW) high temperature: Check DHW sensor, heat exchanger scale.
+HOT WATER BOILER FAULT CODES — LOCHINVAR KNIGHT, NAVIEN NCB/NFB
+A previous version of this reference listed specific numbered fault codes
+for these two brands. On review, several of those code-to-meaning
+mappings did not match the manufacturers' own service documentation
+(confirmed against multiple independent sources) — presenting the wrong
+ones alongside correct ones risked more harm than a shorter, honest
+reference. Rather than publish a partially-wrong table, use the boiler's
+own display (most modern condensing boilers show a plain-language fault
+description, not just a bare code) and the manufacturer's service manual
+for exact code definitions on the specific model in front of you — codes
+also vary between model lines within the same brand (e.g. Knight vs
+Knight XL vs Knight Fire Tube), so a single generic table is inherently
+risky. General troubleshooting for common boiler symptoms (ignition
+failure, flame loss, high limit, sensor faults) follows the same logic
+regardless of the exact code: check gas supply and pressure, igniter and
+flame sensor condition/signal, combustion air and venting, water flow
+and circulator operation, and sensor resistance against the thermistor's
+published temperature/resistance table before condemning a part.
 E067 – Flow sensor fault (domestic water).
 E109 – Low water pressure (if equipped with pressure sensor): Check fill, pressure relief valve.
 E110 – Water pressure sensor fault.
@@ -1713,7 +1701,7 @@ Model: AGZ = air-cooled scroll (Daikin). ALR = water-cooled screw (McQuay). WME 
 Serial: Year + week format.
 
 REFRIGERANTS USED IN CHILLERS
-R-134a: Most common in centrifugal and large screw chillers. GWP=1430. Cylinder=light blue. Pressure at 77°F: 71 psig. Phasing down — replacement is R-1234ze or R-513A.
+R-134a: Most common in centrifugal and large screw chillers. GWP=1430. Cylinder=light blue. Pressure at 77°F: 82 psig. Phasing down — replacement is R-1234ze or R-513A.
 R-410A: Scroll and small screw air-cooled chillers. GWP=2088. Cylinder=pink/rose.
 R-123: Low-pressure centrifugal chillers (Carrier 19XR older, Trane CenTraVac). GWP=77. Cylinder=grey. Boiling point=82°F — operates below atmospheric pressure. HCFC, being phased out.
 R-1234ze(E): Low-GWP replacement for R-134a. GWP=7. A2L (mildly flammable). Increasingly common in new centrifugal chillers.
@@ -2182,7 +2170,7 @@ BRANDS & TYPES
 KEY COMPONENTS
 Fill media: splash or film. Film fill is efficient but fouling‑sensitive – clean with low‑pressure water (max 40 PSI) to avoid damaging fins.
 Drift eliminators: capture water droplets. If drift >0.001% of circulation flow, check eliminators for damage or fouling.
-Fan: direct‑drive or belt‑drive. Belt tension: deflect ½" per foot of span. Check sheave alignment with straight edge.
+Fan: direct‑drive or belt‑drive. Belt tension: 1/64" deflection per inch of span under moderate thumb pressure. Check sheave alignment with straight edge.
 Gearbox (induced draft): oil level and condition – check monthly. Change oil annually (ISO 220 or OEM spec).
 Distribution basin / spray nozzles: check for even water flow – plugged nozzles cause dry spots and reduced efficiency.
 Bleed / blowdown: maintain cycles of concentration (3–5) per water treatment plan. Use conductivity controller (setpoint 1000–2000 µS/cm typical).
@@ -2235,7 +2223,7 @@ WINTER OPERATION
 AIR HANDLING UNITS (AHU)
 Major brands: Trane (M‑Series, Climate Changer, Modular), Carrier (39/40 series, Aero), York (Sunline, Airfoil).
 Components:
-- Fan: belt‑drive or direct‑drive (plug or plenum). Check shaft alignment, bearing condition, belt tension (deflect ½" per foot of span).
+- Fan: belt‑drive or direct‑drive (plug or plenum). Check shaft alignment, bearing condition, belt tension (1/64" deflection per inch of span under moderate thumb pressure).
 - Coils: cooling (chilled water or DX) and heating (hot water, steam, electric). Air‑side pressure drop <0.5" w.c. at design flow – higher = fouled coil.
 - Filters: MERV 8, 11, 13, HEPA. Pressure drop across filter bank should be monitored with magnahelic – change when ΔP exceeds initial + 0.5" w.c. (or per spec).
 - Mixing box: outdoor air and return air dampers. Check for binding, correct actuator travel (0–90°), end switches.
@@ -2306,7 +2294,7 @@ SAFETY – CRITICAL FIRST STEP
 - Test for hazardous fumes (kitchen grease, lab chemicals) with appropriate detector.
 
 ROOF EXHAUST FAN MAINTENANCE
-- Belt tension: deflect ½" per foot of span – adjust by moving motor base.
+- Belt tension: 1/64" deflection per inch of span under moderate thumb pressure – adjust by moving motor base.
 - Sheave alignment: use straight edge – within 1/16" per foot.
 - Bearings: grease with NLGI #2 lithium complex – 2–3 pumps every 6 months (or per motor nameplate).
 - Motor: check amp draw vs nameplate FLA. 10–15% higher indicates mechanical binding, overvoltage, or undersized pulley.
