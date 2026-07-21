@@ -5,7 +5,7 @@ const {
   useRef
 } = React;
 const RED = "#2563EB";
-const APP_VERSION = "1.4.3";
+const APP_VERSION = "1.4.4";
 
 // ── THEME ────────────────────────────────────────────────────────────────
 const THEMES = {
@@ -129,7 +129,7 @@ async function ai(system, prompt, retries = 2, history = []) {
       ];
       const r = await fetch(WORKER_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-FieldPro-Client": "fieldpro-app-2026" },
         body: JSON.stringify({
           model: "claude-sonnet-5",
           max_tokens: 4096,
