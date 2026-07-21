@@ -667,8 +667,14 @@ function Dashboard({
           profile.region && /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:RED,fontWeight:600,marginTop:2,letterSpacing:".05em"}},
             profile.region)
         ),
-        /*#__PURE__*/React.createElement("div", {style:{fontSize:9,color:GTXT3,fontWeight:600,letterSpacing:".05em",alignSelf:"flex-start",marginTop:2}},
-          "v"+APP_VERSION)
+        /*#__PURE__*/React.createElement("div", {style:{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:4,alignSelf:"flex-start"}},
+          /*#__PURE__*/React.createElement("div", {style:{fontSize:9,color:GTXT3,fontWeight:600,letterSpacing:".05em"}},
+            "v"+APP_VERSION),
+          onDemo && /*#__PURE__*/React.createElement("button", {
+            onClick: onDemo,
+            style: {background:"none",border:"none",padding:0,cursor:"pointer",fontSize:10,color:RED,fontWeight:700,letterSpacing:".03em",textDecoration:"underline"}
+          }, "View Demo")
+        )
       ),
 
       /* Stat pills */

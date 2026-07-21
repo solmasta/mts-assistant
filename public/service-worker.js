@@ -1,4 +1,9 @@
-const CACHE_NAME = 'fieldpro-v1';
+// Bump this alongside APP_VERSION on every release — it's what forces
+// browsers to notice service-worker.js changed and actually run
+// install/activate again. Without a byte-level change here, a cache-first
+// fetch handler (see below) would keep serving whatever JS was cached on
+// a user's first visit indefinitely, even after new code is deployed.
+const CACHE_NAME = 'fieldpro-v1.4.4';
 const PRECACHE = [
   './',
   './index.html',
@@ -32,15 +37,27 @@ self.addEventListener('fetch', (event) => {
   // Skip API calls — never cache those
   if (url.hostname.includes('openai') || url.hostname.includes('workers.dev') || url.hostname.includes('cloudflare')) return;
 
+  // Stale-while-revalidate: serve the cached copy immediately if we have
+  // one (fast, works offline), but always refresh it in the background so
+  // the *next* load gets fresh content — a pure cache-first strategy here
+  // would mean a deployed fix never reaches a user who already has this
+  // exact file cached, since nothing would ever re-check the network.
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request).then((response) => {
-        if (!response || response.status !== 200 || response.type === 'opaque') return response;
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-        return response;
-      }).catch(() => caches.match('./index.html'));
-    })
+    caches.open(CACHE_NAME).then((cache) =>
+      cache.match(event.request).then((cached) => {
+        const networkFetch = fetch(event.request).then((response) => {
+          if (response && response.status === 200 && response.type !== 'opaque') {
+            cache.put(event.request, response.clone());
+          }
+          return response;
+        }).catch(() => null);
+
+        if (cached) {
+          event.waitUntil(networkFetch);
+          return cached;
+        }
+        return networkFetch.then((response) => response || caches.match('./index.html'));
+      })
+    )
   );
 });
