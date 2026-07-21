@@ -1055,8 +1055,7 @@ function PTChart() {
     if (satT === null) { setShResult({error:"Pressure out of range"}); return; }
     const sh = lt - satT;
     const target = SH_TARGETS[ref];
-    const status = sh < 5 ? "LOW \u2014 Risk of liquid slugging" : sh > 20 ? "HIGH \u2014 Possible low charge or restriction" : "NORMAL \u2014 Good charge";
-    const color = sh < 5 ? RED : sh > 20 ? "#E67E22" : "#27AE60";
+    const { status, color } = classifyAgainstTarget(sh, target, "Risk of liquid slugging", "Possible low charge or restriction");
     const oatHint = !isNaN(oat) ? ("At "+oat+"\u00b0F OAT, target suction sat temp \u2248 "+(oat-35).toFixed(0)+"\u00b0F") : "";
     setShResult({satT:satT.toFixed(1), sh:sh.toFixed(1), status, color, target, oatHint});
   }
@@ -1069,8 +1068,7 @@ function PTChart() {
     if (satT === null) { setScResult({error:"Pressure out of range"}); return; }
     const sc = satT - lt;
     const target = SC_TARGETS[ref];
-    const status = sc < 5 ? "LOW \u2014 Possible undercharge or restriction" : sc > 20 ? "HIGH \u2014 Possible overcharge" : "NORMAL \u2014 Good charge";
-    const color = sc < 5 ? RED : sc > 20 ? "#E67E22" : "#27AE60";
+    const { status, color } = classifyAgainstTarget(sc, target, "Possible undercharge or restriction", "Possible overcharge");
     setScResult({satT:satT.toFixed(1), sc:sc.toFixed(1), status, color, target});
   }
 

@@ -1,6 +1,55 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 
+// Nothing in the app tree (public/app1-3.js, ~7000 lines of legacy React
+// components with no error boundaries of their own) catches render errors,
+// so any unhandled exception would otherwise crash to a blank white/black
+// screen with no way back short of knowing to manually reload.
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+  componentDidCatch(error, info) {
+    console.error('❌ Unhandled error in app tree:', error, info);
+    // The splash screen only gets hidden by app-specific init timing —
+    // if the crash happens before that runs, the splash (fixed on top of
+    // #root) would otherwise hide this fallback from the user forever.
+    const splash = document.getElementById('splash');
+    if (splash) splash.remove();
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{
+          width: '100%', height: '100vh', minHeight: '100vh', display: 'flex',
+          flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          padding: 30, textAlign: 'center', background: '#0a0a0a', color: '#fff',
+          fontFamily: 'sans-serif',
+        }}>
+          <div style={{ fontSize: 32, marginBottom: 12 }}>⚠️</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: '#E30613', marginBottom: 8 }}>
+            Something went wrong
+          </div>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', marginBottom: 20, maxWidth: 320, wordBreak: 'break-word' }}>
+            {this.state.error.message || 'The app hit an unexpected error.'}
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            style={{ background: '#E30613', color: '#fff', border: 'none', borderRadius: 10, padding: '12px 28px', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+          >
+            Reload
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function App() {
   const [appLoaded, setAppLoaded] = React.useState(false);
 
@@ -62,7 +111,11 @@ function App() {
   // Render App3 if available
   if (window.App3 && appLoaded) {
     console.log('🎨 Rendering window.App3');
-    return React.createElement(window.App3);
+    return (
+      <ErrorBoundary>
+        {React.createElement(window.App3)}
+      </ErrorBoundary>
+    );
   }
 
   return <div style={{ width: '100%', height: '100vh', background: 'transparent' }} />;

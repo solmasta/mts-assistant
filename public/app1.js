@@ -5,7 +5,7 @@ const {
   useRef
 } = React;
 const RED = "#2563EB";
-const APP_VERSION = "1.4.3";
+const APP_VERSION = "1.4.4";
 
 // ── THEME ────────────────────────────────────────────────────────────────
 const THEMES = {
@@ -129,7 +129,7 @@ async function ai(system, prompt, retries = 2, history = []) {
       ];
       const r = await fetch(WORKER_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-FieldPro-Client": "fieldpro-app-2026" },
         body: JSON.stringify({
           model: "claude-sonnet-5",
           max_tokens: 4096,
@@ -256,6 +256,17 @@ function getSatPress(refrigerant, degF) {
 }
 const SH_TARGETS = {"R-410A":"8-12°F","R-22":"10-15°F","R-32":"8-12°F","R-454B":"8-12°F","R-407C":"10-15°F","R-134a":"10-15°F"};
 const SC_TARGETS = {"R-410A":"10-15°F","R-22":"10-15°F","R-32":"10-15°F","R-454B":"10-15°F","R-407C":"10-15°F","R-134a":"8-12°F"};
+// Classifies a superheat/subcooling reading against its refrigerant-specific
+// target band (e.g. "8-12°F") instead of one generic threshold for every
+// refrigerant — a reading can sit inside a generic 5-20°F "normal" range
+// while still being outside the specific target shown next to it.
+function classifyAgainstTarget(value, targetStr, lowLabel, highLabel) {
+  const m = (targetStr || "").match(/(-?\d+(?:\.\d+)?)\s*-\s*(-?\d+(?:\.\d+)?)/);
+  const [lo, hi] = m ? [parseFloat(m[1]), parseFloat(m[2])] : [5, 20];
+  if (value < lo) return { status: `LOW — ${lowLabel}`, color: RED };
+  if (value > hi) return { status: `HIGH — ${highLabel}`, color: "#E67E22" };
+  return { status: "NORMAL — Good charge", color: "#27AE60" };
+}
 
 // Global nav ref — set by App, used by any component to navigate home
 const _nav = {
@@ -667,8 +678,14 @@ function Dashboard({
           profile.region && /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:RED,fontWeight:600,marginTop:2,letterSpacing:".05em"}},
             profile.region)
         ),
-        /*#__PURE__*/React.createElement("div", {style:{fontSize:9,color:GTXT3,fontWeight:600,letterSpacing:".05em",alignSelf:"flex-start",marginTop:2}},
-          "v"+APP_VERSION)
+        /*#__PURE__*/React.createElement("div", {style:{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:4,alignSelf:"flex-start"}},
+          /*#__PURE__*/React.createElement("div", {style:{fontSize:9,color:GTXT3,fontWeight:600,letterSpacing:".05em"}},
+            "v"+APP_VERSION),
+          onDemo && /*#__PURE__*/React.createElement("button", {
+            onClick: onDemo,
+            style: {background:"none",border:"none",padding:0,cursor:"pointer",fontSize:10,color:RED,fontWeight:700,letterSpacing:".03em",textDecoration:"underline"}
+          }, "View Demo")
+        )
       ),
 
       /* Stat pills */
@@ -1438,8 +1455,8 @@ function RefAgent() {
 
       const shTarget = SH_TARGETS[ref];
       const scTarget = SC_TARGETS[ref];
-      const shStatus = sh === null ? null : sh < 5 ? "LOW — risk of liquid slugging" : sh > 20 ? "HIGH — possible low charge or restriction" : "NORMAL — good charge";
-      const scStatus = sc === null ? null : sc < 5 ? "LOW — possible undercharge or restriction" : sc > 20 ? "HIGH — possible overcharge" : "NORMAL — good charge";
+      const shStatus = sh === null ? null : classifyAgainstTarget(sh, shTarget, "risk of liquid slugging", "possible low charge or restriction").status;
+      const scStatus = sc === null ? null : classifyAgainstTarget(sc, scTarget, "possible undercharge or restriction", "possible overcharge").status;
 
       const lines = ["✅ VERIFIED CALCULATION (refrigerant PT table — not AI-generated)"];
       if (satSuction !== null) lines.push(`Suction saturation temp: ${satSuction.toFixed(1)}°F (from ${suctPress} psig)`);
